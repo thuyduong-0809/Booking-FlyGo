@@ -3,7 +3,7 @@ import { IsEmail, IsNotEmpty } from "class-validator";
 export class CreateUserDto{
 
  
-   @IsNotEmpty()
+   // @IsNotEmpty()
    full_name: string;
     
    @IsNotEmpty({ message: 'Email không được để trống' })
@@ -15,8 +15,10 @@ export class CreateUserDto{
 
    cccd: string;
  
-   
+    
    sex: 'male' | 'female';
+
+   country: string;
  
    avatar: string;
  
