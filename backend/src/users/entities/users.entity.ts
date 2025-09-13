@@ -33,6 +33,9 @@ export class User {
   })
   sex: 'male' | 'female';
 
+  @Column({ type: 'varchar', length: 255, nullable: true})
+  country: string;
+
   @Column({
     type: 'enum',
     enum: ['admin', 'customer'],
