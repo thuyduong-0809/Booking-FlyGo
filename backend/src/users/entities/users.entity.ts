@@ -1,4 +1,5 @@
 // import { Account } from 'src/accounts/entities/account.entity';
+import { Account } from 'src/accounts/entities/accounts.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -38,10 +39,10 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: ['admin', 'customer'],
-    default: 'customer',
+    enum: ['guest', 'customer', 'admin'],
+    default: 'guest',
   })
-  role: 'admin' | 'customer';
+  role: 'guest' | 'customer' | 'admin';
 
   @Column({
     name: 'status_verify',
@@ -64,8 +65,8 @@ export class User {
   updated_at: Date;
 
   // Quan hệ 1-1 với Account
-  // @OneToOne(() => Account, (account) => account.user)
-  // account: Account;
+  @OneToOne(() => Account, (account) => account.user)
+  account: Account;
 }
 
 
