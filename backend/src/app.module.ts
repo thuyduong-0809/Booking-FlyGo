@@ -8,10 +8,11 @@ import { ConfigModule } from '@nestjs/config';
 import { AccountsController } from './accounts/accounts.controller';
 import { AccountsService } from './accounts/accounts.service';
 import { AccountsModule } from './accounts/accounts.module';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
-  imports: [ TypeOrmModule.forRoot(dataSourceOptions), UsersModule,ConfigModule.forRoot(), AccountsModule],
+  imports: [ TypeOrmModule.forRoot(dataSourceOptions), UsersModule,ConfigModule.forRoot(), AccountsModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })

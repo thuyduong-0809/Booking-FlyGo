@@ -55,9 +55,6 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   avatar: string;
 
-  @Column({nullable:true, default: null})
-  refresh_token: string;
-
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;
 

@@ -10,7 +10,8 @@ import { UsersService } from 'src/users/users.service';
 @Module({
     imports:[TypeOrmModule.forFeature([Account,User]),ConfigModule],
     providers:[AccountsService,UsersService],
-    controllers:[AccountsController]
+    controllers:[AccountsController],
+     exports: [AccountsService],
 })
 export class AccountsModule {
       
