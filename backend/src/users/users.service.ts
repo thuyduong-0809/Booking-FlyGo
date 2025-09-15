@@ -15,7 +15,7 @@ export class UsersService {
         let response = common_response;
         try {
             let users = await this.userRepository.find({
-               select:['id','full_name','email','phone','cccd','sex','country','role','status_verify','avatar','refresh_token','created_at','updated_at']
+               select:['id','full_name','email','phone','cccd','sex','country','role','status_verify','avatar','created_at','updated_at']
             })
             if(users){
                response.success = true;
@@ -63,7 +63,7 @@ export class UsersService {
       let response = common_response;
       let user = await this.userRepository.findOne({
             where:{id:id},
-            select:['id','full_name','email','phone','cccd','sex','country','role','status_verify','avatar','refresh_token','created_at','updated_at'],
+            select:['id','full_name','email','phone','cccd','sex','country','role','status_verify','avatar','created_at','updated_at'],
             // relations:['videos']
       })
       if(user){

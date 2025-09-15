@@ -7,7 +7,7 @@ import { CreateUserDto } from 'src/users/dto/create_user.dto';
 export class AccountsController {
     constructor(private readonly accountsService: AccountsService) {}
 
-@UsePipes()
+  @UsePipes()
   @Post('signup')
   async signup(
     @Body() createLocalAccountDto: CreateLocalAccountDto,

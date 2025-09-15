@@ -32,6 +32,9 @@ export class Account {
   @Column({ nullable: true })
   providerId: string; // googleId, facebookId... (nếu provider != local)
 
+  @Column({nullable:true, default: null})
+  refresh_token: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

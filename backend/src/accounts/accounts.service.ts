@@ -7,6 +7,7 @@ import { CreateUserDto } from 'src/users/dto/create_user.dto';
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 import { User } from 'src/users/entities/users.entity';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AccountsService {
@@ -27,7 +28,7 @@ export class AccountsService {
                     email,
                     role: 'customer',   // mặc định customer khi đăng ký
                     });
-                user = await this.userRepository.save(user);
+                    user = await this.userRepository.save(user);
                 }
                 //đã booking
                 else{
@@ -46,9 +47,10 @@ export class AccountsService {
                 }
 
                  // Tạo account gắn user
+                const hash_password = await this.hashPassword(password)
                 const account = this.accountRepository.create({
                 email,
-                password, 
+                password:hash_password, 
                 provider: 'local',
                 user,
                 });
@@ -70,6 +72,14 @@ export class AccountsService {
           
      
        }
+
+       
+  private async hashPassword(password: string): Promise<string> {
+    const saltRound = 10;
+    const salt = await bcrypt.genSalt(saltRound);
+    const hash = await bcrypt.hash(password, saltRound);
+    return hash;
+  }
 
     
 
