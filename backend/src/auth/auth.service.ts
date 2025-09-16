@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from 'src/accounts/entities/accounts.entity';
 import { User } from 'src/users/entities/users.entity';
@@ -79,48 +79,15 @@ export class AuthService {
 
 
 
-     async login(loginLocalDto: LoginLocalDto) {
-          let response = { ...common_response };
-          try {
-            const account = await this.accountRepository.findOne({
-              where: { email: loginLocalDto.email },
-              relations: ['user'],
-            });
+       async login(account: Account) {
+           
 
-            if (!account) {
-              response.success = false;
-              response.message = 'Account not existing.';
-              response.errorCode = 'ACC_NOT_EXIST';
-              return response;
-            }
+            // if (!accountWithUser || !accountWithUser.user) {
+            //     throw new UnauthorizedException('User not found');
+            //  }
+            const payload = { id: account.id, email: account.email, role: account.user.role };
 
-            if (!validator.isEmail(loginLocalDto.email)) {
-              response.success = false;
-              response.message = 'Email must be a valid email...';
-              return response;
-            }
-
-            const checkPass = bcrypt.compareSync(
-              loginLocalDto.password,
-              account.password,
-            );
-            if (!checkPass) {
-              response.success = false;
-              response.message = 'Password incorrect.';
-              response.errorCode = 'PASSWORD_INCORRECT';
-              return response;
-            }
-
-            // Payload cho JWT
-            const payload = {
-              id: account.id, 
-              email: account.email,
-              role: account.user.role,
-            };
-
-            console.log(payload)
-
-           const accessToken = await this.jwtService.signAsync(payload, {
+            const accessToken = await this.jwtService.signAsync(payload, {
               secret: process.env.JWT_ACCESS_SECRET,
               expiresIn: process.env.JWT_ACCESS_EXPIRE,
             });
@@ -130,26 +97,30 @@ export class AuthService {
               expiresIn: process.env.JWT_REFRESH_EXPIRE,
             });
 
-             // Hash refresh token trước khi lưu DB
-            const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-            account.refresh_token = hashedRefresh;
-            await this.accountRepository.save(account);
-
-            response.success = true;
-            response.message = 'Login success';
-            response.data = {
-              account,
-              accessToken,
-              refreshToken,
+            return {
+              success: true,
+              message: 'Login success',
+              data: {
+                accessToken,
+                refreshToken,
+                payload
+              },
             };
-            return response;
-          } catch (error) {
-            response.success = false;
-            response.message = error.message;
-            response.statusCode = 500;
-            return response;
-          }
-     }
+       }     
+
+     // dùng cho LocalStrategy
+      async validateUser(email: string, password: string): Promise<any> {
+       const account = await this.accountRepository.findOne({
+            where: { email },
+            relations: ['user'],
+        });
+
+        if (account && (await bcrypt.compare(password, account.password))) {
+          const { password, ...result } = account;
+          return result;
+        }
+         return null;
+      }
 
 
      
