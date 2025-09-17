@@ -10,6 +10,7 @@ import { LoginLocalDto } from 'src/auth/dto/login-local.dto';
 import validator from 'validator';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -109,7 +110,8 @@ export class AuthService {
        }     
 
      // dùng cho LocalStrategy
-      async validateUser(email: string, password: string): Promise<any> {
+      async validateAccountLocal(email: string, password: string): Promise<any> {
+        
        const account = await this.accountRepository.findOne({
             where: { email },
             relations: ['user'],
@@ -122,6 +124,36 @@ export class AuthService {
          return null;
       }
 
+
+       // dùng cho GoogleStrategy
+
+  async validateAccountGoogle(email: string): Promise<any> {
+ 
+      let account = await this.accountRepository.findOne({
+        where: { email },
+        relations: ['user'],
+      });
+
+      if (!account) {
+        // nếu chưa có thì tạo user + account mới (provider = google)
+        let user = this.userRepository.create({
+          email,
+          role: 'customer',
+        });
+        user = await this.userRepository.save(user);
+
+        account = this.accountRepository.create({
+          email,
+          provider: 'google',
+          user,
+        });
+        await this.accountRepository.save(account);
+      }
+
+      return account;
+   }
+
+    
 
      
            
