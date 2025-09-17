@@ -8,6 +8,7 @@ import { AccountsService } from 'src/accounts/accounts.service';
 import { Account } from 'src/accounts/entities/accounts.entity';
 import { AuthController } from 'src/auth/auth.controller';
 import { AuthService } from 'src/auth/auth.service';
+import { GoogleStrategy } from 'src/auth/strategies/google.strategy';
 import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 import { LocalStrategy } from 'src/auth/strategies/local.strategy';
 import { User } from 'src/users/entities/users.entity';
@@ -25,7 +26,7 @@ import { User } from 'src/users/entities/users.entity';
     }),
 ],
   controllers: [AuthController],
-  providers: [AuthService,LocalStrategy,JwtStrategy],
+  providers: [AuthService,LocalStrategy,JwtStrategy,GoogleStrategy],
 })
 export class AuthModule {}
 

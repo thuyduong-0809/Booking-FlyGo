@@ -13,7 +13,7 @@ export interface PageLoginProps {}
 const loginSocials = [
   {
     name: "Continue with Google",
-    href: "#",
+    href: "http://localhost:3001/auth/google",
     icon: googleSvg,
   },
 ];
@@ -44,7 +44,7 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
     <div className={`nc-PageLogin`}>
       <div className="container mb-24 lg:mb-32">
         <h2 className="my-20 flex items-center text-3xl md:text-5xl font-semibold justify-center">
-          Login
+          Đăng nhập
         </h2>
 
         <div className="max-w-md mx-auto space-y-6">
@@ -78,7 +78,7 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
           {/* FORM */}
           <form onSubmit={handleSubmit} className="grid gap-6">
             <label className="block">
-              <span>Email address</span>
+              <span>Email</span>
               <Input
                 type="email"
                 value={email}
@@ -90,9 +90,9 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
 
             <label className="block">
               <span className="flex justify-between items-center">
-                Password
+                Mật khẩu
                 <Link href="#" className="text-sm underline">
-                  Forgot password?
+                  Quên mật khẩu?
                 </Link>
               </span>
               <Input
@@ -114,9 +114,9 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
 
           {/* ==== */}
           <span className="block text-center">
-            New user?{" "}
+            Chưa có tài khoản?{" "}
             <Link href="/signup" className="font-semibold underline">
-              Create an account
+              Tạo tài khoản
             </Link>
           </span>
         </div>

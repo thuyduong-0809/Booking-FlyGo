@@ -1,21 +1,31 @@
-// frontend/lib/api.ts
+import axios from "axios";
 
-export async function loginApi(email: string, password: string) {
-  const res = await fetch("http://localhost:3001/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+const api = axios.create({
+  baseURL: "http://localhost:3001", 
+});
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.message || "Login failed");
+// interceptor thêm token vào header
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+});
 
-  // Lưu token vào localStorage
-  localStorage.setItem("accessToken", data.data.accessToken);
-  localStorage.setItem("refreshToken", data.data.refreshToken);
+export const signupApi = async (email: string, password: string) => {
+  const res = await api.post("/auth/register", { email, password });
+  // nếu backend trả token thì lưu
+  if (res.data.access_token) {
+    localStorage.setItem("access_token", res.data.access_token);
+  }
+  return res.data;
+};
 
-  return data;
-}
+export const loginApi = async (email: string, password: string) => {
+  const res = await api.post("/auth/login", { email, password });
+  if (res.data.access_token) {
+    localStorage.setItem("access_token", res.data.access_token);
+  }
+  return res.data;
+};

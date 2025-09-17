@@ -11,6 +11,7 @@
   "dependencies": {
     "@headlessui/react": "^1.7.14",
     "@heroicons/react": "^2.0.18",
+    "@nestjs/axios": "^4.0.1",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.9",
@@ -19,6 +20,7 @@
     "@types/react": "18.2.7",
     "@types/react-datepicker": "^4.11.2",
     "@types/react-dom": "18.2.4",
+    "axios": "^1.12.2",
     "client-only": "^0.0.1",
     "date-fns": "^4.1.0",
     "eslint": "8.41.0",
