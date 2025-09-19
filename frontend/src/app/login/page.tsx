@@ -1,11 +1,14 @@
 "use client";
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import googleSvg from "@/images/Google.svg";
 import Input from "@/shared/Input";
 import ButtonPrimary from "@/shared/ButtonPrimary";
 import Image from "next/image";
 import Link from "next/link";
-import { loginApi } from "lib/api";
+import {requestApi } from "lib/api";
+import { loginSuccess, updateLocalStorage } from "stores/features/masterSlice";
+import { useAppDispatch, useAppSelector } from "stores/hookStore";
+import { useRouter } from "next/navigation";
 
 
 export interface PageLoginProps {}
@@ -23,22 +26,32 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const dispatch = useAppDispatch();
+  const masterStore = useAppSelector((state) => state.master);
+  const router = useRouter();
+
+  useEffect(() => {
+  console.log("Master store thay đổi:", masterStore);
+}, [masterStore]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
-    try {
-      const res = await loginApi(email, password);
-      alert("✅ Login thành công!");
-      console.log("Payload:", res.data.payload); // payload có role
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    
+     try {
+    
+    const res = await requestApi("auth/login", "POST", { email, password });
+     dispatch(loginSuccess({ ...res }));
+     dispatch(updateLocalStorage());
+    // console.log("Login success:", res);
+     alert("Login thành công 🎉");
+     router.push("/"); 
+    
+    } catch (err) {
+    console.error("Login failed:", err);
     }
-  };
+   };
 
   return (
     <div className={`nc-PageLogin`}>

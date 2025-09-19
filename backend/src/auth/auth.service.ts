@@ -85,6 +85,7 @@ export class AuthService {
 
             // if (!accountWithUser || !accountWithUser.user) {
             //     throw new UnauthorizedException('User not found');
+            let response = { ...common_response };
             //  }
             const payload = { id: account.id, email: account.email, role: account.user.role };
 
@@ -97,16 +98,15 @@ export class AuthService {
               secret: process.env.JWT_REFRESH_SECRET,
               expiresIn: process.env.JWT_REFRESH_EXPIRE,
             });
-
-            return {
-              success: true,
-              message: 'Login success',
-              data: {
+            response.success = true;
+            response.message = 'Login success';
+            response.data={
                 accessToken,
                 refreshToken,
                 payload
-              },
-            };
+            }
+            return response;
+             
        }     
 
      // dùng cho LocalStrategy

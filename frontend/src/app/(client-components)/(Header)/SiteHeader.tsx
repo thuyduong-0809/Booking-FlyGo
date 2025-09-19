@@ -12,6 +12,7 @@ import Header from "./Header";
 import Header3 from "./Header3";
 import { usePathname } from "next/navigation";
 import { useThemeMode } from "@/utils/useThemeMode";
+import { useAppSelector } from "stores/hookStore";
 
 export type SiteHeaders = "Header 1" | "Header 2" | "Header 3";
 
@@ -47,10 +48,18 @@ const SiteHeader = () => {
 
   const [isTopOfPage, setIsTopOfPage] = useState(true);
 
+  const { is_login } = useAppSelector((state) => state.master);
+
   useEffect(() => {
-    setIsTopOfPage(window.pageYOffset < 5);
-  }, []);
-  //
+    if (is_login) {
+      console.log(is_login)
+      setHeaderSelected("Header 2");
+    }else{
+        setHeaderSelected("Header 1");
+    }
+  }, [is_login]);
+
+
   useThemeMode();
   //
   const pathname = usePathname();
@@ -61,19 +70,6 @@ const SiteHeader = () => {
     });
   };
 
-  useEffect(() => {
-    // disconnect the observer
-    // observer for show the LINE bellow header
-    if (!PAGES_HIDE_HEADER_BORDER.includes(pathname as PathName)) {
-      OBSERVER && OBSERVER.disconnect();
-      OBSERVER = null;
-      return;
-    }
-    if (!OBSERVER) {
-      OBSERVER = new IntersectionObserver(intersectionCallback, OPTIONS);
-      anchorRef.current && OBSERVER.observe(anchorRef.current);
-    }
-  }, [pathname]);
 
   const renderRadioHeaders = () => {
     return (
@@ -100,30 +96,6 @@ const SiteHeader = () => {
     );
   };
 
-  const renderRadioHomePages = () => {
-    return (
-      <div className="mt-4">
-        <span className="text-sm font-medium">Home Demos</span>
-        <div className="mt-1.5 flex items-center space-x-2">
-          {homePages.map((home) => {
-            return (
-              <Link
-                key={home.slug}
-                href={home.slug}
-                className={`py-1.5 px-3.5 flex items-center rounded-full font-medium text-xs cursor-pointer select-none ${
-                  pathname === home.slug
-                    ? "bg-black text-white shadow-black/10 shadow-lg"
-                    : "border border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500"
-                }`}
-              >
-                {home.name}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
   // FOR DEMO PAGE
   const renderControlSelections = () => {
@@ -155,7 +127,6 @@ const SiteHeader = () => {
                         <span className="text-xl font-semibold">Customize</span>
                         <div className="w-full border-b border-neutral-200 dark:border-neutral-700 mt-4"></div>
                         {renderRadioHeaders()}
-                        {renderRadioHomePages()}
                       </div>
                     
                     </div>
@@ -191,7 +162,7 @@ const SiteHeader = () => {
 
   return (
     <>
-      {renderControlSelections()}
+      {/* {renderControlSelections()} */}
       {renderHeader()}
       <div ref={anchorRef} className="h-1 absolute invisible"></div>
     </>

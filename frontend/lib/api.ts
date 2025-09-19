@@ -1,10 +1,11 @@
-import axios from "axios";
+// api.ts
+import axios, { Method } from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3001", 
+  baseURL: "http://localhost:3001",
 });
 
-// interceptor thêm token vào header
+// interceptor: gắn token vào header nếu có
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   if (token) {
@@ -13,19 +14,32 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export const signupApi = async (email: string, password: string) => {
-  const res = await api.post("/auth/register", { email, password });
-  // nếu backend trả token thì lưu
-  if (res.data.access_token) {
-    localStorage.setItem("access_token", res.data.access_token);
-  }
-  return res.data;
-};
+/**
+ * Hàm gọi API chung
+ * @param endpoint đường dẫn API (vd: "auth/login")
+ * @param method phương thức HTTP ("GET", "POST", ...)
+ * @param body dữ liệu gửi đi (optional)
+ */
+export const requestApi = async (
+  endpoint: string,
+  method: Method,
+  body?: any
+) => {
+  try {
+    const res = await api.request({
+      url: endpoint,
+      method,
+      data: body,
+    });
 
-export const loginApi = async (email: string, password: string) => {
-  const res = await api.post("/auth/login", { email, password });
-  if (res.data.access_token) {
-    localStorage.setItem("access_token", res.data.access_token);
+    // Nếu login/register trả token thì lưu
+    if (res.data?.access_token) {
+      localStorage.setItem("access_token", res.data.access_token);
+    }
+
+    return res.data;
+  } catch (error: any) {
+    console.error("API Error:", error.response?.data || error.message);
+    throw error.response?.data || error;
   }
-  return res.data;
 };

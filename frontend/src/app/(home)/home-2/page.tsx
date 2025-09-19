@@ -2,10 +2,9 @@ import SectionSliderNewCategories from "@/components/SectionSliderNewCategories"
 import React from "react";
 import SectionSubscribe2 from "@/components/SectionSubscribe2";
 import SectionOurFeatures from "@/components/SectionOurFeatures";
-import SectionHowItWork from "@/components/SectionHowItWork";
 import BackgroundSection from "@/components/BackgroundSection";
 import { TaxonomyType } from "@/data/types";
-import SectionGridAuthorBox from "@/components/SectionGridAuthorBox";
+
 //
 import logo1 from "@/images/logos/nomal/1.png";
 import logo1Dark from "@/images/logos/dark/1.png";
@@ -38,7 +37,7 @@ import Image from "next/image";
 const DEMO_CATS_2: TaxonomyType[] = [
   {
     id: "1",
-    href: "/listing-real-estate",
+    href: "#",
     name: "Enjoy the great cold",
     taxonomy: "category",
     count: 188288,
@@ -47,7 +46,7 @@ const DEMO_CATS_2: TaxonomyType[] = [
   },
   {
     id: "2",
-    href: "/listing-real-estate",
+    href: "#",
     name: "Sleep in a floating way",
     taxonomy: "category",
     count: 188288,
@@ -56,7 +55,7 @@ const DEMO_CATS_2: TaxonomyType[] = [
   },
   {
     id: "3",
-    href: "/listing-real-estate",
+    href: "#",
     name: "In the billionaire's house",
     taxonomy: "category",
     count: 188288,
@@ -65,7 +64,7 @@ const DEMO_CATS_2: TaxonomyType[] = [
   },
   {
     id: "4",
-    href: "/listing-real-estate",
+    href: "#",
     name: "Cool in the deep forest",
     taxonomy: "category",
     count: 188288,
@@ -74,7 +73,7 @@ const DEMO_CATS_2: TaxonomyType[] = [
   },
   {
     id: "5",
-    href: "/listing-real-estate",
+    href: "#",
     name: "In the billionaire's house",
     taxonomy: "category",
     count: 188288,
@@ -83,7 +82,7 @@ const DEMO_CATS_2: TaxonomyType[] = [
   },
   {
     id: "6",
-    href: "/listing-real-estate",
+    href: "#",
     name: "Sleep in a floating way",
     taxonomy: "category",
     count: 188288,
@@ -92,7 +91,7 @@ const DEMO_CATS_2: TaxonomyType[] = [
   },
   {
     id: "7",
-    href: "/listing-real-estate",
+    href: "#",
     name: "In the billionaire's house",
     taxonomy: "category",
     count: 188288,
@@ -131,31 +130,7 @@ function PageHome2() {
           </div>
         </div>
 
-        <SectionHowItWork
-          data={[
-            {
-              id: 1,
-              img: HIW1img,
-              imgDark: HIW1imgDark,
-              title: "Smart search",
-              desc: "Name the area or type of home you are looking for the search bar. Our app will find you the perfect match.",
-            },
-            {
-              id: 2,
-              img: HIW2img,
-              imgDark: HIW2imgDark,
-              title: "Choose property",
-              desc: "From the number of options our app will provide, you can select any property that you like to explore.",
-            },
-            {
-              id: 3,
-              img: HIW3img,
-              imgDark: HIW3imgDark,
-              title: "Book you property",
-              desc: "Find a home or space from our search bar. Enter your specific location, property type and price range.",
-            },
-          ]}
-        />
+      
 
         <div className="relative py-16">
           <BackgroundSection />
@@ -176,7 +151,6 @@ function PageHome2() {
 
         <div className="relative py-16">
           <BackgroundSection className="bg-neutral-100 dark:bg-black dark:bg-opacity-20 " />
-          <SectionGridAuthorBox boxCard="box2" />
         </div>
 
         <SectionSliderNewCategories
