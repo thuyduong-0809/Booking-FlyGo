@@ -29,7 +29,7 @@ export class AuthController {
    @Get('google')
    @UseGuards(AuthGuard('google'))
    async googleAuth() {
-  // Tự động redirect sang Google login
+   // Tự động redirect sang Google login
     }
 
     @Get('google/callback')

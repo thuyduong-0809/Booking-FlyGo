@@ -40,16 +40,23 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
     setError("");
     
      try {
+
     
-    const res = await requestApi("auth/login", "POST", { email, password });
-     dispatch(loginSuccess({ ...res }));
-     dispatch(updateLocalStorage());
-    // console.log("Login success:", res);
-     alert("Login thành công 🎉");
-     router.push("/"); 
+     const res = await requestApi("auth/login", "POST", { email, password });
+     if(res.success){
+      dispatch(loginSuccess({ ...res }));
+      dispatch(updateLocalStorage());
+      // console.log("Login success:", res);
+      alert("Login thành công 🎉");
+       router.push("/"); 
+     }else {
+         setError("Email hoặc mật khẩu không đúng")
+     }
     
     } catch (err) {
+    setError("Email hoặc mật khẩu không đúng")
     console.error("Login failed:", err);
+    setLoading(false)
     }
    };
 
@@ -115,7 +122,7 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
                 className="mt-1"
               />
             </label>
-
+              
             <ButtonPrimary type="submit" disabled={loading}>
               {loading ? "Đang đăng nhập..." : "Continue"}
             </ButtonPrimary>
