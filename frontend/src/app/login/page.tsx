@@ -40,8 +40,6 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
     setError("");
     
      try {
-
-    
      const res = await requestApi("auth/login", "POST", { email, password });
      if(res.success){
       dispatch(loginSuccess({ ...res }));

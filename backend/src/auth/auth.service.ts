@@ -25,9 +25,6 @@ export class AuthService {
                 try {
                     const { email, password } = registerLocalDto;
                     let user = await this.userRepository.findOne({where:{email:email}})
-
-
-
                  
                     //chưa booking chưa có account 
                     if(!user){

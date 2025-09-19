@@ -29,21 +29,19 @@ export class AuthController {
    @Get('google')
    @UseGuards(AuthGuard('google'))
    async googleAuth() {
-   // Tự động redirect sang Google login
+  // Tự động redirect sang Google login
     }
 
     @Get('google/callback')
     @UseGuards(GoogleOAuthGuard)
-    async googleAuthRedirect(@Req() req) {
+    async googleAuthRedirect(@Req() req, @Res() res) {
+    const tokens = await this.authService.login(req.user); // tạo accessToken + refreshToken
 
-        console.log(req.user)
-        // const token = await this.authService.login(req.user);
-        // return {
-        //     success: true,
-        //     token,
-        //     user: req.user,
-        // };
-}
+    // redirect về FE, kèm token qua query
+    const redirectUrl = `http://localhost:3000/auth/callback?accessToken=${tokens.data.accessToken}&refreshToken=${tokens.data.refreshToken}`;
+    return res.redirect(redirectUrl);
+    }
+
 
    
    // test bảo vệ route bằng JWT
