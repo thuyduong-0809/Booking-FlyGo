@@ -3,6 +3,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginLocalDto } from 'src/auth/dto/login-local.dto';
 import { RegisterLocalDto } from 'src/auth/dto/register-local.dto';
+import { SendOtpDto } from 'src/auth/dto/send-otp.dto';
+import { VerifyOtpDto } from 'src/auth/dto/verify-otp.dto';
 import { GoogleOAuthGuard } from 'src/auth/guards/google.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { LocalAuthGuard } from 'src/auth/guards/local-auth.guard';
@@ -15,7 +17,19 @@ export class AuthController {
     @UsePipes(ValidationPipe)
     async register(@Body() registerLocalDto: RegisterLocalDto) {
         //  console.log('BODY:', registerLocalDto);
-    return this.authService.register(registerLocalDto);
+    return this.authService.registerPending(registerLocalDto);
+    }
+
+    @Post('send-otp')
+    @UsePipes(ValidationPipe)
+    async sendOtp(@Body() sendOtpDto: SendOtpDto) {
+        return this.authService.sendOtp(sendOtpDto);
+    }
+
+    @Post('verify-otp')
+    @UsePipes(ValidationPipe)
+    async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+        return this.authService.verifyOtpAndRegister(verifyOtpDto);
     }
 
    // login dùng local strategy

@@ -12,6 +12,8 @@ import { GoogleStrategy } from 'src/auth/strategies/google.strategy';
 import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 import { LocalStrategy } from 'src/auth/strategies/local.strategy';
 import { User } from 'src/users/entities/users.entity';
+import { EmailModule } from 'src/email/email.module';
+import { OtpModule } from 'src/otp/otp.module';
 
 
 @Module({
@@ -19,6 +21,8 @@ import { User } from 'src/users/entities/users.entity';
   ConfigModule.forRoot(),
   AccountsModule,
   PassportModule,
+  EmailModule,
+  OtpModule,
   JwtModule.register({
       global: true,
       secret: process.env.JWT_ACCESS_SECRET,

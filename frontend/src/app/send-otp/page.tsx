@@ -3,13 +3,29 @@ import React, { useState, useEffect } from "react";
 import Input from "@/shared/Input";
 import ButtonPrimary from "@/shared/ButtonPrimary";
 import { useRouter } from "next/navigation";
+import { requestApi } from "lib/api";
 
 const PageOtp = () => {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [timer, setTimer] = useState(60); // 60 giây
+  const [email, setEmail] = useState("");
+  const [resending, setResending] = useState(false);
   const router = useRouter();
+
+  // Lấy email từ localStorage khi component mount
+  useEffect(() => {
+    const pendingEmail = localStorage.getItem('pendingEmail');
+    if (pendingEmail) {
+      setEmail(pendingEmail);
+      // Gửi OTP ngay khi vào trang
+      sendOtp(pendingEmail);
+    } else {
+      // Nếu không có email, chuyển về trang đăng ký
+      router.replace('/signup');
+    }
+  }, [router]);
 
   // Countdown timer
   useEffect(() => {
@@ -34,6 +50,14 @@ const PageOtp = () => {
     }
   };
 
+  const sendOtp = async (emailAddress: string) => {
+    try {
+      await requestApi("auth/send-otp", "POST", { email: emailAddress });
+    } catch (err: any) {
+      console.error("Lỗi gửi OTP:", err);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join("");
@@ -45,23 +69,39 @@ const PageOtp = () => {
     try {
       setLoading(true);
       setError("");
-      // 👉 Call API verify OTP
-      console.log("OTP submit:", code);
-
-      alert("Xác thực OTP thành công!");
-      router.push("/");
+      const res = await requestApi("auth/verify-otp", "POST", { 
+        email, 
+        otp: code 
+      });
+      
+      if (res.success) {
+        alert("Xác thực OTP thành công! Đăng ký hoàn tất.");
+        router.push("/login");
+      } else {
+        setError("OTP không hợp lệ");
+        setOtp(["", "", "", "", "", ""]); 
+      }
     } catch (err: any) {
-      setError(err.message || "OTP không hợp lệ");
+      setError("OTP không hợp lệ");
+      setOtp(["", "", "", "", "", ""]); 
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendOtp = () => {
-    setOtp(["", "", "", "", "", ""]);
-    setTimer(60);
-    alert("OTP mới đã được gửi!");
-    // 👉 Call API resend OTP ở đây
+  const handleResendOtp = async () => {
+    try {
+      setResending(true);
+      setOtp(["", "", "", "", "", ""]);
+      setError("");
+      await sendOtp(email);
+      setTimer(60);
+      alert("OTP mới đã được gửi!");
+    } catch (err: any) {
+      setError("Không thể gửi lại OTP");
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
@@ -71,6 +111,13 @@ const PageOtp = () => {
           Nhập mã OTP
         </h2>
         <div className="max-w-md mx-auto space-y-6">
+          {email && (
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-600">
+                Mã OTP đã được gửi đến: <span className="font-semibold text-blue-600">{email}</span>
+              </p>
+            </div>
+          )}
           <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit}>
             <div className="flex justify-between gap-2">
               {otp.map((digit, index) => (
@@ -100,9 +147,10 @@ const PageOtp = () => {
             ) : (
               <button
                 onClick={handleResendOtp}
-                className="text-sm font-semibold text-primary-600 underline"
+                disabled={resending}
+                className="text-sm font-semibold text-primary-600 underline disabled:opacity-50"
               >
-                Gửi lại OTP
+                {resending ? "Đang gửi..." : "Gửi lại OTP"}
               </button>
             )}
           </div>
