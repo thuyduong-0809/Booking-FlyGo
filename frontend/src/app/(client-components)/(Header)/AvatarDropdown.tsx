@@ -3,11 +3,20 @@ import { Fragment } from "react";
 import Avatar from "@/shared/Avatar";
 import SwitchDarkMode2 from "@/shared/SwitchDarkMode2";
 import Link from "next/link";
+import { useAppDispatch } from "stores/hookStore";
+import { logout } from "stores/features/masterSlice";
 interface Props {
   className?: string;
 }
 
 export default function AvatarDropdown({ className = "" }: Props) {
+   const dispatch = useAppDispatch();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    // Nếu muốn redirect về trang login:
+    window.location.href = "/login"; 
+   };
   return (
     <>
       <Popover className={`AvatarDropdown relative flex ${className}`}>
@@ -78,7 +87,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
 
                     {/* ------------------ 2 --------------------- */}
                     <Link
-                      href={"/author"}
+                      href={"#"}
                       className="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
                       onClick={() => close()}
                     >
@@ -299,7 +308,10 @@ export default function AvatarDropdown({ className = "" }: Props) {
                         </svg>
                       </div>
                       <div className="ml-4">
-                        <p className="text-sm font-medium ">{"Log out"}</p>
+                        <p onClick={() => {
+                      handleLogout();
+                      close(); // đóng popover
+                    }} className="text-sm font-medium ">{"Log out"}</p>
                       </div>
                     </Link>
                   </div>

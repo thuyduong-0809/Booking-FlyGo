@@ -3,7 +3,8 @@ import React, { FC, useState } from "react";
 import Input from "@/shared/Input";
 import ButtonPrimary from "@/shared/ButtonPrimary";
 import Link from "next/link";
-import { signupApi } from "lib/api";
+import { requestApi } from "lib/api";
+import { useRouter } from "next/navigation";
 
 
 export interface PageSignUpProps {}
@@ -14,6 +15,9 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
+  
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +29,12 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
     try {
       setLoading(true);
       setError("");
-      const res = await signupApi(email, password);
+      const res = await  requestApi("auth/register", "POST", { email, password });
       alert("Đăng ký thành công!");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      router.push("/login");
       console.log("Signup result:", res);
     } catch (err: any) {
       setError(err.message);
