@@ -14,6 +14,7 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successRegister, setSuccessRegister] = React.useState('');
   const [error, setError] = useState("");
   const router = useRouter();
   
@@ -30,12 +31,23 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
       setLoading(true);
       setError("");
       const res = await  requestApi("auth/register", "POST", { email, password });
-      alert("Đăng ký thành công!");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-      router.push("/login");
-      console.log("Signup result:", res);
+      if(res.success){
+        // alert("Đăng ký thành công!");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        //  setTimeout(() => {
+        //     router.replace('/send-otp');
+        //   }, 1000);
+        console.log("Signup result:", res);
+      }else if (res.errorCode === 'USER_EXISTS') {
+          setSuccessRegister('');
+          setError("Email đã dược đăng ký"); // Show error message for existing user
+        } else {
+          setError(res.message); // Show other error messages if available
+          setSuccessRegister('');
+        }
+      
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -80,6 +92,7 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
               />
             </label>
             {error && <p className="text-red-500">{error}</p>}
+            {/* {successRegister && <p className="text-black-600 text-center">{successRegister}</p>} */}
             <ButtonPrimary type="submit" disabled={loading}>
               {loading ? "Đang xử lý..." : "Tiếp tục"}
             </ButtonPrimary>

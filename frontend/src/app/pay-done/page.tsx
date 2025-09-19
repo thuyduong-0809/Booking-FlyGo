@@ -1,4 +1,4 @@
-import StartRating from "@/components/StartRating";
+
 import React, { FC } from "react";
 import ButtonPrimary from "@/shared/ButtonPrimary";
 import Image from "next/image";
@@ -42,7 +42,7 @@ const PayPage: FC<PayPageProps> = () => {
                 2 beds · 2 baths
               </span>
               <div className="w-10 border-b border-neutral-200  dark:border-neutral-700"></div>
-              <StartRating />
+              {/* <StartRating /> */}
             </div>
           </div>
           <div className="mt-6 border border-neutral-200 dark:border-neutral-700 rounded-3xl flex flex-col sm:flex-row divide-y sm:divide-x sm:divide-y-0 divide-neutral-200 dark:divide-neutral-700">

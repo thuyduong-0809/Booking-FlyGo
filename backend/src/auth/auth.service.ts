@@ -25,6 +25,9 @@ export class AuthService {
                 try {
                     const { email, password } = registerLocalDto;
                     let user = await this.userRepository.findOne({where:{email:email}})
+
+
+
                  
                     //chưa booking chưa có account 
                     if(!user){
@@ -59,7 +62,13 @@ export class AuthService {
                     user,
                     });
     
-    
+                    const existingAccount = await this.accountRepository.findOne({ where: { email: email } });
+                      if (existingAccount) {
+                      response.success = false;
+                      response.message = 'You are already registered. Please log in.';
+                      response.errorCode = 'Account_EXISTS';
+                      return response;
+                    }
                     await this.accountRepository.save(account);
                     response.success = true;
                     response.message = 'Tạo account thành công';
@@ -87,6 +96,14 @@ export class AuthService {
             //     throw new UnauthorizedException('User not found');
             let response = { ...common_response };
             //  }
+
+            let account_invalid = await this.accountRepository.findOne({where:{email:account.email}})
+            if(!account_invalid){
+                  response.success = false;
+                  response.errorCode = 'Account_INVALID';
+                  return response;
+
+            }
             const payload = { id: account.id, email: account.email, role: account.user.role };
 
             const accessToken = await this.jwtService.signAsync(payload, {
