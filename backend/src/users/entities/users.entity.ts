@@ -1,69 +1,72 @@
-// import { Account } from 'src/accounts/entities/account.entity';
-import { Account } from 'src/accounts/entities/accounts.entity';
+import { Controller } from '@nestjs/common';
+import { UserRole } from 'src/user-roles/entities/user-roles.entity';
+
+@Controller('users')
+export class UsersController {}
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
 
-@Entity('users')
+@Entity('Users')
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  UserID: number;
 
-  @Column({ name: 'full_name', type: 'varchar', length: 255 ,nullable: true })
-  full_name: string;
+  @Column({ type: 'varchar', length: 100, unique: true })
+  Email: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true ,nullable:false })
-  email: string;
+  @Column({ type: 'varchar', length: 255 })
+  PasswordHash: string;
 
-  @Column({ type: 'varchar', length: 25, nullable: true })
-  phone: string;
+  @Column({ type: 'varchar', length: 50 })
+  FirstName: string;
 
-  @Column({ type: 'varchar', length: 12, nullable: true})
-  cccd: string;
+  @Column({ type: 'varchar', length: 50 })
+  LastName: string;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  Phone: string;
+
+  @Column({ type: 'date', nullable: true })
+  DateOfBirth: Date;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  PassportNumber: string;
+
+  @Column({ type: 'date', nullable: true })
+  PassportExpiry: Date;
+
+  @Column()
+  RoleID: number;
+
+  @Column({ type: 'int', default: 0 })
+  LoyaltyPoints: number;
 
   @Column({
     type: 'enum',
-    enum: ['male', 'female'],
-    nullable: true,
+    enum: ['Standard', 'Silver', 'Gold', 'Platinum'],
+    default: 'Standard',
   })
-  sex: 'male' | 'female';
+  LoyaltyTier: 'Standard' | 'Silver' | 'Gold' | 'Platinum';
 
-  @Column({ type: 'varchar', length: 255, nullable: true})
-  country: string;
+  @Column({ type: 'boolean', default: true })
+  IsActive: boolean;
 
-  @Column({
-    type: 'enum',
-    enum: ['guest', 'customer', 'admin'],
-    default: 'guest',
-  })
-  role: 'guest' | 'customer' | 'admin';
+  @CreateDateColumn({ type: 'datetime' })
+  CreatedAt: Date;
 
-  @Column({
-    name: 'status_verify',
-    type: 'enum',
-    enum: ['active', 'inactive'],
-    default: 'inactive',
-  })
-  status_verify: 'active' | 'inactive';
+  @UpdateDateColumn({ type: 'datetime', nullable: true })
+  LastLogin: Date;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  avatar: string;
-
-  @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
-
-  @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
-
-  // Quan hệ 1-1 với Account
-  @OneToOne(() => Account, (account) => account.user)
-  account: Account;
+  // Quan hệ n-1: nhiều User thuộc về 1 Role
+  @ManyToOne(() => UserRole, (role) => role.users, { eager: true })
+  @JoinColumn({ name: 'RoleID' })
+  role: UserRole;
 }
-
-
