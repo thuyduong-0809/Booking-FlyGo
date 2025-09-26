@@ -10,6 +10,8 @@ import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 // import { LocalStrategy } from 'src/auth/strategies/local.strategy';
 import { UserRole } from 'src/user-roles/entities/user-roles.entity';
 import { User } from 'src/users/entities/users.entity';
+import { EmailModule } from 'src/email/email.module';
+import { OtpModule } from 'src/otp/otp.module';
 
 
 
@@ -17,6 +19,8 @@ import { User } from 'src/users/entities/users.entity';
   imports:[TypeOrmModule.forFeature([User,UserRole]),
   ConfigModule.forRoot(),
   PassportModule,
+  EmailModule,
+  OtpModule,
   JwtModule.register({
       global: true,
       secret: process.env.JWT_ACCESS_SECRET,

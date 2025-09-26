@@ -32,19 +32,17 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
       setError("");
       const res = await  requestApi("auth/register", "POST", { email, password });
       if(res.success){
-        // alert("Đăng ký thành công!");
+        localStorage.setItem('pendingEmail', email);
         setEmail("");
         setPassword("");
-        setConfirmPassword("");
-        //  setTimeout(() => {
-        //     router.replace('/send-otp');
-        //   }, 1000);
+        setConfirmPassword("");        
+        router.replace('/send-otp');
         console.log("Signup result:", res);
       }else if (res.errorCode === 'USER_EXISTS') {
           setSuccessRegister('');
-          setError("Email đã dược đăng ký"); // Show error message for existing user
+          setError("Email đã dược đăng ký"); 
         } else {
-          setError(res.message); // Show other error messages if available
+          setError(res.message); 
           setSuccessRegister('');
         }
       

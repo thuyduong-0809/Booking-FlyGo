@@ -31,8 +31,16 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
   const router = useRouter();
 
   useEffect(() => {
-  console.log("Master store thay đổi:", masterStore);
-}, [masterStore]);
+    console.log("Master store thay đổi:", masterStore);
+  }, [masterStore]);
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('pendingEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      localStorage.removeItem('pendingEmail');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
