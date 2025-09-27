@@ -15,7 +15,7 @@ import { UsersService } from './users/users.service';
 
 @Module({
   imports: [ TypeOrmModule.forRoot(dataSourceOptions), UsersModule,ConfigModule.forRoot(), AuthModule, UserRolesModule],
-  controllers: [AppController, UserRolesController, UsersController],
-  providers: [AppService, UserRolesService, UsersService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -12,16 +12,16 @@ import {
 @Entity('UserRoles')
 export class UserRole {
   @PrimaryGeneratedColumn()
-  RoleID: number;
+  roleId: number;
 
   @Column({ type: 'varchar', length: 50, unique: true })
-  RoleName: string;
+  roleName: string;
 
   @Column({ type: 'text', nullable: true })
-  Description: string;
+  description: string;
 
   @CreateDateColumn({ type: 'datetime' })
-  CreatedAt: Date;
+  createdAt: Date;
 
   // Quan hệ 1-n: Một Role có nhiều User
   @OneToMany(() => User, (user) => user.role)

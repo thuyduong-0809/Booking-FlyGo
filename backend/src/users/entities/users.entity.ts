@@ -17,56 +17,56 @@ import {
 @Entity('Users')
 export class User {
   @PrimaryGeneratedColumn()
-  UserID: number;
+  userId: number;
 
   @Column({ type: 'varchar', length: 100, unique: true })
-  Email: string;
+  email: string;
 
   @Column({ type: 'varchar', length: 255 })
-  PasswordHash: string;
+  passwordHash: string;
 
   @Column({ type: 'varchar', length: 50 })
-  FirstName: string;
+  firstName: string;
 
   @Column({ type: 'varchar', length: 50 })
-  LastName: string;
+  lastName: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  Phone: string;
+  phone: string;
 
   @Column({ type: 'date', nullable: true })
-  DateOfBirth: Date;
+  dateOfBirth: Date;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  PassportNumber: string;
+  passportNumber: string;
 
   @Column({ type: 'date', nullable: true })
-  PassportExpiry: Date;
+  passportExpiry: Date;
 
-  @Column()
-  RoleID: number;
+  @Column({type: 'int', default: 1})
+  roleId: number;
 
   @Column({ type: 'int', default: 0 })
-  LoyaltyPoints: number;
+  loyaltyPoints: number;
 
   @Column({
     type: 'enum',
     enum: ['Standard', 'Silver', 'Gold', 'Platinum'],
     default: 'Standard',
   })
-  LoyaltyTier: 'Standard' | 'Silver' | 'Gold' | 'Platinum';
+  loyaltyTier: 'Standard' | 'Silver' | 'Gold' | 'Platinum';
 
   @Column({ type: 'boolean', default: true })
-  IsActive: boolean;
+  isActive: boolean;
 
   @CreateDateColumn({ type: 'datetime' })
-  CreatedAt: Date;
+  createdAt: Date;
 
   @UpdateDateColumn({ type: 'datetime', nullable: true })
-  LastLogin: Date;
+  lastLogin: Date;
 
   // Quan hệ n-1: nhiều User thuộc về 1 Role
   @ManyToOne(() => UserRole, (role) => role.users, { eager: true })
-  @JoinColumn({ name: 'RoleID' })
+  @JoinColumn({ name: 'roleId' })
   role: UserRole;
 }

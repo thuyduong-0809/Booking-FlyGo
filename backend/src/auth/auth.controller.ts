@@ -13,19 +13,32 @@ import { LocalAuthGuard } from 'src/auth/guards/local-auth.guard';
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
-    // @Post('register')
-    // @UsePipes(ValidationPipe)
-    // async register(@Body() registerLocalDto: RegisterLocalDto) {
-    // return this.authService.register(registerLocalDto);
-    // }
+    @Post('register')
+    @UsePipes(ValidationPipe)
+        async register(@Body() registerLocalDto: RegisterLocalDto) {
+            //  console.log('BODY:', registerLocalDto);
+        return this.authService.registerPending(registerLocalDto);
+    }
+
+    @Post('send-otp')
+    @UsePipes(ValidationPipe)
+    async sendOtp(@Body() sendOtpDto: SendOtpDto) {
+        return this.authService.sendOtp(sendOtpDto);
+    }
+
+    @Post('verify-otp')
+    @UsePipes(ValidationPipe)
+    async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+        return this.authService.verifyOtpAndRegister(verifyOtpDto);
+    }
 
    // login dùng local strategy
-//    @UseGuards(LocalAuthGuard)
-//    @Post('login')
-//    async login(@Req() req) {
-
-//     return this.authService.login(req.user);
-//    }
+    @UseGuards(LocalAuthGuard)
+    @Post('login')
+    async login(@Req() req) {
+        console.log('req:',req.user)
+        return this.authService.login(req.user);
+    }
 
 //    @Get('google')
 //    @UseGuards(AuthGuard('google'))

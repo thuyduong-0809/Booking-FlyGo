@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { RegisterLocalDto } from 'src/auth/dto/register-local.dto';
 import { common_response } from 'src/untils/common';
@@ -26,121 +26,107 @@ export class AuthService {
     private otpService: OtpService,
   ) {}
 
-    //  async register(registerLocalDto:RegisterLocalDto): Promise<Account> {
-    //             let response = { ...common_response };
-    //             try {
-    //                 const { email, password } = registerLocalDto;
-    //                 let user = await this.userRepository.findOne({where:{email:email}})
-                 
-    //                 //chưa booking chưa có account 
-    //                 if(!user){
-    //                     user = this.userRepository.create({
-    //                     email,
-    //                     role: 'customer',   // mặc định customer khi đăng ký
-    //                     });
-    //                     user = await this.userRepository.save(user);
-    //                 }
-    //                 //đã booking
-    //                 else{
-    //                     //đã có account
-    //                     if(user.role == 'customer' || user.role == 'admin'){
-    //                         response.success = false;
-    //                         response.message = 'Email đã được đăng ký';
-    //                         response.statusCode = 400;
-    //                         return response;
-    //                     }
-    //                     //chưa có account(đã booking)
-    //                     else{
-    //                          user.role = 'customer';
-    //                          await this.userRepository.save(user);
-    //                     }
-    //                 }
-    
-    //                  // Tạo account gắn user
-    //                 const hash_password = await this.hashPassword(password)
-    //                 const account = this.accountRepository.create({
-    //                 email,
-    //                 password:hash_password, 
-    //                 provider: 'local',
-    //                 user,
-    //                 });
-    
-    //                 const existingAccount = await this.accountRepository.findOne({ where: { email: email } });
-    //                   if (existingAccount) {
-    //                   response.success = false;
-    //                   response.message = 'You are already registered. Please log in.';
-    //                   response.errorCode = 'Account_EXISTS';
-    //                   return response;
-    //                 }
-    //                 await this.accountRepository.save(account);
-    //                 response.success = true;
-    //                 response.message = 'Tạo account thành công';
-    //                 response.data = account;
-    //                 response.statusCode = 201;
-               
-    //             } catch (error) {
-    //                 console.error(error);
-    //                 response.success = false;
-    //                 response.message = error.message || "An unexpected error occurred.";
-    //                 response.statusCode = 500;
-    //             }
-    //             return response;
-          
-              
-         
-    //        }
+  async register(registerLocalDto: RegisterLocalDto): Promise<any> {
+    let response = { ...common_response };
+
+    try {
+      // hash password
+      const password = await this.hashPassword(registerLocalDto.passwordHash)
+
+      // tạo user
+      const newUser = this.userRepository.create({
+        email: registerLocalDto.email,
+        passwordHash: password,
+        roleId: 1, // default Passenger
+      });
+
+      const savedUser = await this.userRepository.save(newUser);
+
+      response.success = true;
+      response.data = {
+        userId: savedUser.userId,
+        email: savedUser.email,
+        roleId: savedUser.roleId,
+      };
+      return response;
+    } catch (error) {
+      console.error('Register error:', error);
+
+      if (error instanceof QueryFailedError && error.driverError.code === 'ER_DUP_ENTRY') {
+        response.success = false;
+        response.message = `User with email ${registerLocalDto.email} already exists.`;
+        response.statusCode = 400;
+        return response;
+      }
+
+      response.success = false;
+      response.message = 'An unexpected error occurred during registration.';
+      response.statusCode = 500;
+      return response;
+    }
+  
+}
+
+ async validateUserLocal(email: string, password: string): Promise<any> {
+        const user = await this.userRepository.findOne({
+            where: { email },
+            relations: ['role'],
+        });
 
 
+        if (!user) {
+          return null; // không tìm thấy user
+        }
 
-      //  async login(account: Account) {
-           
+        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        if (!isMatch) {
+          return null; // sai mật khẩu
+        }
 
-      //       let response = { ...common_response };
+        // Bỏ PasswordHash trước khi return
+        const { passwordHash, ...result } = user;
+        return result;
+      }
+
+      async login(user: User) {
+      let response = { ...common_response };
+
+        try {
+          // user được lấy từ LocalStrategy -> req.user
+          const payload = { 
+            userId: user.userId, 
+            email: user.email, 
+            role: user.role.roleName
+          };
+
+            const accessToken = await this.jwtService.signAsync(payload, {
+                    secret: process.env.JWT_ACCESS_SECRET,
+                    expiresIn: process.env.JWT_ACCESS_EXPIRE,
+                  });
+
+            const refreshToken = await this.jwtService.signAsync(payload, {
+                    secret: process.env.JWT_REFRESH_SECRET,
+                    expiresIn: process.env.JWT_REFRESH_EXPIRE,
+            });
+
+          response.success = true;
+          response.message = 'Login success';
+          response.data = {
+            accessToken,
+            refreshToken,
+            user: payload,
+          };
+
+          return response;
+        } catch (error) {
+          response.success = false;
+          response.message = error.message || 'Login failed';
+          response.statusCode = 500;
+          return response;
+        }
+      }
 
 
-      //       let account_invalid = await this.accountRepository.findOne({where:{email:account.email}})
-      //       if(!account_invalid){
-      //             response.success = false;
-      //             response.errorCode = 'Account_INVALID';
-      //             return response;
-
-      //       }
-      //       const payload = { id: account.id, email: account.email, role: account.user.role };
-
-      //       const accessToken = await this.jwtService.signAsync(payload, {
-      //         secret: process.env.JWT_ACCESS_SECRET,
-      //         expiresIn: process.env.JWT_ACCESS_EXPIRE,
-      //       });
-
-      //       const refreshToken = await this.jwtService.signAsync(payload, {
-      //         secret: process.env.JWT_REFRESH_SECRET,
-      //         expiresIn: process.env.JWT_REFRESH_EXPIRE,
-      //       });
-      //       response.success = true;
-      //       response.message = 'Login success';
-      //       response.data={
-      //           accessToken,
-      //           refreshToken,
-      //           payload
-      //       }
-      //       return response;
-             
-      //  }     
-
-     // dùng cho LocalStrategy
-      // async validateAccountLocal(email: string, password: string): Promise<any> {
-        
-      //  const account = await this.accountRepository.findOne({
-      //       where: { email },
-      //       relations: ['user'],
-      //   });
-
-      //   if (account && (await bcrypt.compare(password, account.password))) {
-      //     const { password, ...result } = account;
-      //     return result;
-      //   }
-      //    return null;
-      // }
 
 
        // dùng cho GoogleStrategy
@@ -182,8 +168,8 @@ export class AuthService {
         return hash;
       }
 
-      // Lưu thông tin đăng ký tạm thời (chưa tạo account)
-      private pendingRegistrations = new Map<string, { email: string; password: string }>();
+         // Lưu thông tin đăng ký tạm thời (chưa tạo account)
+      private pendingRegistrations = new Map<string, { email: string; passwordHash: string }>();
 
       async sendOtp(sendOtpDto: SendOtpDto) {
         let response = { ...common_response };
@@ -192,9 +178,9 @@ export class AuthService {
           
           // Kiểm tra xem email đã được đăng ký chưa
           const existingUser = await this.userRepository.findOne({ where: { email } });
-          const existingAccount = await this.accountRepository.findOne({ where: { email } });
+          // const existingAccount = await this.accountRepository.findOne({ where: { email } });
           
-          if (existingUser && existingAccount && existingUser.role !== 'guest') {
+          if (existingUser) {
             response.success = false;
             response.message = 'Email đã được đăng ký';
             response.errorCode = 'USER_EXISTS';
@@ -249,39 +235,33 @@ export class AuthService {
             return response;
           }
 
-          const { password } = pendingData;
+          const {passwordHash } = pendingData;
 
           // Tạo user và account
+         
           let user = await this.userRepository.findOne({ where: { email } });
           
+          
           if (!user) {
+            const hash_password = await this.hashPassword(passwordHash);
             user = this.userRepository.create({
               email,
-              role: 'customer',
+              passwordHash: hash_password,
+
             });
             user = await this.userRepository.save(user);
           } else {
-            user.role = 'customer';
             await this.userRepository.save(user);
           }
 
-          // Tạo account
-          const hash_password = await this.hashPassword(password);
-          const account = this.accountRepository.create({
-            email,
-            password: hash_password,
-            provider: 'local',
-            user,
-          });
 
-          await this.accountRepository.save(account);
 
           // Xóa thông tin tạm thời
           this.pendingRegistrations.delete(email);
 
           response.success = true;
           response.message = 'Đăng ký thành công';
-          response.data = account;
+          response.data = user;
           response.statusCode = 201;
 
         } catch (error) {
@@ -297,13 +277,12 @@ export class AuthService {
       async registerPending(registerLocalDto: RegisterLocalDto) {
         let response = { ...common_response };
         try {
-          const { email, password } = registerLocalDto;
+          const { email, passwordHash } = registerLocalDto;
           
           // Kiểm tra xem email đã được đăng ký chưa
           const existingUser = await this.userRepository.findOne({ where: { email } });
-          const existingAccount = await this.accountRepository.findOne({ where: { email } });
           
-          if (existingUser && existingAccount && existingUser.role !== 'guest') {
+          if (existingUser) {
             response.success = false;
             response.message = 'Email đã được đăng ký';
             response.errorCode = 'USER_EXISTS';
@@ -311,7 +290,7 @@ export class AuthService {
           }
 
           // Lưu thông tin đăng ký tạm thời
-          this.pendingRegistrations.set(email, { email, password });
+          this.pendingRegistrations.set(email, { email, passwordHash});
 
           response.success = true;
           response.message = 'Thông tin đăng ký đã được lưu. Vui lòng xác thực OTP.';
@@ -325,4 +304,6 @@ export class AuthService {
         }
         return response;
       }
+
+ 
 }
