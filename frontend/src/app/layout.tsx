@@ -28,7 +28,8 @@ export default function RootLayout({
         <StoreProvider>
             <ClientCommons />
             <SiteHeader />
-            {children}
+             {children}
+            
             <FooterNav />
             <Footer />
 

@@ -15,9 +15,9 @@ export class AuthController {
 
     @Post('register')
     @UsePipes(ValidationPipe)
-    async register(@Body() registerLocalDto: RegisterLocalDto) {
-        //  console.log('BODY:', registerLocalDto);
-    return this.authService.registerPending(registerLocalDto);
+        async register(@Body() registerLocalDto: RegisterLocalDto) {
+            //  console.log('BODY:', registerLocalDto);
+        return this.authService.registerPending(registerLocalDto);
     }
 
     @Post('send-otp')
@@ -33,38 +33,38 @@ export class AuthController {
     }
 
    // login dùng local strategy
-   @UseGuards(LocalAuthGuard)
-   @Post('login')
-   async login(@Req() req) {
-    // console.log(req.user)
-    return this.authService.login(req.user);
-   }
-
-   @Get('google')
-   @UseGuards(AuthGuard('google'))
-   async googleAuth() {
-  // Tự động redirect sang Google login
+    @UseGuards(LocalAuthGuard)
+    @Post('login')
+    async login(@Req() req) {
+        // console.log('req:',req.user)
+        return this.authService.login(req.user);
     }
 
-    @Get('google/callback')
-    @UseGuards(GoogleOAuthGuard)
-    async googleAuthRedirect(@Req() req, @Res() res) {
-    const tokens = await this.authService.login(req.user); // tạo accessToken + refreshToken
+//    @Get('google')
+//    @UseGuards(AuthGuard('google'))
+//    async googleAuth() {
 
-    // redirect về FE, kèm token qua query
-    const redirectUrl = `http://localhost:3000/auth/callback?accessToken=${tokens.data.accessToken}&refreshToken=${tokens.data.refreshToken}`;
-    return res.redirect(redirectUrl);
-    }
+//     }
+
+    // @Get('google/callback')
+    // @UseGuards(GoogleOAuthGuard)
+    // async googleAuthRedirect(@Req() req, @Res() res) {
+    // const tokens = await this.authService.login(req.user);
+
+  
+    // const redirectUrl = `http://localhost:3000/auth/callback?accessToken=${tokens.data.accessToken}&refreshToken=${tokens.data.refreshToken}`;
+    // return res.redirect(redirectUrl);
+    // }
 
 
    
    // test bảo vệ route bằng JWT
-   @UseGuards(JwtAuthGuard)
-   @Get('profile')
-    getProfile(@Req() req) {
-        // console.log(req.user)
-        return req.user;
-    }
+//    @UseGuards(JwtAuthGuard)
+//    @Get('profile')
+//     getProfile(@Req() req) {
+    
+//         return req.user;
+//     }
         
     
 

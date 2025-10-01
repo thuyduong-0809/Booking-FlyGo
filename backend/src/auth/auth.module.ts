@@ -3,23 +3,22 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AccountsModule } from 'src/accounts/accounts.module';
-import { AccountsService } from 'src/accounts/accounts.service';
-import { Account } from 'src/accounts/entities/accounts.entity';
 import { AuthController } from 'src/auth/auth.controller';
 import { AuthService } from 'src/auth/auth.service';
-import { GoogleStrategy } from 'src/auth/strategies/google.strategy';
+// import { GoogleStrategy } from 'src/auth/strategies/google.strategy';
 import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
-import { LocalStrategy } from 'src/auth/strategies/local.strategy';
+// import { LocalStrategy } from 'src/auth/strategies/local.strategy';
+import { UserRole } from 'src/user-roles/entities/user-roles.entity';
 import { User } from 'src/users/entities/users.entity';
 import { EmailModule } from 'src/email/email.module';
 import { OtpModule } from 'src/otp/otp.module';
+import { LocalStrategy } from 'src/auth/strategies/local.strategy';
+
 
 
 @Module({
-  imports:[TypeOrmModule.forFeature([Account,User]),
+  imports:[TypeOrmModule.forFeature([User,UserRole]),
   ConfigModule.forRoot(),
-  AccountsModule,
   PassportModule,
   EmailModule,
   OtpModule,
@@ -30,7 +29,7 @@ import { OtpModule } from 'src/otp/otp.module';
     }),
 ],
   controllers: [AuthController],
-  providers: [AuthService,LocalStrategy,JwtStrategy,GoogleStrategy],
+  providers: [AuthService,JwtStrategy,LocalStrategy],//them GoogleStrategy,,LocalStrategy
 })
 export class AuthModule {}
 

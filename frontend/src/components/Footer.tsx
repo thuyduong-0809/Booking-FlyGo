@@ -14,47 +14,47 @@ export interface WidgetFooterMenu {
 
 const widgetMenus: WidgetFooterMenu[] = [
   {
-    id: "5",
-    title: "Getting started",
-    menus: [
-      { href: "#", label: "Installation" },
-      { href: "#", label: "Release Notes" },
-      { href: "#", label: "Upgrade Guide" },
-      { href: "#", label: "Browser Support" },
-      { href: "#", label: "Editor Support" },
-    ],
-  },
-  {
     id: "1",
-    title: "Explore",
+    title: "Về chúng tôi",
     menus: [
-      { href: "#", label: "Design features" },
-      { href: "#", label: "Prototyping" },
-      { href: "#", label: "Design systems" },
-      { href: "#", label: "Pricing" },
-      { href: "#", label: "Security" },
+      { href: "/gioi-thieu", label: "Giới thiệu" },
+      { href: "/lien-he", label: "Liên hệ" },
+      { href: "/tuyen-dung", label: "Tuyển dụng" },
+      { href: "/blog", label: "Blog" },
+      { href: "/doi-tac", label: "Đối tác" },
     ],
   },
   {
     id: "2",
-    title: "Resources",
+    title: "Hỗ trợ khách hàng",
     menus: [
-      { href: "#", label: "Best practices" },
-      { href: "#", label: "Support" },
-      { href: "#", label: "Developers" },
-      { href: "#", label: "Learn design" },
-      { href: "#", label: "Releases" },
+      { href: "/faq", label: "Câu hỏi thường gặp" },
+      { href: "/huong-dan-dat-ve", label: "Hướng dẫn đặt vé" },
+      { href: "/chinh-sach-hoan-ve", label: "Chính sách hoàn vé" },
+      { href: "/ho-tro", label: "Liên hệ hỗ trợ" },
+      { href: "/khuyen-mai", label: "Khuyến mãi" },
+    ],
+  },
+  {
+    id: "3",
+    title: "Dịch vụ",
+    menus: [
+      { href: "/ve-noi-dia", label: "Vé máy bay nội địa" },
+      { href: "/ve-quoc-te", label: "Vé máy bay quốc tế" },
+      { href: "/khach-san", label: "Đặt phòng khách sạn" },
+      { href: "/tour", label: "Tour du lịch" },
+      { href: "/dua-don-san-bay", label: "Đưa đón sân bay" },
     ],
   },
   {
     id: "4",
-    title: "Community",
+    title: "Thông tin hữu ích",
     menus: [
-      { href: "#", label: "Discussion Forums" },
-      { href: "#", label: "Code of Conduct" },
-      { href: "#", label: "Community Resources" },
-      { href: "#", label: "Contributing" },
-      { href: "#", label: "Concurrent Mode" },
+      { href: "/dieu-khoan", label: "Điều khoản & Điều kiện" },
+      { href: "/bao-mat", label: "Chính sách bảo mật" },
+      { href: "/thanh-toan", label: "Hướng dẫn thanh toán" },
+      { href: "/kinh-nghiem-du-lich", label: "Kinh nghiệm du lịch" },
+      { href: "/lien-he-khan", label: "Liên hệ khẩn cấp" },
     ],
   },
 ];
@@ -70,8 +70,7 @@ const Footer: React.FC = () => {
           {menu.menus.map((item, index) => (
             <li key={index}>
               <a
-                key={index}
-                className="text-neutral-6000 dark:text-neutral-300 hover:text-black dark:hover:text-white"
+                className="text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white"
                 href={item.href}
               >
                 {item.label}
@@ -86,10 +85,10 @@ const Footer: React.FC = () => {
   return (
     <>
       <FooterNav />
-
       <div className="nc-Footer relative py-24 lg:py-28 border-t border-neutral-200 dark:border-neutral-700">
         <div className="container grid grid-cols-2 gap-y-10 gap-x-5 sm:gap-x-8 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-10 ">
-          <div className="grid grid-cols-4 gap-5 col-span-2 md:col-span-4 lg:md:col-span-1 lg:flex lg:flex-col">
+          {/* Logo + Social */}
+          <div className="grid grid-cols-4 gap-5 col-span-2 md:col-span-4 lg:col-span-1 lg:flex lg:flex-col">
             <div className="col-span-2 md:col-span-1">
               <Logo />
             </div>
@@ -97,6 +96,7 @@ const Footer: React.FC = () => {
               <SocialsList1 className="flex items-center space-x-3 lg:space-x-0 lg:flex-col lg:space-y-2.5 lg:items-start" />
             </div>
           </div>
+          {/* Menu */}
           {widgetMenus.map(renderWidgetMenuItem)}
         </div>
       </div>

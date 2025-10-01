@@ -10,26 +10,24 @@ import {
   IsInt,
 } from 'class-validator';
 
-export class UpdateUserDto {
-  @IsOptional()
+export class CreateUserDto {
   @IsEmail()
-  email?: string;
+  email: string;
 
-  @IsOptional()
   @IsString()
-  @MinLength(6)
+  @MinLength(6,{
+     message:'mật khẩu phải trên 6 ký tự'
+  })
   @MaxLength(255)
-  passwordHash?: string;
+  passwordHash: string;
 
-  @IsOptional()
   @IsString()
   @MaxLength(50)
-  firstName?: string;
+  firstName: string;
 
-  @IsOptional()
   @IsString()
   @MaxLength(50)
-  lastName?: string;
+  lastName: string;
 
   @IsOptional()
   @IsString()
@@ -49,9 +47,8 @@ export class UpdateUserDto {
   @IsDateString()
   passportExpiry?: Date;
 
-  @IsOptional()
   @IsInt()
-  roleId?: number;
+  roleId: number;
 
   @IsOptional()
   @IsInt()
@@ -65,4 +62,3 @@ export class UpdateUserDto {
   @IsBoolean()
   isActive?: boolean;
 }
-

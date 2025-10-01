@@ -1,126 +1,157 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { common_response } from 'src/untils/common';
-import { CreateUserDto } from 'src/users/dto/create_user.dto';
-import { UpdateUserDto } from 'src/users/dto/update-user.dto';
+import { UserRole } from 'src/user-roles/entities/user-roles.entity';
 import { User } from 'src/users/entities/users.entity';
-import { Repository, UpdateResult } from 'typeorm';
-import { DeleteResult } from 'typeorm/browser';
+import { DeleteResult, QueryFailedError, Repository, UpdateResult } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-     constructor(@InjectRepository(User) private userRepository:Repository<User>){}
+    constructor(
+          @InjectRepository(User) private userRepository: Repository<User>,
+           @InjectRepository(UserRole) private userRoleRepository: Repository<UserRole>,
+    ){}
 
-     async findAll():Promise<User[]>{
-        let response = common_response;
+
+     async findAll(): Promise<any> {
+           let response = {...common_response};
         try {
-            let users = await this.userRepository.find({
-               select:['id','full_name','email','phone','cccd','sex','country','role','status_verify','avatar','created_at','updated_at']
-            })
-            if(users){
-               response.success = true;
-               response.data = users;
-               return response;
-            }else{
-                response.success = false;
-               
-            }
-            return response;
-      
-        } catch (error) {
+            const users = await this.userRepository.find({
+            select: [
+                'userId', 'email', 'firstName', 'lastName', 'phone', 
+                'dateOfBirth', 'passportNumber', 'passportExpiry', 
+                'loyaltyPoints', 'loyaltyTier', 'isActive', 
+                'createdAt', 'lastLogin'
+            ],
+            relations: ['role'], // load role của user
+            });
 
+            response.success = true;
+            response.data = users;
+        } catch (error) {
+            console.error(error);
             response.success = false;
-            response.message = "An unexpected error occurred."
-            response.statusCode=500
+            response.message = 'Error fetching users';
         }
         return response;
-    }
+        }
 
-    async create(createUserDto: CreateUserDto): Promise<User> {
-          let response = common_response;
-         try {
-             const user = await this.userRepository.save({...createUserDto});
-             if(user){
-                response.success = true;
-                response.data = user;
-                return response;
-             }else{
+   
+    async create(createUserDto:CreateUserDto):Promise<User>{
+       let response = {...common_response};
+       try {
+          const hashPassword = await this.hashPassword(createUserDto.passwordHash);
+          const user = await this.userRepository.save({
+            ...createUserDto,
+            passwordHash: hashPassword,
+            roleId: createUserDto.roleId?? 1
+            });
+            if(user){
+                response.success = true
+                response.user = user
+            }else{
+                response.success = false
+            }
+            
+       return response;
+       } catch (error) {
+          console.error('Error:', error); 
+        if (error instanceof QueryFailedError) {
+         if (error.driverError.code === 'ER_DUP_ENTRY') { 
                 response.success = false;
+                response.message = `User with email  ${createUserDto.email} already exists.`
+                response.statusCode =400
+                return response;
+                // throw new BadRequestException(`Category with name  ${createCategoryDto.name} already exists.`);
                 
-             }
-         } catch (error) {
+                }
+            }
             response.success = false;
             response.message = "An unexpected error occurred."
             response.statusCode=500
-         }
+            
+            // throw new InternalServerErrorException("An unexpected error occurred.");
+            
+            }
          return response;
-   
        
-  
     }
 
-     async findOne(id:number):Promise<User>{
-      let response = common_response;
-      let user = await this.userRepository.findOne({
-            where:{id:id},
-            select:['id','full_name','email','phone','cccd','sex','country','role','status_verify','avatar','created_at','updated_at'],
-            // relations:['videos']
-      })
-      if(user){
-        response.success = true;
-        response.data = user;
+         async findOne(id:number): Promise<any> {
+           let response = {...common_response};
+        try {
+            const user = await this.userRepository.findOneBy({userId:id})
+
+            response.success = true;
+            response.data = user;
+        } catch (error) {
+            console.error(error);
+            response.success = false;
+            response.message = 'Error fetching user by id';
+        }
         return response;
-      }else{
-        response.success = false;
-        response.message = 'user có id này không tồn tại'
+        }
 
-      }
-      return response;
+
+           
+    async update(id:number,updateUserDto:UpdateUserDto):Promise<UpdateResult>{
+       let response = {...common_response};
+       try {
+           
+            if (updateUserDto.passwordHash) {
+            
+                const hashPassword = await this.hashPassword(updateUserDto.passwordHash);
+                updateUserDto.passwordHash = hashPassword;
+            }
+            let updateUser =  await this.userRepository.update(id,updateUserDto);
+                if(updateUser){
+                    response.success = true;
+                    return response;
+                }else{
+                    response.success = false;
+                }
+
+            return response;
+       } catch (error) {
+            response.success = false;
+            response.message = "An unexpected error occurred."
+            response.error=error
+            }
+         return response;
+       
     }
 
-     async update(id:number,updateUserDto:UpdateUserDto):Promise<UpdateResult>{
-      let response = common_response;
-      
-      
-      let updateUser =  await this.userRepository.update(id,updateUserDto);
-      if(updateUser){
-        response.success = true;
-        return response;
-      } else if (!updateUserDto.full_name){
-        response.success = false;
-        response.message = 'Full name cannot be empty';
-      }else{
-        response.success = false;
-      }
-    
-      return response;
-    }
 
-    
     async delete(id:number):Promise<DeleteResult>{
-      let response = common_response;
-     try {
+      let response = {...common_response};
+      try {
+         let result = await this.userRepository.delete({userId:id})
+         if(result.affected ==1){
+           response.success = true;
+         }else{
+             response.success = false;
+         }
+        
+         return response;
 
-     
-      let deleteUser  = await this.userRepository.delete(id);
-      if(deleteUser){
-        response.success = true;
-        return response;
+      } catch (error) {
+            response.success = false;
+            response.message = "An unexpected error occurred."
+            response.error=error
       }
-      else{
-        response.success = false
-        response.message= "user invalid"
-      }
-        return response;
-      
-     } catch (error) {
-
-      response.success = false;
-          response.message = error.message || 'An error occurred while deleting the user';
-          return response;
-      
-     }
+       return response;
     }
+
+
+
+    private async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10;
+    return bcrypt.hash(password, saltRounds);
+    }
+
 
 
 }

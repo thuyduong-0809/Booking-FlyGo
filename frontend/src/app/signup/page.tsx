@@ -30,7 +30,11 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
     try {
       setLoading(true);
       setError("");
-      const res = await  requestApi("auth/register", "POST", { email, password });
+      const res = await  requestApi("auth/register", "POST", {
+        email: email,
+        passwordHash: password,
+      });
+      
       if(res.success){
         localStorage.setItem('pendingEmail', email);
         setEmail("");
