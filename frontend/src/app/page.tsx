@@ -1,4 +1,5 @@
-import React from "react";
+"use client"
+import React, { useEffect, useState } from "react";
 import SectionHero from "@/app/(server-components)/SectionHero";
 import BgGlassmorphism from "@/components/BgGlassmorphism";
 import { TaxonomyType } from "@/data/types";
@@ -10,6 +11,10 @@ import SectionGridCategoryBox from "@/components/SectionGridCategoryBox";
 import SectionBecomeAnAuthor from "@/components/SectionBecomeAnAuthor";
 import SectionVideos from "@/components/SectionVideos";
 import SectionClientSay from "@/components/SectionClientSay";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import secureLocalStorage from "react-secure-storage";
+import { useAppSelector } from "stores/hookStore";
 
 const DEMO_CATS: TaxonomyType[] = [
   {
@@ -144,6 +149,26 @@ const DEMO_CATS_2: TaxonomyType[] = [
 ];
 
 function PageHome() {
+
+
+  const [message, setMessage] = useState("");
+  const router = useRouter();
+  const {access_token } = useAppSelector((state) => state.master);
+
+  useEffect(() => {
+  
+
+    if (!access_token) {
+      router.push("/login"); // nếu chưa login thì quay lại trang login
+      return;
+    }
+    axios
+      .get("/", {
+        headers: { Authorization: `Bearer ${access_token}` },
+      })
+      .then((res) => setMessage(res.data.message))
+      .catch(() => router.push("/login"));
+  }, [router]);
   return (
     <main className="nc-PageHome relative overflow-hidden">
       {/* GLASSMOPHIN */}
@@ -197,6 +222,7 @@ function PageHome() {
           <SectionClientSay />
         </div> */}
       </div>
+      <p>{message}</p>
     </main>
   );
 }
