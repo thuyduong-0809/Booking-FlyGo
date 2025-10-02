@@ -13,6 +13,7 @@ import { User } from 'src/users/entities/users.entity';
 import { EmailModule } from 'src/email/email.module';
 import { OtpModule } from 'src/otp/otp.module';
 import { LocalStrategy } from 'src/auth/strategies/local.strategy';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 
 
@@ -29,7 +30,7 @@ import { LocalStrategy } from 'src/auth/strategies/local.strategy';
     }),
 ],
   controllers: [AuthController],
-  providers: [AuthService,JwtStrategy,LocalStrategy],//them GoogleStrategy,,LocalStrategy
+  providers: [AuthService,JwtStrategy,LocalStrategy,RolesGuard],//them GoogleStrategy,,LocalStrategy
 })
 export class AuthModule {}
 
