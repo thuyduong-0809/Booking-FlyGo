@@ -1,4 +1,8 @@
 import { Controller } from '@nestjs/common';
+import { Booking } from 'src/bookings/entities/bookings.entity';
+import { FareHistory } from 'src/fare-history/entities/fare-history.entity';
+import { Notification } from 'src/notifications/entities/notifications.entity';
+import { Review } from 'src/reviews/entities/reviews.entity';
 import { UserRole } from 'src/user-roles/entities/user-roles.entity';
 
 @Controller('users')
@@ -11,6 +15,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 
 
@@ -69,4 +74,17 @@ export class User {
   @ManyToOne(() => UserRole, (role) => role.users, { eager: true })
   @JoinColumn({ name: 'roleId' })
   role: UserRole;
+
+
+  @OneToMany(()=> Booking, (booking) => booking.user)
+  bookings: Booking[];
+
+  @OneToMany(() => FareHistory, (fh) => fh.changedBy)
+  fareHistories: FareHistory[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
+
+  @OneToMany(() => Review, (review) => review.user)
+  reviews: Review[];
 }

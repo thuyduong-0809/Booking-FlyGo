@@ -1,20 +1,32 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { dataSourceOptions } from 'db/data-source';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './users/users.module';
-import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
-import { UserRolesController } from './user-roles/user-roles.controller';
-import { UserRolesService } from './user-roles/user-roles.service';
-import { UserRolesModule } from './user-roles/user-roles.module';
-import { UsersController } from './users/users.controller';
-import { UsersService } from './users/users.service';
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { dataSourceOptions } from "db/data-source";
+import { AircraftsModule } from "src/aircrafts/aircrafts.module";
+import { AirlinesModule } from "src/airlines/airlines.module";
+import { AirportsModule } from "src/airports/airports.module";
+import { AppController } from "src/app.controller";
+import { AppService } from "src/app.service";
+import { AuthModule } from "src/auth/auth.module";
+import { BookingFlightsModule } from "src/booking-flights/booking-flights.module";
+import { BookingsModule } from "src/bookings/bookings.module";
+import { CheckInsModule } from "src/check-ins/check-ins.module";
+import { FareHistoryModule } from "src/fare-history/fare-history.module";
+import { FlightsModule } from "src/flights/flights.module";
+import { NotificationsModule } from "src/notifications/notifications.module";
+import { PassengersModule } from "src/passengers/passengers.module";
+import { PaymentsModule } from "src/payments/payments.module";
+import { ReviewsModule } from "src/reviews/reviews.module";
+import { SeatAllocationsModule } from "src/seat-allocations/seat-allocations.module";
+import { SeatsModule } from "src/seats/seats.module";
+import { TerminalsModule } from "src/terminals/terminals.module";
+import { UserRolesModule } from "src/user-roles/user-roles.module";
+import { UsersModule } from "src/users/users.module";
+
 
 
 @Module({
-  imports: [ TypeOrmModule.forRoot(dataSourceOptions), UsersModule,ConfigModule.forRoot(), AuthModule, UserRolesModule],
+  imports: [ TypeOrmModule.forRoot(dataSourceOptions), UsersModule,ConfigModule.forRoot(), AuthModule, UserRolesModule, AirlinesModule, AirportsModule, TerminalsModule, AircraftsModule, FlightsModule, BookingsModule, BookingFlightsModule, PassengersModule, SeatsModule, SeatAllocationsModule, PaymentsModule, CheckInsModule, FareHistoryModule, NotificationsModule, ReviewsModule],
   controllers: [AppController],
   providers: [AppService],
 })

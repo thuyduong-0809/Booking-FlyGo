@@ -21,10 +21,12 @@ export class CreateUserDto {
   @MaxLength(255)
   passwordHash: string;
 
+  @IsOptional()
   @IsString()
   @MaxLength(50)
   firstName: string;
 
+  @IsOptional()
   @IsString()
   @MaxLength(50)
   lastName: string;
@@ -47,7 +49,7 @@ export class CreateUserDto {
   @IsDateString()
   passportExpiry?: Date;
 
-  @IsInt()
+  // @IsInt()
   roleId: number;
 
   @IsOptional()
