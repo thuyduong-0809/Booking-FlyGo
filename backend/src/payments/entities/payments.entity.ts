@@ -1,5 +1,5 @@
 import { Booking } from 'src/bookings/entities/bookings.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('Payments')
 export class Payment {
@@ -32,6 +32,9 @@ export class Payment {
   paidAt: Date;
 
   // Relations
-  @ManyToOne(() => Booking, (booking) => booking.payments)
+  @ManyToOne(() => Booking, (booking) => booking.payments, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'bookingId' })
   booking: Booking;
 }

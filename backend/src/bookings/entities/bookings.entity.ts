@@ -10,6 +10,7 @@ import {
   ManyToOne,
   OneToMany,
   CreateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity('Bookings')
@@ -50,7 +51,8 @@ export class Booking {
   bookedAt: Date;
 
   // Relations
-  @ManyToOne(() => User, (user) => user.bookings)
+  @ManyToOne(() => User, (user) => user.bookings, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
   @OneToMany(() => BookingFlight, (bf) => bf.booking)

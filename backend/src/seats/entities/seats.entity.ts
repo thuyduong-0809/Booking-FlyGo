@@ -1,6 +1,6 @@
 import { Aircraft } from 'src/aircrafts/entities/aircrafts.entity';
 import { SeatAllocation } from 'src/seat-allocations/entities/seat-allocations.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, Unique, JoinColumn } from 'typeorm';
 
 @Entity('Seats')
 @Unique(['aircraft', 'seatNumber'])
@@ -24,8 +24,12 @@ export class Seat {
   features: object;
 
   // Relations
-  @ManyToOne(() => Aircraft, (aircraft) => aircraft.seats)
+  @ManyToOne(() => Aircraft, (aircraft) => aircraft.seats, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'aircraftId' })
   aircraft: Aircraft;
+
 
   @OneToMany(() => SeatAllocation, (sa) => sa.seat)
   seatAllocations: SeatAllocation[];

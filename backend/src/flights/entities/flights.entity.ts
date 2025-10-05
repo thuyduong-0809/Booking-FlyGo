@@ -11,6 +11,7 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 
 
@@ -57,22 +58,36 @@ export class Flight {
   availableFirstClassSeats: number;
 
   // Relations
-  @ManyToOne(() => Airline, (airline) => airline.flights)
+  // Quan hệ N-1: Flight thuộc Airline
+  @ManyToOne(() => Airline, (airline) => airline.airlineId, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'airlineId' })
   airline: Airline;
 
-  @ManyToOne(() => Airport, (airport) => airport.departures)
+  // Quan hệ N-1: Flight -> Departure Airport
+  @ManyToOne(() => Airport, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'departureAirportId' })
   departureAirport: Airport;
 
-  @ManyToOne(() => Airport, (airport) => airport.arrivals)
+   // Quan hệ N-1: Flight -> Arrival Airport
+  @ManyToOne(() => Airport, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'arrivalAirportId' })
   arrivalAirport: Airport;
 
-  @ManyToOne(() => Terminal, { nullable: true })
-  departureTerminal: Terminal;
+  // Quan hệ N-1: Flight -> Departure Terminal
+  @ManyToOne(() => Terminal, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'departureTerminalId' })
+  departureTerminal?: Terminal;
 
-  @ManyToOne(() => Terminal, { nullable: true })
-  arrivalTerminal: Terminal;
+  // Quan hệ N-1: Flight -> Arrival Terminal
+  @ManyToOne(() => Terminal, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'arrivalTerminalId' })
+  arrivalTerminal?: Terminal;
 
-  @ManyToOne(() => Aircraft, (aircraft) => aircraft.flights)
+  // Quan hệ N-1: Flight -> Aircraft
+  @ManyToOne(() => Aircraft, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'aircraftId' })
   aircraft: Aircraft;
 
   @OneToMany(() => BookingFlight, (bf) => bf.flight)

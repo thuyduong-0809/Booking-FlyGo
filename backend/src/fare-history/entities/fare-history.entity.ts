@@ -1,6 +1,6 @@
 import { Flight } from 'src/flights/entities/flights.entity';
 import { User } from 'src/users/entities/users.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn } from 'typeorm';
 
 export enum TravelClass {
   Economy = 'Economy',
@@ -13,7 +13,8 @@ export class FareHistory {
   @PrimaryGeneratedColumn()
   fareHistoryId: number;
 
-  @ManyToOne(() => Flight, (flight) => flight.fareHistories)
+  @ManyToOne(() => Flight, (flight) => flight.fareHistories, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'flightId' })
   flight: Flight;
 
   @Column({
@@ -31,8 +32,9 @@ export class FareHistory {
   @CreateDateColumn()
   changedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.fareHistories, { nullable: true })
-  changedBy: User;
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'changedBy' })
+  changedBy?: User;
 
   @Column({ type: 'text', nullable: true })
   reason: string;
