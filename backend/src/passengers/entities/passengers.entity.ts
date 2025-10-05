@@ -1,7 +1,7 @@
 import { Booking } from 'src/bookings/entities/bookings.entity';
 import { CheckIn } from 'src/check-ins/entities/check-ins.entity';
 import { SeatAllocation } from 'src/seat-allocations/entities/seat-allocations.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 
 
 @Entity('Passengers')
@@ -29,7 +29,10 @@ export class Passenger {
   passengerType: string;
 
   // Relations
-  @ManyToOne(() => Booking, (booking) => booking.passengers)
+  @ManyToOne(() => Booking, (booking) => booking.passengers, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'bookingId' })
   booking: Booking;
 
   @OneToMany(() => SeatAllocation, (sa) => sa.passenger)

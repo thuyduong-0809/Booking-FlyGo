@@ -2,7 +2,7 @@ import { Booking } from 'src/bookings/entities/bookings.entity';
 import { CheckIn } from 'src/check-ins/entities/check-ins.entity';
 import { Flight } from 'src/flights/entities/flights.entity';
 import { SeatAllocation } from 'src/seat-allocations/entities/seat-allocations.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 
 
 @Entity('BookingFlights')
@@ -26,10 +26,16 @@ export class BookingFlight {
   baggageAllowance: number;
 
   // Relations
-  @ManyToOne(() => Booking, (booking) => booking.bookingFlights)
+   @ManyToOne(() => Booking, (booking) => booking.bookingFlights, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'bookingId' })
   booking: Booking;
 
-  @ManyToOne(() => Flight, (flight) => flight.bookingFlights)
+  @ManyToOne(() => Flight, (flight) => flight.bookingFlights, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'flightId' })
   flight: Flight;
 
   @OneToMany(() => SeatAllocation, (sa) => sa.bookingFlight)

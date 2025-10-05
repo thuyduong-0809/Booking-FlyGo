@@ -1,6 +1,6 @@
 import { BookingFlight } from 'src/booking-flights/entities/booking-flights.entity';
 import { Passenger } from 'src/passengers/entities/passengers.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn } from 'typeorm';
 
 export enum CheckInType {
   Online = 'Online',
@@ -18,10 +18,13 @@ export class CheckIn {
   @PrimaryGeneratedColumn()
   checkInId: number;
 
-  @ManyToOne(() => BookingFlight, (bookingFlight) => bookingFlight.checkIns)
+  // Relations
+  @ManyToOne(() => BookingFlight, (bookingFlight) => bookingFlight.checkIns,{onDelete: 'CASCADE'})
+  @JoinColumn({name: 'bookingFlightId'})
   bookingFlight: BookingFlight;
 
-  @ManyToOne(() => Passenger, (passenger) => passenger.checkIns)
+  @ManyToOne(() => Passenger, (passenger) => passenger.checkIns,{onDelete: 'CASCADE'})
+  @JoinColumn({ name: 'passengerId' })
   passenger: Passenger;
 
   @Column({

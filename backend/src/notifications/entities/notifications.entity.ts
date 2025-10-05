@@ -1,5 +1,5 @@
 import { User } from 'src/users/entities/users.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn } from 'typeorm';
 // import { User } from './user.entity';
 
 export enum NotificationType {
@@ -14,7 +14,8 @@ export class Notification {
   @PrimaryGeneratedColumn()
   notificationId: number;
 
-  @ManyToOne(() => User, (user) => user.notifications)
+  @ManyToOne(() => User, (user) => user.notifications,{ onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
   @Column()
@@ -35,6 +36,6 @@ export class Notification {
   @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ nullable: true })
-  relatedId: number;
+  @Column({ type: 'int', nullable: true })
+  RelatedId?: number;
 }

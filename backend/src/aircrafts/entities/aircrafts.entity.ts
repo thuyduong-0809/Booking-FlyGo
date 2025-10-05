@@ -1,7 +1,7 @@
 import { Airline } from 'src/airlines/entities/airlines.entity';
 import { Flight } from 'src/flights/entities/flights.entity';
 import { Seat } from 'src/seats/entities/seats.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 
 
 @Entity('Aircrafts')
@@ -38,6 +38,7 @@ export class Aircraft {
 
   // Relations
   @ManyToOne(() => Airline, (airline) => airline.aircrafts, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'airlineId' })
   airline: Airline;
 
   @OneToMany(() => Flight, (flight) => flight.aircraft)
