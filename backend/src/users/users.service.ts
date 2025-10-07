@@ -84,7 +84,6 @@ export class UsersService {
            let response = {...common_response};
         try {
             const user = await this.userRepository.findOneBy({userId:id})
-
             response.success = true;
             response.data = user;
         } catch (error) {
