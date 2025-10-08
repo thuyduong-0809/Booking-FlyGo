@@ -1,6 +1,6 @@
 export let common_response:any = {
     success:true,
-    message:'',
+    message:'ok',
     statusCode:200,
 
 }

@@ -247,7 +247,8 @@ export class AuthService {
             user = this.userRepository.create({
               email,
               passwordHash: hash_password,
-
+              firstName:'',
+              lastName:''
             });
             user = await this.userRepository.save(user);
           } else {
