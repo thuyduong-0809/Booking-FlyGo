@@ -13,61 +13,88 @@ import {
   CalendarIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
+import { User } from '../../types/database';
 
-interface Customer {
-  id: string;
+// Extended interface for local state management with additional display fields
+interface ExtendedCustomer extends User {
   name: string;
-  email: string;
-  phone: string;
-  dateOfBirth: string;
   address: string;
-  membershipLevel: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   totalBookings: number;
   totalSpent: number;
   joinDate: string;
-  status: 'Active' | 'Inactive' | 'Blocked';
+  membershipLevel: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
 }
 
 export default function CustomerManagement() {
-  const [customers, setCustomers] = useState<Customer[]>([
+  const [customers, setCustomers] = useState<ExtendedCustomer[]>([
     {
-      id: 'CUS001',
+      UserID: 1,
+      Email: 'nguyenvana@email.com',
+      PasswordHash: '',
+      FirstName: 'Nguyễn Văn',
+      LastName: 'A',
+      Phone: '0901234567',
+      DateOfBirth: '1990-05-15',
+      PassportNumber: 'N1234567',
+      PassportExpiry: '2030-05-15',
+      RoleID: 2,
+      LoyaltyTier: 'Gold',
+      LoyaltyPoints: 4500,
+      IsActive: true,
+      CreatedAt: '2023-01-15T00:00:00Z',
+      LastLogin: '2024-01-15T08:30:00Z',
       name: 'Nguyễn Văn A',
-      email: 'nguyenvana@email.com',
-      phone: '0901234567',
-      dateOfBirth: '1990-05-15',
       address: '123 Đường ABC, Quận 1, TP.HCM',
-      membershipLevel: 'Gold',
       totalBookings: 15,
       totalSpent: 45000000,
       joinDate: '2023-01-15',
-      status: 'Active'
+      membershipLevel: 'Gold'
     },
     {
-      id: 'CUS002',
+      UserID: 2,
+      Email: 'tranthib@email.com',
+      PasswordHash: '',
+      FirstName: 'Trần Thị',
+      LastName: 'B',
+      Phone: '0907654321',
+      DateOfBirth: '1985-08-22',
+      PassportNumber: 'N1234568',
+      PassportExpiry: '2030-08-22',
+      RoleID: 2,
+      LoyaltyTier: 'Silver',
+      LoyaltyPoints: 1800,
+      IsActive: true,
+      CreatedAt: '2023-06-10T00:00:00Z',
+      LastLogin: '2024-01-14T15:20:00Z',
       name: 'Trần Thị B',
-      email: 'tranthib@email.com',
-      phone: '0907654321',
-      dateOfBirth: '1985-08-22',
       address: '456 Đường XYZ, Quận 2, TP.HCM',
-      membershipLevel: 'Silver',
       totalBookings: 8,
       totalSpent: 18000000,
       joinDate: '2023-06-10',
-      status: 'Active'
+      membershipLevel: 'Silver'
     },
     {
-      id: 'CUS003',
+      UserID: 3,
+      Email: 'levanc@email.com',
+      PasswordHash: '',
+      FirstName: 'Lê Văn',
+      LastName: 'C',
+      Phone: '0909876543',
+      DateOfBirth: '1992-12-03',
+      PassportNumber: 'N1234569',
+      PassportExpiry: '2030-12-03',
+      RoleID: 2,
+      LoyaltyTier: 'Standard',
+      LoyaltyPoints: 750,
+      IsActive: false,
+      CreatedAt: '2023-11-20T00:00:00Z',
+      LastLogin: '2024-01-10T12:45:00Z',
       name: 'Lê Văn C',
-      email: 'levanc@email.com',
-      phone: '0909876543',
-      dateOfBirth: '1992-12-03',
       address: '789 Đường DEF, Quận 3, TP.HCM',
-      membershipLevel: 'Bronze',
       totalBookings: 3,
       totalSpent: 7500000,
       joinDate: '2023-11-20',
-      status: 'Inactive'
+      membershipLevel: 'Bronze'
     }
   ]);
 
@@ -76,13 +103,8 @@ export default function CustomerManagement() {
   const [statusFilter, setStatusFilter] = useState('');
   const [membershipFilter, setMembershipFilter] = useState('');
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active': return 'text-green-600 bg-green-100';
-      case 'Inactive': return 'text-yellow-600 bg-yellow-100';
-      case 'Blocked': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
   };
 
   const getMembershipColor = (level: string) => {
@@ -95,21 +117,16 @@ export default function CustomerManagement() {
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'Active': return 'Hoạt động';
-      case 'Inactive': return 'Không hoạt động';
-      case 'Blocked': return 'Bị khóa';
-      default: return status;
-    }
+  const getStatusText = (isActive: boolean) => {
+    return isActive ? 'Hoạt động' : 'Không hoạt động';
   };
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.phone.includes(searchTerm) ||
-                         customer.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || customer.status === statusFilter;
+                         customer.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         customer.Phone.includes(searchTerm) ||
+                         customer.UserID.toString().includes(searchTerm);
+    const matchesStatus = !statusFilter || (statusFilter === 'Active' ? customer.IsActive : !customer.IsActive);
     const matchesMembership = !membershipFilter || customer.membershipLevel === membershipFilter;
     return matchesSearch && matchesStatus && matchesMembership;
   });
@@ -189,7 +206,7 @@ export default function CustomerManagement() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center space-x-4">
           <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Tìm kiếm khách hàng..."
@@ -231,32 +248,32 @@ export default function CustomerManagement() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Khách hàng
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Thông tin liên hệ
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Hạng thành viên
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Thống kê
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Ngày tham gia
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredCustomers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-50">
+                <tr key={customer.UserID} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -264,25 +281,25 @@ export default function CustomerManagement() {
                       </div>
                       <div>
                         <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                        <div className="text-sm text-gray-500">{customer.id}</div>
+                        <div className="text-sm text-gray-500">#{customer.UserID}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="flex items-center text-sm text-gray-900">
-                        <EnvelopeIcon className="h-4 w-4 text-gray-400 mr-2" />
-                        {customer.email}
+                        <EnvelopeIcon className="h-5 w-5 text-gray-400 mr-2" />
+                        {customer.Email}
                       </div>
                       <div className="flex items-center text-sm text-gray-500">
-                        <PhoneIcon className="h-4 w-4 text-gray-400 mr-2" />
-                        {customer.phone}
+                        <PhoneIcon className="h-5 w-5 text-gray-400 mr-2" />
+                        {customer.Phone}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMembershipColor(customer.membershipLevel)}`}>
-                      {customer.membershipLevel}
+                      {customer.LoyaltyTier}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -292,23 +309,23 @@ export default function CustomerManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(customer.status)}`}>
-                      {getStatusText(customer.status)}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(customer.IsActive)}`}>
+                      {getStatusText(customer.IsActive)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {customer.joinDate}
+                    {new Date(customer.CreatedAt).toLocaleDateString('vi-VN')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button className="text-blue-600 hover:text-blue-900">
-                        <EyeIcon className="h-4 w-4" />
+                        <EyeIcon className="h-5 w-5" />
                       </button>
                       <button className="text-green-600 hover:text-green-900">
-                        <PencilIcon className="h-4 w-4" />
+                        <PencilIcon className="h-5 w-5" />
                       </button>
                       <button className="text-red-600 hover:text-red-900">
-                        <TrashIcon className="h-4 w-4" />
+                        <TrashIcon className="h-5 w-5" />
                       </button>
                     </div>
                   </td>
@@ -327,7 +344,7 @@ export default function CustomerManagement() {
             <form className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Họ và tên</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -335,7 +352,7 @@ export default function CustomerManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
                   <input
                     type="email"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -345,7 +362,7 @@ export default function CustomerManagement() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
                   <input
                     type="tel"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -353,7 +370,7 @@ export default function CustomerManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Ngày sinh</label>
                   <input
                     type="date"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -361,7 +378,7 @@ export default function CustomerManagement() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Địa chỉ</label>
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -369,7 +386,7 @@ export default function CustomerManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hạng thành viên</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Hạng thành viên</label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                   <option value="Bronze">Bronze</option>
                   <option value="Silver">Silver</option>
