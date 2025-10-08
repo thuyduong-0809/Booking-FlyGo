@@ -1,4 +1,192 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Aircraft } from 'src/aircrafts/entities/aircrafts.entity';
+import { Airline } from 'src/airlines/entities/airlines.entity';
+import { Airport } from 'src/airports/entities/airports.entity';
+import { CreateFlightDto } from 'src/flights/dto/create-flight.dto';
+import { UpdateFlightDto } from 'src/flights/dto/update-flight.dto';
+import { Flight } from 'src/flights/entities/flights.entity';
+import { Terminal } from 'src/terminals/entities/terminals.entity';
+import { common_response } from 'src/untils/common';
+import { Repository } from 'typeorm';
 
 @Injectable()
-export class FlightsService {}
+export class FlightsService {
+    constructor(@InjectRepository(Flight) private flightRepository:Repository<Flight>,
+               @InjectRepository(Airline) private airlineRepository:Repository<Airline>,
+               @InjectRepository(Airport) private airportRepository:Repository<Airport>,
+               @InjectRepository(Aircraft) private aircraftRepository:Repository<Aircraft>,
+               @InjectRepository(Terminal) private terminalRepository:Repository<Terminal>
+ 
+    ){}
+
+    async findAll():Promise<any>{
+        let response = {...common_response}
+        try {
+            const flights = await this.flightRepository.find({
+                relations:['airline','departureAirport','arrivalAirport','aircraft','departureTerminal','arrivalTerminal']
+            });
+     
+            response.success = true;
+            response.message = 'Flights retrieved successfully';
+            response.data = flights;
+          
+        } catch (error) {
+            response.success = false;
+            response.message = error.message || 'Error retrieving flights';
+        }
+        return response;
+    }
+
+    async findOne(id:number):Promise<any>{
+        let response = {...common_response}
+        try {
+            const flight = await this.flightRepository.findOne({
+                where:{flightId:id},
+                relations:['airline','departureAirport','arrivalAirport','aircraft','departureTerminal','arrivalTerminal']
+            });
+            if (!flight) {
+                response.success = false;
+                response.message = 'Flight not found';
+                return response;
+            }
+            response.success = true;
+            response.message = 'Flight retrieved successfully';
+            response.data = flight;
+            return response;
+        } catch (error) {
+            response.success = false;
+            response.message = error.message || 'Error retrieving flight';
+            return response;
+        }
+      
+    }
+
+    async create(createFlightDto:CreateFlightDto):Promise<any>{
+        let response = {...common_response}
+        try {
+            const airline = await this.airlineRepository.findOne({where:{airlineId:createFlightDto.airlineId}});
+            if(!airline) {
+                response.success = false;
+                response.message = 'Airline not found';
+                return response;
+            }
+            const departureAirport = await this.airportRepository.findOne({where:{airportId:createFlightDto.departureAirportId}});
+            if(!departureAirport) {
+                response.success = false;
+                response.message = 'Departure Airport not found';
+                return response;
+            }
+            const arrivalAirport = await this.airportRepository.findOne({where:{airportId:createFlightDto.arrivalAirportId}});
+            if(!arrivalAirport) {
+                response.success = false;
+                response.message = 'Arrival Airport not found';
+                return response;
+            }
+
+            const terminalDeparture = await this.terminalRepository.findOne({where:{terminalId:createFlightDto.departureTerminalId}});
+            if(!terminalDeparture) {
+                response.success = false;
+                response.message = 'Departure Terminal not found';
+                return response;
+            }
+            const terminalArrival = await this.terminalRepository.findOne({where:{terminalId:createFlightDto.arrivalTerminalId}});
+            if(!terminalArrival) {
+                response.success = false;
+                response.message = 'Arrival Terminal not found';
+                return response;
+            }
+            const aircraft = await this.aircraftRepository.findOne({where:{aircraftId:createFlightDto.aircraftId}});
+            if(!aircraft) {
+                response.success = false;
+                response.message = 'Aircraft not found';
+                return response;
+            }
+            const newFlight = this.flightRepository.create({
+                ...createFlightDto,
+                airline: airline,
+                departureAirport: departureAirport,
+                arrivalAirport: arrivalAirport,
+                departureTerminal: terminalDeparture,
+                arrivalTerminal: terminalArrival,
+                aircraft: aircraft
+            });
+            await this.flightRepository.save(newFlight);
+            response.success = true;
+            response.message = 'Flight created successfully';
+            response.data = newFlight;
+            return response;
+        } catch (error) {
+            response.success = false;
+            response.message = error.message || 'Error creating flight';
+            return response;
+        }
+    }
+    async update(id:number,updateFlightDto:UpdateFlightDto):Promise<any>{
+        let response = {...common_response}
+        try {
+            const flight = await this.flightRepository.findOne({where:{flightId:id}});
+            if(!flight) {
+                response.success = false;
+                response.message = 'Flight not found';
+                return response;
+            }
+            const terminalDeparture = await this.terminalRepository.findOne({where:{terminalId:updateFlightDto.departureTerminalId}});
+            if(!terminalDeparture) {
+                response.success = false;
+                response.message = 'Departure Terminal not found';
+                return response;
+            }
+            const terminalArrival = await this.terminalRepository.findOne({where:{terminalId:updateFlightDto.arrivalTerminalId}});
+            if(!terminalArrival) {
+                response.success = false;
+                response.message = 'Arrival Terminal not found';
+                return response;
+            }
+            const aircraft = await this.aircraftRepository.findOne({where:{aircraftId:updateFlightDto.aircraftId}});
+            if(!aircraft) {
+                response.success = false;
+                response.message = 'Aircraft not found';
+                return response;
+            }
+            const updateResult = await this.flightRepository.update(id,{
+                ...updateFlightDto,
+                aircraft: aircraft,
+                arrivalTerminal: terminalArrival,
+                departureTerminal: terminalDeparture,
+            });
+            if(updateResult.affected && updateResult.affected > 0) {
+                response.success = true;
+                response.message = 'Flight updated successfully';
+            } else {
+                response.success = false;
+                response.message = 'Flight not found or no changes made';
+            }
+            return response;           
+
+        } catch (error) {
+            response.success = false;
+            response.message = error.message || 'Error updating flight';
+            return response;
+        }
+    }
+
+    async delete(id:number):Promise<any>{
+        let response = {...common_response}
+        try {
+            const deleteResult = await this.flightRepository.delete(id);
+            if(deleteResult.affected && deleteResult.affected > 0) {
+                response.success = true;
+                response.message = 'Flight deleted successfully';
+            } else {
+                response.success = false;
+                response.message = 'Flight not found';
+            }
+            return response;
+        } catch (error) {
+            response.success = false;
+            response.message = error.message || 'Error deleting flight';
+            return response;
+        }
+    }
+}
