@@ -32,6 +32,13 @@ import Reports from '../../components/dashboard/Reports';
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  // Trạng thái mở/đóng cho từng nhóm navigation
+  const [aircraftOpen, setAircraftOpen] = useState(true);
+  const [flightsOpen, setFlightsOpen] = useState(false);
+  const [bookingsOpen, setBookingsOpen] = useState(false);
+  const [checkinOpen, setCheckinOpen] = useState(false);
+  const [loyaltyOpen, setLoyaltyOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
 
   // Dữ liệu thống kê cho ngành hàng không
   const flightStats = [
@@ -332,7 +339,7 @@ export default function DashboardPage() {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-72' : 'w-16'} transition-all duration-300 bg-white shadow-lg flex flex-col border-r border-gray-200`}>
+      <div className={`${sidebarOpen ? 'w-72' : 'w-21'} transition-all duration-300 bg-white shadow-lg flex flex-col border-r border-gray-200`}>
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -357,8 +364,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-4">
-          <nav className="space-y-2 px-4">
+        {sidebarOpen && (
+          <div className="flex-1 overflow-y-auto py-4">
+            <nav className="space-y-2 px-4">
             {/* Main Navigation */}
             <div className="space-y-1">
               <button
@@ -374,9 +382,17 @@ export default function DashboardPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab('aircraft')}
+                onClick={() => {
+                  // Chỉ toggle khi sidebar mở, nếu không thì chỉ chuyển tab
+                  if (sidebarOpen) {
+                    setAircraftOpen(!aircraftOpen);
+                  }
+                  if (!['aircraft','aircraft-add','aircraft-edit','aircraft-seats','aircraft-maintenance'].includes(activeTab)) {
+                    setActiveTab('aircraft');
+                  }
+                }}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  (activeTab === 'aircraft' || activeTab === 'aircraft-status' || activeTab === 'aircraft-maintenance' || activeTab === 'aircraft-search')
+                  (activeTab === 'aircraft' || activeTab === 'aircraft-add' || activeTab === 'aircraft-edit' || activeTab === 'aircraft-seats' || activeTab === 'aircraft-maintenance')
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
@@ -384,20 +400,42 @@ export default function DashboardPage() {
                 <RocketLaunchIcon className="h-5 w-5 mr-3" />
                 {sidebarOpen && 'Quản lý máy bay'}
               </button>
-              
+
               {/* Aircraft Management Sub-menu */}
-              {(activeTab === 'aircraft' || activeTab === 'aircraft-status' || activeTab === 'aircraft-maintenance' || activeTab === 'aircraft-search') && sidebarOpen && (
+              {aircraftOpen && sidebarOpen && (
                 <div className="ml-4 space-y-1">
                   <button
-                    onClick={() => setActiveTab('aircraft-status')}
+                    onClick={() => setActiveTab('aircraft-add')}
                     className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
-                      activeTab === 'aircraft-status' 
+                      activeTab === 'aircraft-add' 
                         ? 'bg-blue-50 text-blue-700' 
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                    Theo dõi trạng thái
+                    Thêm máy bay
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('aircraft-edit')}
+                    className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
+                      activeTab === 'aircraft-edit' 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                    Sửa thông tin máy bay
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('aircraft-seats')}
+                    className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
+                      activeTab === 'aircraft-seats' 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                    Quản lý chỗ ngồi
                   </button>
                   <button
                     onClick={() => setActiveTab('aircraft-maintenance')}
@@ -408,24 +446,21 @@ export default function DashboardPage() {
                     }`}
                   >
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                    Lịch bảo trì
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('aircraft-search')}
-                    className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
-                      activeTab === 'aircraft-search' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                    Tìm kiếm máy bay
+                    Theo dõi bảo trì
                   </button>
                 </div>
               )}
 
               <button
-                onClick={() => setActiveTab('flights')}
+                onClick={() => {
+                  // Chỉ toggle khi sidebar mở, nếu không thì chỉ chuyển tab
+                  if (sidebarOpen) {
+                    setFlightsOpen(!flightsOpen);
+                  }
+                  if (!['flights','flights-add-aircraft','flights-edit-aircraft','flights-seat-management','flights-maintenance'].includes(activeTab)) {
+                    setActiveTab('flights');
+                  }
+                }}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   (activeTab === 'flights' || activeTab === 'flights-add-aircraft' || activeTab === 'flights-edit-aircraft' || activeTab === 'flights-seat-management' || activeTab === 'flights-maintenance')
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
@@ -437,7 +472,7 @@ export default function DashboardPage() {
               </button>
 
               {/* Flight Management Sub-menu */}
-              {(activeTab === 'flights' || activeTab === 'flights-add-aircraft' || activeTab === 'flights-edit-aircraft' || activeTab === 'flights-seat-management' || activeTab === 'flights-maintenance') && sidebarOpen && (
+              {flightsOpen && sidebarOpen && (
                 <div className="ml-4 space-y-1">
                   <button
                     onClick={() => setActiveTab('flights-add-aircraft')}
@@ -488,7 +523,15 @@ export default function DashboardPage() {
 
 
               <button
-                onClick={() => setActiveTab('bookings')}
+                onClick={() => {
+                  // Chỉ toggle khi sidebar mở, nếu không thì chỉ chuyển tab
+                  if (sidebarOpen) {
+                    setBookingsOpen(!bookingsOpen);
+                  }
+                  if (!activeTab.startsWith('bookings')) {
+                    setActiveTab('bookings');
+                  }
+                }}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === 'bookings' 
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
@@ -500,7 +543,7 @@ export default function DashboardPage() {
               </button>
 
               {/* Bookings Sub-menu */}
-              {(activeTab.startsWith('bookings')) && sidebarOpen && (
+              {bookingsOpen && sidebarOpen && (
                 <div className="ml-4 space-y-1">
                   <button onClick={() => setActiveTab('bookings-search')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${activeTab==='bookings-search' ? 'bg-blue-50 text-blue-700':'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
@@ -522,7 +565,15 @@ export default function DashboardPage() {
               )}
 
               <button
-                onClick={() => setActiveTab('checkin')}
+                onClick={() => {
+                  // Chỉ toggle khi sidebar mở, nếu không thì chỉ chuyển tab
+                  if (sidebarOpen) {
+                    setCheckinOpen(!checkinOpen);
+                  }
+                  if (!activeTab.startsWith('checkin')) {
+                    setActiveTab('checkin');
+                  }
+                }}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === 'checkin' 
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
@@ -534,7 +585,7 @@ export default function DashboardPage() {
               </button>
 
               {/* Check-in Sub-menu */}
-              {(activeTab.startsWith('checkin')) && sidebarOpen && (
+              {checkinOpen && sidebarOpen && (
                 <div className="ml-4 space-y-1">
                   <button onClick={() => setActiveTab('checkin-airport')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${activeTab==='checkin-airport' ? 'bg-blue-50 text-blue-700':'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
@@ -568,7 +619,15 @@ export default function DashboardPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab('loyalty')}
+                onClick={() => {
+                  // Chỉ toggle khi sidebar mở, nếu không thì chỉ chuyển tab
+                  if (sidebarOpen) {
+                    setLoyaltyOpen(!loyaltyOpen);
+                  }
+                  if (!activeTab.startsWith('loyalty')) {
+                    setActiveTab('loyalty');
+                  }
+                }}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === 'loyalty' 
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
@@ -580,7 +639,7 @@ export default function DashboardPage() {
                 </button>
 
               {/* Loyalty Sub-menu */}
-              {(activeTab.startsWith('loyalty')) && sidebarOpen && (
+              {loyaltyOpen && sidebarOpen && (
                 <div className="ml-4 space-y-1">
                   <button onClick={() => setActiveTab('loyalty-earn')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${activeTab==='loyalty-earn' ? 'bg-blue-50 text-blue-700':'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
@@ -598,7 +657,15 @@ export default function DashboardPage() {
               )}
 
               <button
-                onClick={() => setActiveTab('reports')}
+                onClick={() => {
+                  // Chỉ toggle khi sidebar mở, nếu không thì chỉ chuyển tab
+                  if (sidebarOpen) {
+                    setReportsOpen(!reportsOpen);
+                  }
+                  if (!activeTab.startsWith('reports')) {
+                    setActiveTab('reports');
+                  }
+                }}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === 'reports' 
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
@@ -610,7 +677,7 @@ export default function DashboardPage() {
                 </button>
 
               {/* Reports Sub-menu */}
-              {(activeTab.startsWith('reports')) && sidebarOpen && (
+              {reportsOpen && sidebarOpen && (
                 <div className="ml-4 space-y-1">
                   <button onClick={() => setActiveTab('reports-by-date')} className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${activeTab==='reports-by-date' ? 'bg-blue-50 text-blue-700':'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
@@ -684,7 +751,8 @@ export default function DashboardPage() {
               </div>
             )}
           </nav>
-        </div>
+          </div>
+        )}
 
         {/* User Profile */}
         <div className="p-4 border-t border-gray-200">
