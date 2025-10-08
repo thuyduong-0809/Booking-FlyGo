@@ -8,6 +8,7 @@ import "rc-slider/assets/index.css";
 import Footer from "@/components/Footer";
 import FooterNav from "@/components/FooterNav";
 import StoreProvider from "stores/providers";
+import ConditionalLayout from "./ConditionalLayout";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -26,15 +27,11 @@ export default function RootLayout({
     <html lang="en" className={poppins.className}>
       <body className="bg-white text-base dark:bg-neutral-900 text-neutral-900 dark:text-neutral-200">
         <StoreProvider>
-            <ClientCommons />
-            <SiteHeader />
-             {children}
-            
-            <FooterNav />
-            <Footer />
-
+          <ClientCommons />
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
         </StoreProvider>
-       
       </body>
     </html>
   );
