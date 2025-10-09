@@ -12,6 +12,7 @@ import {
   GiftIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
+import { User, Notification } from '../../types/database';
 
 interface LoyaltyProgram {
   id: string;
@@ -25,11 +26,9 @@ interface LoyaltyProgram {
   benefits: string[];
 }
 
-interface Customer {
-  id: string;
+// Extended interface for loyalty program display
+interface ExtendedCustomer extends User {
   name: string;
-  email: string;
-  tier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   totalPoints: number;
   availablePoints: number;
   joinDate: string;
@@ -74,32 +73,68 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
     }
   ]);
 
-  const [customers, setCustomers] = useState<Customer[]>([
+  const [customers, setCustomers] = useState<ExtendedCustomer[]>([
     {
-      id: 'C001',
+      UserID: 1,
+      Email: 'nguyenvana@email.com',
+      PasswordHash: '',
+      FirstName: 'Nguyễn Văn',
+      LastName: 'A',
+      Phone: '0901234567',
+      DateOfBirth: '1990-05-15',
+      PassportNumber: 'N1234567',
+      PassportExpiry: '2030-05-15',
+      RoleID: 2,
+      LoyaltyTier: 'Gold',
+      LoyaltyPoints: 15000,
+      IsActive: true,
+      CreatedAt: '2023-01-15T00:00:00Z',
+      LastLogin: '2024-01-15T08:30:00Z',
       name: 'Nguyễn Văn A',
-      email: 'nguyenvana@email.com',
-      tier: 'Gold',
       totalPoints: 15000,
       availablePoints: 8500,
       joinDate: '2023-01-15',
       lastActivity: '2024-01-10'
     },
     {
-      id: 'C002',
+      UserID: 2,
+      Email: 'tranthib@email.com',
+      PasswordHash: '',
+      FirstName: 'Trần Thị',
+      LastName: 'B',
+      Phone: '0907654321',
+      DateOfBirth: '1985-08-22',
+      PassportNumber: 'N1234568',
+      PassportExpiry: '2030-08-22',
+      RoleID: 2,
+      LoyaltyTier: 'Silver',
+      LoyaltyPoints: 8500,
+      IsActive: true,
+      CreatedAt: '2023-06-10T00:00:00Z',
+      LastLogin: '2024-01-14T15:20:00Z',
       name: 'Trần Thị B',
-      email: 'tranthib@email.com',
-      tier: 'Silver',
       totalPoints: 8500,
       availablePoints: 4200,
       joinDate: '2023-06-20',
       lastActivity: '2024-01-08'
     },
     {
-      id: 'C003',
+      UserID: 3,
+      Email: 'levanc@email.com',
+      PasswordHash: '',
+      FirstName: 'Lê Văn',
+      LastName: 'C',
+      Phone: '0909876543',
+      DateOfBirth: '1992-12-03',
+      PassportNumber: 'N1234569',
+      PassportExpiry: '2030-12-03',
+      RoleID: 2,
+      LoyaltyTier: 'Platinum',
+      LoyaltyPoints: 25000,
+      IsActive: true,
+      CreatedAt: '2022-03-10T00:00:00Z',
+      LastLogin: '2024-01-12T10:15:00Z',
       name: 'Lê Văn C',
-      email: 'levanc@email.com',
-      tier: 'Platinum',
       totalPoints: 25000,
       availablePoints: 18000,
       joinDate: '2022-03-10',
@@ -109,31 +144,41 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
 
   const [transactions, setTransactions] = useState<PointsTransaction[]>([
     {
-      id: 'T001',
+      id: 'TXN001',
       customerName: 'Nguyễn Văn A',
       customerEmail: 'nguyenvana@email.com',
       transactionType: 'Earn',
-      points: 500,
-      description: 'Đặt vé chuyến bay FG001',
-      date: '2024-01-10'
+      points: 1500,
+      description: 'Đặt vé chuyến bay SGN-HAN',
+      date: '2024-01-15'
     },
     {
-      id: 'T002',
+      id: 'TXN002',
       customerName: 'Trần Thị B',
       customerEmail: 'tranthib@email.com',
       transactionType: 'Redeem',
-      points: -1000,
-      description: 'Đổi điểm lấy hành lý miễn phí',
-      date: '2024-01-08'
+      points: -2000,
+      description: 'Đổi thưởng nâng cấp ghế',
+      date: '2024-01-14'
+    },
+    {
+      id: 'TXN003',
+      customerName: 'Lê Văn C',
+      customerEmail: 'levanc@email.com',
+      transactionType: 'Earn',
+      points: 3000,
+      description: 'Đặt vé chuyến bay quốc tế',
+      date: '2024-01-12'
     }
   ]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tierFilter, setTierFilter] = useState('');
 
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'Bronze': return 'text-orange-600 bg-orange-100';
+      case 'Standard': return 'text-gray-600 bg-gray-100';
       case 'Silver': return 'text-gray-600 bg-gray-100';
       case 'Gold': return 'text-yellow-600 bg-yellow-100';
       case 'Platinum': return 'text-purple-600 bg-purple-100';
@@ -141,28 +186,27 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active': return 'text-green-600 bg-green-100';
-      case 'Inactive': return 'text-gray-600 bg-gray-100';
-      case 'Suspended': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+  const getTierText = (tier: string) => {
+    switch (tier) {
+      case 'Standard': return 'Standard';
+      case 'Silver': return 'Silver';
+      case 'Gold': return 'Gold';
+      case 'Platinum': return 'Platinum';
+      default: return tier;
     }
   };
 
   const getTransactionColor = (type: string) => {
-    switch (type) {
-      case 'Earn': return 'text-green-600 bg-green-100';
-      case 'Redeem': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
+    return type === 'Earn' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
   };
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.tier.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = customers.filter(customer => {
+    const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         customer.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         customer.UserID.toString().includes(searchTerm);
+    const matchesTier = !tierFilter || customer.LoyaltyTier === tierFilter;
+    return matchesSearch && matchesTier;
+  });
 
   // Render content based on active sub-tab
   const renderSubContent = () => {
@@ -171,293 +215,85 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
         return (
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Tích điểm cho khách hàng</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Tích điểm thưởng</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chọn khách hàng</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Khách hàng</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn khách hàng</option>
                     {customers.map((customer) => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name} - {customer.email} ({customer.tier})
+                      <option key={customer.UserID} value={customer.UserID}>
+                        {customer.name} - {customer.Email}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điểm tích</label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Lý do tích điểm</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại giao dịch</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="">Chọn lý do</option>
-                    <option value="flight-booking">Đặt vé máy bay</option>
-                    <option value="upgrade">Nâng cấp hạng vé</option>
-                    <option value="special-offer">Ưu đãi đặc biệt</option>
-                    <option value="referral">Giới thiệu bạn bè</option>
-                    <option value="birthday">Sinh nhật</option>
-                    <option value="other">Lý do khác</option>
+                    <option value="">Chọn loại</option>
+                    <option value="booking">Đặt vé</option>
+                    <option value="upgrade">Nâng cấp dịch vụ</option>
+                    <option value="referral">Giới thiệu bạn</option>
+                    <option value="special">Ưu đãi đặc biệt</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Giá trị giao dịch (₫)</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số điểm</label>
                   <input
                     type="number"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="1000000"
-                  />
-                </div>
-              </div>
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả chi tiết</label>
-                <textarea
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  rows={3}
-                  placeholder="Mô tả chi tiết về việc tích điểm..."
-                ></textarea>
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                  Hủy
-                </button>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                  Tích điểm
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Lịch sử tích điểm gần đây</h3>
-              <div className="space-y-3">
-                {transactions.filter(t => t.transactionType === 'Earn').map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">{transaction.customerName}</p>
-                      <p className="text-sm text-gray-600">{transaction.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm font-medium text-green-600">+{transaction.points} điểm</span>
-                      <p className="text-xs text-gray-500">{transaction.date}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'loyalty-redeem':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Đổi điểm thưởng</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chọn khách hàng</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="">Chọn khách hàng</option>
-                    {customers.map((customer) => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name} - {customer.availablePoints} điểm
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điểm đổi</label>
-                  <input
-                    type="number"
+                    min="1"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     placeholder="1000"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại thưởng</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="">Chọn loại thưởng</option>
-                    <option value="free-baggage">Hành lý miễn phí</option>
-                    <option value="seat-upgrade">Nâng cấp ghế</option>
-                    <option value="lounge-access">Phòng chờ VIP</option>
-                    <option value="discount-voucher">Phiếu giảm giá</option>
-                    <option value="free-flight">Vé máy bay miễn phí</option>
-                    <option value="other">Khác</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Giá trị thưởng (₫)</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Mô tả</label>
                   <input
-                    type="number"
+                    type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="500000"
+                    placeholder="Tích điểm cho đặt vé chuyến bay"
                   />
                 </div>
-              </div>
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả thưởng</label>
-                <textarea
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  rows={3}
-                  placeholder="Mô tả chi tiết về phần thưởng..."
-                ></textarea>
               </div>
               <div className="mt-6 flex justify-end space-x-3">
                 <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                   Hủy
                 </button>
                 <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  Đổi điểm
+                  Tích điểm
                 </button>
               </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Danh sách thưởng có sẵn</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <div className="flex items-center mb-2">
-                    <GiftIcon className="h-6 w-6 text-blue-600 mr-2" />
-                    <h4 className="font-medium text-blue-900">Hành lý miễn phí</h4>
-                  </div>
-                  <p className="text-sm text-blue-700 mb-2">1 kiện hành lý ký gửi 20kg</p>
-                  <p className="text-lg font-bold text-blue-600">1,000 điểm</p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <div className="flex items-center mb-2">
-                    <StarIcon className="h-6 w-6 text-green-600 mr-2" />
-                    <h4 className="font-medium text-green-900">Nâng cấp ghế</h4>
-                  </div>
-                  <p className="text-sm text-green-700 mb-2">Từ Economy lên Business</p>
-                  <p className="text-lg font-bold text-green-600">5,000 điểm</p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <div className="flex items-center mb-2">
-                    <ChartBarIcon className="h-6 w-6 text-purple-600 mr-2" />
-                    <h4 className="font-medium text-purple-900">Phòng chờ VIP</h4>
-                  </div>
-                  <p className="text-sm text-purple-700 mb-2">Quyền sử dụng 2 giờ</p>
-                  <p className="text-lg font-bold text-purple-600">2,000 điểm</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'loyalty-status':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Trạng thái chương trình khuyến mãi</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-center">
-                    <StarIcon className="h-8 w-8 text-blue-600 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-900">Tổng khách hàng</p>
-                      <p className="text-2xl font-bold text-blue-600">{customers.length}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-center">
-                    <CurrencyDollarIcon className="h-8 w-8 text-green-600 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-green-900">Tổng điểm tích</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {customers.reduce((sum, customer) => sum + customer.totalPoints, 0).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <div className="flex items-center">
-                    <GiftIcon className="h-8 w-8 text-yellow-600 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-yellow-900">Điểm đã đổi</p>
-                      <p className="text-2xl font-bold text-yellow-600">
-                        {customers.reduce((sum, customer) => sum + (customer.totalPoints - customer.availablePoints), 0).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="flex items-center">
-                    <ChartBarIcon className="h-8 w-8 text-purple-600 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-purple-900">Chương trình hoạt động</p>
-                      <p className="text-2xl font-bold text-purple-600">{programs.filter(p => p.status === 'Active').length}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Phân bố khách hàng theo hạng</h3>
-              <div className="space-y-4">
-                {['Platinum', 'Gold', 'Silver', 'Bronze'].map((tier) => {
-                  const count = customers.filter(c => c.tier === tier).length;
-                  const percentage = customers.length > 0 ? (count / customers.length) * 100 : 0;
-                  return (
-                    <div key={tier} className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTierColor(tier)}`}>
-                          {tier}
-                        </span>
-                        <span className="ml-3 text-sm text-gray-600">{count} khách hàng</span>
-                      </div>
-                      <div className="flex items-center">
-                        <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${percentage}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">{percentage.toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Giao dịch điểm gần đây</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Lịch sử tích điểm</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Điểm</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Loại</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Điểm</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {transactions.map((transaction) => (
+                    {transactions.filter(t => t.transactionType === 'Earn').map((transaction) => (
                       <tr key={transaction.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{transaction.customerName}</div>
-                            <div className="text-sm text-gray-500">{transaction.customerEmail}</div>
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {transaction.customerName}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTransactionColor(transaction.transactionType)}`}>
-                            {transaction.transactionType === 'Earn' ? 'Tích điểm' : 'Đổi điểm'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <span className={transaction.transactionType === 'Earn' ? 'text-green-600' : 'text-red-600'}>
-                            {transaction.transactionType === 'Earn' ? '+' : ''}{transaction.points}
+                            Tích điểm
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          +{transaction.points}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
                           {transaction.description}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -472,14 +308,183 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
           </div>
         );
 
+      case 'loyalty-redeem':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Đổi điểm thưởng</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Khách hàng</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
+                    <option value="">Chọn khách hàng</option>
+                    {customers.map((customer) => (
+                      <option key={customer.UserID} value={customer.UserID}>
+                        {customer.name} - {customer.availablePoints} điểm
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại đổi thưởng</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
+                    <option value="">Chọn loại</option>
+                    <option value="upgrade">Nâng cấp ghế</option>
+                    <option value="baggage">Thêm hành lý</option>
+                    <option value="lounge">Phòng chờ VIP</option>
+                    <option value="discount">Giảm giá vé</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số điểm đổi</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    placeholder="2000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Giá trị tương đương (₫)</label>
+                  <input
+                    type="number"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    placeholder="200000"
+                    readOnly
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                  Hủy
+                </button>
+                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                  Đổi thưởng
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Lịch sử đổi thưởng</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Loại</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Điểm</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {transactions.filter(t => t.transactionType === 'Redeem').map((transaction) => (
+                      <tr key={transaction.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {transaction.customerName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTransactionColor(transaction.transactionType)}`}>
+                            Đổi thưởng
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {transaction.points}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {transaction.description}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {transaction.date}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'loyalty-status':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Trạng thái chương trình</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-center">
+                    <StarIcon className="h-8 w-8 text-blue-600 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">Tổng thành viên</p>
+                      <p className="text-2xl font-bold text-blue-600">{customers.length}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="flex items-center">
+                    <GiftIcon className="h-8 w-8 text-green-600 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-green-900">Điểm đã tích</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {customers.reduce((sum, c) => sum + c.LoyaltyPoints, 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="flex items-center">
+                    <ChartBarIcon className="h-8 w-8 text-purple-600 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-purple-900">Điểm đã đổi</p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {transactions.filter(t => t.transactionType === 'Redeem').reduce((sum, t) => sum + Math.abs(t.points), 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Phân bố hạng thành viên</h3>
+              <div className="space-y-4">
+                {['Platinum', 'Gold', 'Silver', 'Standard'].map((tier) => {
+                  const count = customers.filter(c => c.LoyaltyTier === tier).length;
+                  const percentage = customers.length > 0 ? (count / customers.length) * 100 : 0;
+                  return (
+                    <div key={tier} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTierColor(tier)}`}>
+                          {getTierText(tier)}
+                        </span>
+                        <span className="ml-3 text-sm text-gray-600">{count} thành viên</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm text-gray-600">{percentage.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="space-y-6">
-            {/* Search */}
+            {/* Search and Filters */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-4">
                 <div className="relative flex-1">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Tìm kiếm khách hàng..."
@@ -488,82 +493,52 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
                     className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <StarIcon className="h-8 w-8 text-blue-600 mr-3" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Tổng khách hàng</p>
-                    <p className="text-2xl font-bold text-gray-900">{customers.length}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <CurrencyDollarIcon className="h-8 w-8 text-green-600 mr-3" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Tổng điểm tích</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {customers.reduce((sum, customer) => sum + customer.totalPoints, 0).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <GiftIcon className="h-8 w-8 text-purple-600 mr-3" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Điểm đã đổi</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {customers.reduce((sum, customer) => sum + (customer.totalPoints - customer.availablePoints), 0).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <ChartBarIcon className="h-8 w-8 text-orange-600 mr-3" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Chương trình</p>
-                    <p className="text-2xl font-bold text-gray-900">{programs.length}</p>
-                  </div>
-                </div>
+                <select 
+                  value={tierFilter}
+                  onChange={(e) => setTierFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                >
+                  <option value="">Tất cả hạng</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Silver">Silver</option>
+                  <option value="Gold">Gold</option>
+                  <option value="Platinum">Platinum</option>
+                </select>
               </div>
             </div>
 
             {/* Customers List */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Danh sách khách hàng</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Danh sách thành viên</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Khách hàng
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Hạng
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Hạng thành viên
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tổng điểm
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Điểm tích lũy
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Điểm khả dụng
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Ngày tham gia
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Thao tác
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredCustomers.map((customer) => (
-                      <tr key={customer.id} className="hover:bg-gray-50">
+                      <tr key={customer.UserID} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -571,31 +546,34 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
                             </div>
                             <div>
                               <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                              <div className="text-sm text-gray-500">{customer.email}</div>
+                              <div className="text-sm text-gray-500">{customer.Email}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTierColor(customer.tier)}`}>
-                            {customer.tier}
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTierColor(customer.LoyaltyTier)}`}>
+                            {getTierText(customer.LoyaltyTier)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {customer.totalPoints.toLocaleString()}
+                          {customer.LoyaltyPoints.toLocaleString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {customer.availablePoints.toLocaleString()}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(customer.CreatedAt).toLocaleDateString('vi-VN')}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             <button className="text-blue-600 hover:text-blue-900">
-                              <EyeIcon className="h-4 w-4" />
+                              <EyeIcon className="h-5 w-5" />
                             </button>
                             <button className="text-green-600 hover:text-green-900">
-                              <PencilIcon className="h-4 w-4" />
+                              <PencilIcon className="h-5 w-5" />
                             </button>
                             <button className="text-red-600 hover:text-red-900">
-                              <TrashIcon className="h-4 w-4" />
+                              <TrashIcon className="h-5 w-5" />
                             </button>
                           </div>
                         </td>
@@ -616,16 +594,16 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            {activeSubTab === 'loyalty-earn' ? 'Tích điểm khách hàng' :
+            {activeSubTab === 'loyalty-earn' ? 'Tích điểm thưởng' :
              activeSubTab === 'loyalty-redeem' ? 'Đổi điểm thưởng' :
              activeSubTab === 'loyalty-status' ? 'Trạng thái chương trình' :
              'Chương trình khuyến mãi'}
           </h2>
           <p className="text-gray-600">
             {activeSubTab === 'loyalty-earn' ? 'Tích điểm cho khách hàng' :
-             activeSubTab === 'loyalty-redeem' ? 'Đổi điểm thành phần thưởng' :
+             activeSubTab === 'loyalty-redeem' ? 'Đổi điểm thành thưởng' :
              activeSubTab === 'loyalty-status' ? 'Theo dõi trạng thái chương trình' :
-             'Quản lý chương trình khuyến mãi và tích điểm'}
+             'Quản lý chương trình khuyến mãi và thành viên'}
           </p>
         </div>
         {activeSubTab === 'loyalty' && (
@@ -634,7 +612,7 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
-            Thêm chương trình
+            Tạo chương trình
           </button>
         )}
       </div>
@@ -646,47 +624,47 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
       {activeSubTab === 'loyalty' && showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm chương trình khuyến mãi mới</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tạo chương trình khuyến mãi mới</h3>
             <form className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên chương trình</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Tên chương trình</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Tích điểm đặt vé"
+                    placeholder="Tích điểm đặc biệt"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại chương trình</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại chương trình</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="Points">Tích điểm</option>
-                    <option value="Tier">Thành viên</option>
+                    <option value="Tier">Hạng thành viên</option>
                     <option value="Cashback">Hoàn tiền</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
                   <input
                     type="date"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày kết thúc</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Ngày kết thúc</label>
                   <input
                     type="date"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-                <textarea
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  rows={3}
-                  placeholder="Mô tả chi tiết về chương trình..."
-                ></textarea>
+                <div className="md:col-span-2">
+                  <label className="block text-md font-medium text-gray-700 mb-1">Mô tả</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    rows={3}
+                    placeholder="Mô tả chi tiết chương trình khuyến mãi..."
+                  ></textarea>
+                </div>
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button
@@ -700,7 +678,7 @@ export default function LoyaltyProgram({ activeSubTab = 'loyalty' }: LoyaltyProg
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Thêm chương trình
+                  Tạo chương trình
                 </button>
               </div>
             </form>

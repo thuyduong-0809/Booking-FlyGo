@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
+import {
   RocketLaunchIcon,
   PlusIcon,
   PencilIcon,
@@ -12,38 +12,23 @@ import {
   UserGroupIcon,
   WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
+import { Aircraft, Maintenance, Seat, Airline } from '../../types/database';
 
-interface Aircraft {
-  id: string;
+// Extended interfaces for local state management
+interface ExtendedAircraft extends Aircraft {
   name: string;
   type: string;
-  capacity: number;
-  status: 'Active' | 'Maintenance' | 'Inactive';
   registrationNumber: string;
   manufacturer: string;
-  model: string;
   yearOfManufacture: number;
 }
 
-interface Seat {
-  id: string;
-  aircraftId: string;
-  seatNumber: string;
-  class: 'Economy' | 'Business' | 'First';
-  row: number;
-  column: string;
-  status: 'Available' | 'Occupied' | 'Maintenance';
+interface ExtendedSeat extends Seat {
+  aircraftName: string;
 }
 
-interface Maintenance {
-  id: string;
-  aircraftId: string;
+interface ExtendedMaintenance extends Maintenance {
   aircraftName: string;
-  type: 'Scheduled' | 'Unscheduled' | 'Emergency';
-  description: string;
-  scheduledDate: string;
-  completedDate?: string;
-  status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
   technician: string;
   duration: number;
 }
@@ -53,56 +38,130 @@ interface AircraftManagementProps {
 }
 
 export default function AircraftManagement({ activeSubTab = 'aircraft' }: AircraftManagementProps) {
-  const [aircrafts, setAircrafts] = useState<Aircraft[]>([
+  const [aircrafts, setAircrafts] = useState<ExtendedAircraft[]>([
     {
-      id: 'AC001',
+      AircraftID: 1,
+      AircraftCode: 'VN-A001',
+      Model: 'Boeing 737-800',
+      AirlineID: 1,
+      EconomyCapacity: 180,
+      BusinessCapacity: 20,
+      FirstClassCapacity: 0,
+      SeatLayoutJSON: null,
+      LastMaintenance: '2024-01-15',
+      NextMaintenance: '2024-07-15',
+      IsActive: true,
       name: 'Boeing 737-800',
       type: 'Narrow-body',
-      capacity: 200,
-      status: 'Active',
       registrationNumber: 'VN-A001',
       manufacturer: 'Boeing',
-      model: '737-800',
       yearOfManufacture: 2018
     },
     {
-      id: 'AC002',
+      AircraftID: 2,
+      AircraftCode: 'VN-A002',
+      Model: 'Airbus A320',
+      AirlineID: 1,
+      EconomyCapacity: 150,
+      BusinessCapacity: 30,
+      FirstClassCapacity: 0,
+      SeatLayoutJSON: null,
+      LastMaintenance: '2024-01-10',
+      NextMaintenance: '2024-07-10',
+      IsActive: true,
       name: 'Airbus A320',
       type: 'Narrow-body',
-      capacity: 180,
-      status: 'Active',
       registrationNumber: 'VN-A002',
       manufacturer: 'Airbus',
-      model: 'A320',
       yearOfManufacture: 2019
     },
     {
-      id: 'AC003',
+      AircraftID: 3,
+      AircraftCode: 'VN-A003',
+      Model: 'Boeing 787-9',
+      AirlineID: 1,
+      EconomyCapacity: 250,
+      BusinessCapacity: 30,
+      FirstClassCapacity: 20,
+      SeatLayoutJSON: null,
+      LastMaintenance: '2024-01-05',
+      NextMaintenance: '2024-07-05',
+      IsActive: false,
       name: 'Boeing 787-9',
       type: 'Wide-body',
-      capacity: 300,
-      status: 'Maintenance',
       registrationNumber: 'VN-A003',
       manufacturer: 'Boeing',
-      model: '787-9',
       yearOfManufacture: 2020
     }
   ]);
 
-  const [seats, setSeats] = useState<Seat[]>([
-    { id: 'S001', aircraftId: 'AC001', seatNumber: '1A', class: 'First', row: 1, column: 'A', status: 'Available' },
-    { id: 'S002', aircraftId: 'AC001', seatNumber: '1B', class: 'First', row: 1, column: 'B', status: 'Available' },
-    { id: 'S003', aircraftId: 'AC001', seatNumber: '2A', class: 'Business', row: 2, column: 'A', status: 'Occupied' },
-    { id: 'S004', aircraftId: 'AC001', seatNumber: '2B', class: 'Business', row: 2, column: 'B', status: 'Available' },
-    { id: 'S005', aircraftId: 'AC001', seatNumber: '3A', class: 'Economy', row: 3, column: 'A', status: 'Available' },
-    { id: 'S006', aircraftId: 'AC001', seatNumber: '3B', class: 'Economy', row: 3, column: 'B', status: 'Occupied' },
-    { id: 'S007', aircraftId: 'AC001', seatNumber: '3C', class: 'Economy', row: 3, column: 'C', status: 'Maintenance' }
+  const [seats, setSeats] = useState<ExtendedSeat[]>([
+    {
+      SeatID: 1,
+      AircraftID: 1,
+      SeatNumber: '1A',
+      TravelClass: 'Business',
+      Row: 1,
+      Column: 'A',
+      Status: 'Available',
+      IsAvailable: true,
+      Features: null,
+      aircraftName: 'Boeing 737-800'
+    },
+    {
+      SeatID: 2,
+      AircraftID: 1,
+      SeatNumber: '1B',
+      TravelClass: 'Business',
+      Row: 1,
+      Column: 'B',
+      Status: 'Available',
+      IsAvailable: true,
+      Features: null,
+      aircraftName: 'Boeing 737-800'
+    },
+    {
+      SeatID: 3,
+      AircraftID: 1,
+      SeatNumber: '2A',
+      TravelClass: 'Economy',
+      Row: 2,
+      Column: 'A',
+      Status: 'Occupied',
+      IsAvailable: false,
+      Features: null,
+      aircraftName: 'Boeing 737-800'
+    },
+    {
+      SeatID: 4,
+      AircraftID: 1,
+      SeatNumber: '2B',
+      TravelClass: 'Economy',
+      Row: 2,
+      Column: 'B',
+      Status: 'Available',
+      IsAvailable: true,
+      Features: null,
+      aircraftName: 'Boeing 737-800'
+    },
+    {
+      SeatID: 5,
+      AircraftID: 1,
+      SeatNumber: '3A',
+      TravelClass: 'Economy',
+      Row: 3,
+      Column: 'A',
+      Status: 'Available',
+      IsAvailable: true,
+      Features: null,
+      aircraftName: 'Boeing 737-800'
+    }
   ]);
 
-  const [maintenances, setMaintenances] = useState<Maintenance[]>([
+  const [maintenances, setMaintenances] = useState<ExtendedMaintenance[]>([
     {
-      id: 'M001',
-      aircraftId: 'AC001',
+      id: 1,
+      aircraftID: 1,
       aircraftName: 'Boeing 737-800',
       type: 'Scheduled',
       description: 'Kiểm tra định kỳ 6 tháng',
@@ -113,8 +172,8 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
       duration: 8
     },
     {
-      id: 'M002',
-      aircraftId: 'AC003',
+      id: 2,
+      aircraftID: 3,
       aircraftName: 'Boeing 787-9',
       type: 'Unscheduled',
       description: 'Sửa chữa động cơ',
@@ -124,8 +183,8 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
       duration: 24
     },
     {
-      id: 'M003',
-      aircraftId: 'AC002',
+      id: 3,
+      aircraftID: 2,
       aircraftName: 'Airbus A320',
       type: 'Scheduled',
       description: 'Bảo dưỡng hệ thống điều hòa',
@@ -172,9 +231,9 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
 
   const filteredAircrafts = aircrafts.filter(aircraft => {
     const matchesSearch = aircraft.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         aircraft.registrationNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         aircraft.manufacturer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || aircraft.status === statusFilter;
+      aircraft.AircraftCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      aircraft.manufacturer.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !statusFilter || (statusFilter === 'Active' ? aircraft.IsActive : !aircraft.IsActive);
     return matchesSearch && matchesStatus;
   });
 
@@ -188,7 +247,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm máy bay mới</h3>
               <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên máy bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Tên máy bay</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -196,7 +255,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số đăng ký</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số đăng ký</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -204,7 +263,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Hãng sản xuất</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Hãng sản xuất</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn hãng sản xuất</option>
                     <option value="Boeing">Boeing</option>
@@ -214,7 +273,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Model</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -222,7 +281,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Năm sản xuất</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Năm sản xuất</label>
                   <input
                     type="number"
                     min="1950"
@@ -232,7 +291,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại máy bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại máy bay</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn loại</option>
                     <option value="Narrow-body">Narrow-body</option>
@@ -241,7 +300,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sức chứa</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Sức chứa</label>
                   <input
                     type="number"
                     min="1"
@@ -250,7 +309,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="Active">Hoạt động</option>
                     <option value="Maintenance">Bảo trì</option>
@@ -276,11 +335,11 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Sửa thông tin máy bay</h3>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Chọn máy bay để chỉnh sửa</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Chọn máy bay để chỉnh sửa</label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                   <option value="">Chọn máy bay</option>
                   {aircrafts.map((aircraft) => (
-                    <option key={aircraft.id} value={aircraft.id}>
+                    <option key={aircraft.AircraftID} value={aircraft.AircraftID}>
                       {aircraft.name} - {aircraft.registrationNumber}
                     </option>
                   ))}
@@ -288,7 +347,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
               </div>
               <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên máy bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Tên máy bay</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -296,7 +355,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số đăng ký</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số đăng ký</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -304,7 +363,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Hãng sản xuất</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Hãng sản xuất</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="Boeing">Boeing</option>
                     <option value="Airbus">Airbus</option>
@@ -313,7 +372,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Model</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -321,7 +380,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Năm sản xuất</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Năm sản xuất</label>
                   <input
                     type="number"
                     min="1950"
@@ -331,7 +390,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại máy bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại máy bay</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="Narrow-body">Narrow-body</option>
                     <option value="Wide-body">Wide-body</option>
@@ -339,7 +398,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sức chứa</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Sức chứa</label>
                   <input
                     type="number"
                     min="1"
@@ -348,7 +407,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="Active">Hoạt động</option>
                     <option value="Maintenance">Bảo trì</option>
@@ -374,32 +433,31 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quản lý chỗ ngồi</h3>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Chọn máy bay</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Chọn máy bay</label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                   <option value="">Chọn máy bay</option>
                   {aircrafts.map((aircraft) => (
-                    <option key={aircraft.id} value={aircraft.id}>
+                    <option key={aircraft.AircraftID} value={aircraft.AircraftID}>
                       {aircraft.name} - {aircraft.registrationNumber}
                     </option>
                   ))}
                 </select>
               </div>
-              
+
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-3">Sơ đồ chỗ ngồi</h4>
                 <div className="grid grid-cols-6 gap-2 max-w-md">
                   {seats.map((seat) => (
                     <div
-                      key={seat.id}
-                      className={`p-2 text-xs text-center rounded border cursor-pointer ${
-                        seat.status === 'Available' 
-                          ? 'bg-green-100 border-green-300 text-green-800' 
-                          : seat.status === 'Occupied'
+                      key={seat.SeatID}
+                      className={`p-2 text-sm text-center rounded border cursor-pointer ${seat.Status === 'Available'
+                        ? 'bg-green-100 border-green-300 text-green-800'
+                        : seat.Status === 'Occupied'
                           ? 'bg-blue-100 border-blue-300 text-blue-800'
                           : 'bg-red-100 border-red-300 text-red-800'
-                      }`}
+                        }`}
                     >
-                      {seat.seatNumber}
+                      {seat.SeatNumber}
                     </div>
                   ))}
                 </div>
@@ -421,7 +479,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
 
               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số ghế</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -429,7 +487,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Hạng ghế</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Hạng ghế</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="Economy">Economy</option>
                     <option value="Business">Business</option>
@@ -437,7 +495,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="Available">Trống</option>
                     <option value="Occupied">Đã đặt</option>
@@ -464,18 +522,18 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Theo dõi bảo trì máy bay</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Máy bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Máy bay</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn máy bay</option>
                     {aircrafts.map((aircraft) => (
-                      <option key={aircraft.id} value={aircraft.id}>
+                      <option key={aircraft.AircraftID} value={aircraft.AircraftID}>
                         {aircraft.name} - {aircraft.registrationNumber}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại bảo trì</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại bảo trì</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn loại</option>
                     <option value="Scheduled">Định kỳ</option>
@@ -484,14 +542,14 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày lên lịch</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Ngày lên lịch</label>
                   <input
                     type="date"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Kỹ thuật viên</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Kỹ thuật viên</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -499,7 +557,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả công việc</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Mô tả công việc</label>
                   <textarea
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     rows={3}
@@ -523,12 +581,12 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Máy bay</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày lên lịch</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kỹ thuật viên</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Máy bay</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Loại</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Ngày lên lịch</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Kỹ thuật viên</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -543,7 +601,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {maintenance.description}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
                           {maintenance.scheduledDate}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -570,7 +628,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-4">
                 <div className="relative flex-1">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Tìm kiếm máy bay..."
@@ -579,7 +637,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                     className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   />
                 </div>
-                <select 
+                <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -601,29 +659,29 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Máy bay
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Số đăng ký
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Hãng sản xuất
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Sức chứa
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Trạng thái
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Thao tác
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredAircrafts.map((aircraft) => (
-                      <tr key={aircraft.id} className="hover:bg-gray-50">
+                      <tr key={aircraft.AircraftID} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -631,34 +689,34 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                             </div>
                             <div>
                               <div className="text-sm font-medium text-gray-900">{aircraft.name}</div>
-                              <div className="text-sm text-gray-500">{aircraft.model}</div>
+                              <div className="text-sm text-gray-500">{aircraft.Model}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {aircraft.registrationNumber}
+                          {aircraft.AircraftCode}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {aircraft.manufacturer}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {aircraft.capacity} ghế
+                          {aircraft.EconomyCapacity + aircraft.BusinessCapacity + aircraft.FirstClassCapacity} ghế
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(aircraft.status)}`}>
-                            {getStatusText(aircraft.status)}
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${aircraft.IsActive ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}`}>
+                            {aircraft.IsActive ? 'Hoạt động' : 'Không hoạt động'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             <button className="text-blue-600 hover:text-blue-900">
-                              <EyeIcon className="h-4 w-4" />
+                              <EyeIcon className="h-5 w-5" />
                             </button>
                             <button className="text-green-600 hover:text-green-900">
-                              <PencilIcon className="h-4 w-4" />
+                              <PencilIcon className="h-5 w-5" />
                             </button>
                             <button className="text-red-600 hover:text-red-900">
-                              <TrashIcon className="h-4 w-4" />
+                              <TrashIcon className="h-5 w-5" />
                             </button>
                           </div>
                         </td>
@@ -680,17 +738,17 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
             {activeSubTab === 'aircraft-add' ? 'Thêm máy bay mới' :
-             activeSubTab === 'aircraft-edit' ? 'Sửa thông tin máy bay' :
-             activeSubTab === 'aircraft-seats' ? 'Quản lý chỗ ngồi' :
-             activeSubTab === 'aircraft-maintenance' ? 'Theo dõi bảo trì máy bay' :
-             'Quản lý máy bay'}
+              activeSubTab === 'aircraft-edit' ? 'Sửa thông tin máy bay' :
+                activeSubTab === 'aircraft-seats' ? 'Quản lý chỗ ngồi' :
+                  activeSubTab === 'aircraft-maintenance' ? 'Theo dõi bảo trì máy bay' :
+                    'Quản lý máy bay'}
           </h2>
           <p className="text-gray-600">
             {activeSubTab === 'aircraft-add' ? 'Thêm máy bay mới vào hệ thống' :
-             activeSubTab === 'aircraft-edit' ? 'Chỉnh sửa thông tin máy bay' :
-             activeSubTab === 'aircraft-seats' ? 'Quản lý sơ đồ chỗ ngồi máy bay' :
-             activeSubTab === 'aircraft-maintenance' ? 'Theo dõi và quản lý lịch trình bảo trì' :
-             'Quản lý thông tin máy bay và lịch trình bảo trì'}
+              activeSubTab === 'aircraft-edit' ? 'Chỉnh sửa thông tin máy bay' :
+                activeSubTab === 'aircraft-seats' ? 'Quản lý sơ đồ chỗ ngồi máy bay' :
+                  activeSubTab === 'aircraft-maintenance' ? 'Theo dõi và quản lý lịch trình bảo trì' :
+                    'Quản lý thông tin máy bay và lịch trình bảo trì'}
           </p>
         </div>
         {activeSubTab === 'aircraft' && (
@@ -714,7 +772,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm máy bay mới</h3>
             <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tên máy bay</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Tên máy bay</label>
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -722,7 +780,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Số đăng ký</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Số đăng ký</label>
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -730,7 +788,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hãng sản xuất</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Hãng sản xuất</label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                   <option value="">Chọn hãng sản xuất</option>
                   <option value="Boeing">Boeing</option>
@@ -740,7 +798,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Model</label>
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -748,7 +806,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Năm sản xuất</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Năm sản xuất</label>
                 <input
                   type="number"
                   min="1950"
@@ -758,7 +816,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sức chứa</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Sức chứa</label>
                 <input
                   type="number"
                   min="1"

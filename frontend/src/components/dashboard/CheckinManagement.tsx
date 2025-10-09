@@ -13,16 +13,15 @@ import {
   TicketIcon
 } from '@heroicons/react/24/outline';
 
-interface Checkin {
-  id: string;
+import { CheckIn as DbCheckIn } from '../../types/database';
+
+interface Checkin extends DbCheckIn {
   bookingNumber: string;
   passengerName: string;
   flightNumber: string;
   route: string;
   seatNumber: string;
   checkinTime: string;
-  checkinType: 'Online' | 'Airport';
-  baggageWeight: number;
   status: 'Checked In' | 'Boarding' | 'Boarded' | 'No Show';
 }
 
@@ -31,39 +30,57 @@ interface CheckinManagementProps { activeSubTab?: string }
 export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinManagementProps) {
   const [checkins, setCheckins] = useState<Checkin[]>([
     {
-      id: 'CI001',
+      CheckinID: 1,
+      BookingFlightID: 1,
+      PassengerID: 1,
+      CheckinType: 'Online',
+      CheckedInAt: '2024-01-15T08:00:00Z',
+      BoardingPassURL: '#',
+      BaggageCount: 1,
+      BaggageWeight: 20,
+      BoardingStatus: 'Boarded',
       bookingNumber: 'FG240115001',
       passengerName: 'Nguyễn Văn A',
-      flightNumber: 'FG001',
+      flightNumber: 'VN001',
       route: 'SGN → HAN',
       seatNumber: '12A',
       checkinTime: '08:00',
-      checkinType: 'Online',
-      baggageWeight: 20,
       status: 'Checked In'
     },
     {
-      id: 'CI002',
+      CheckinID: 2,
+      BookingFlightID: 2,
+      PassengerID: 2,
+      CheckinType: 'Airport',
+      CheckedInAt: '2024-01-15T11:15:00Z',
+      BoardingPassURL: '#',
+      BaggageCount: 1,
+      BaggageWeight: 25,
+      BoardingStatus: 'Boarded',
       bookingNumber: 'FG240115002',
       passengerName: 'Trần Thị B',
-      flightNumber: 'FG002',
+      flightNumber: 'VN002',
       route: 'HAN → DAD',
       seatNumber: '15B',
       checkinTime: '11:15',
-      checkinType: 'Airport',
-      baggageWeight: 25,
       status: 'Boarding'
     },
     {
-      id: 'CI003',
+      CheckinID: 3,
+      BookingFlightID: 3,
+      PassengerID: 3,
+      CheckinType: 'Online',
+      CheckedInAt: '2024-01-15T13:30:00Z',
+      BoardingPassURL: '#',
+      BaggageCount: 1,
+      BaggageWeight: 18,
+      BoardingStatus: 'Boarded',
       bookingNumber: 'FG240115003',
       passengerName: 'Lê Văn C',
-      flightNumber: 'FG003',
+      flightNumber: 'VN003',
       route: 'DAD → SGN',
       seatNumber: '8C',
       checkinTime: '13:30',
-      checkinType: 'Online',
-      baggageWeight: 18,
       status: 'Boarded'
     }
   ]);
@@ -111,7 +128,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Check-in tại sân bay</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số đặt chỗ</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số đặt chỗ</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -119,7 +136,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số chuyến bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số chuyến bay</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -127,7 +144,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên hành khách</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Tên hành khách</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -135,7 +152,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số ghế</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -143,7 +160,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trọng lượng hành lý (kg)</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trọng lượng hành lý (kg)</label>
                   <input
                     type="number"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -151,7 +168,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại hành lý</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại hành lý</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn loại hành lý</option>
                     <option value="carry-on">Hành lý xách tay</option>
@@ -173,8 +190,8 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Hành khách chờ check-in</h3>
               <div className="space-y-3">
-                {checkins.filter(c => c.checkinType === 'Airport').map((checkin) => (
-                  <div key={checkin.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                {checkins.filter(c => c.CheckinType === 'Airport').map((checkin) => (
+                  <div key={checkin.CheckinID} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">{checkin.passengerName}</p>
                       <p className="text-sm text-gray-600">{checkin.bookingNumber} - {checkin.flightNumber}</p>
@@ -198,7 +215,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Check-in trực tuyến</h3>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm đặt chỗ</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Tìm kiếm đặt chỗ</label>
                 <div className="flex space-x-4">
                   <input
                     type="text"
@@ -212,7 +229,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chọn ghế</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Chọn ghế</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn ghế</option>
                     <option value="12A">12A</option>
@@ -224,7 +241,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại hành lý</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại hành lý</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn loại hành lý</option>
                     <option value="carry-on">Hành lý xách tay (7kg)</option>
@@ -233,7 +250,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số lượng hành lý ký gửi</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số lượng hành lý ký gửi</label>
                   <input
                     type="number"
                     min="0"
@@ -243,7 +260,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trọng lượng hành lý (kg)</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trọng lượng hành lý (kg)</label>
                   <input
                     type="number"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -264,8 +281,8 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Check-in trực tuyến gần đây</h3>
               <div className="space-y-3">
-                {checkins.filter(c => c.checkinType === 'Online').map((checkin) => (
-                  <div key={checkin.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                {checkins.filter(c => c.CheckinType === 'Online').map((checkin) => (
+                  <div key={checkin.CheckinID} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">{checkin.passengerName}</p>
                       <p className="text-sm text-gray-600">{checkin.bookingNumber} - {checkin.flightNumber}</p>
@@ -290,7 +307,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quản lý hành lý</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số đặt chỗ</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số đặt chỗ</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -298,7 +315,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên hành khách</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Tên hành khách</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -306,7 +323,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại hành lý</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại hành lý</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn loại hành lý</option>
                     <option value="carry-on">Hành lý xách tay</option>
@@ -315,7 +332,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trọng lượng (kg)</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trọng lượng (kg)</label>
                   <input
                     type="number"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -323,7 +340,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số lượng</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số lượng</label>
                   <input
                     type="number"
                     min="1"
@@ -333,7 +350,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phí hành lý (₫)</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Phí hành lý (₫)</label>
                   <input
                     type="number"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -342,7 +359,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                 </div>
               </div>
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Ghi chú</label>
                 <textarea
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   rows={3}
@@ -401,7 +418,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quản lý lên máy bay</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chuyến bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Chuyến bay</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn chuyến bay</option>
                     <option value="FG001">FG001 - SGN → HAN</option>
@@ -410,7 +427,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cổng lên máy bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Cổng lên máy bay</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn cổng</option>
                     <option value="Gate A1">Cổng A1</option>
@@ -420,14 +437,14 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian bắt đầu lên máy bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Thời gian bắt đầu lên máy bay</label>
                   <input
                     type="time"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian đóng cổng</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Thời gian đóng cổng</label>
                   <input
                     type="time"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -450,16 +467,16 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên hành khách</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số đặt chỗ</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ghế</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Tên hành khách</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Số đặt chỗ</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Ghế</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredCheckins.map((checkin) => (
-                      <tr key={checkin.id} className="hover:bg-gray-50">
+                      <tr key={checkin.CheckinID} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {checkin.passengerName}
                         </td>
@@ -495,7 +512,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-4">
                 <div className="relative flex-1">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Tìm kiếm check-in..."
@@ -527,32 +544,32 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Số đặt chỗ
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Hành khách
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Chuyến bay
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Ghế
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Loại check-in
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Trạng thái
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Thao tác
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredCheckins.map((checkin) => (
-                      <tr key={checkin.id} className="hover:bg-gray-50">
+                      <tr key={checkin.CheckinID} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -560,21 +577,21 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                             </div>
                             <div>
                               <div className="text-sm font-medium text-gray-900">{checkin.bookingNumber}</div>
-                              <div className="text-sm text-gray-500">{checkin.id}</div>
+                              <div className="text-sm text-gray-500">#{checkin.CheckinID}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
                           {checkin.passengerName}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-mdmd text-gray-900">
                           {checkin.flightNumber}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
                           {checkin.seatNumber}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {checkin.checkinType}
+                        <td className="px-6 py-4 whitespace-nowrap text-mdmd text-gray-900">
+                          {checkin.CheckinType}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.status)}`}>
@@ -584,13 +601,13 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             <button className="text-blue-600 hover:text-blue-900">
-                              <EyeIcon className="h-4 w-4" />
+                              <EyeIcon className="h-5 w-5" />
                             </button>
                             <button className="text-green-600 hover:text-green-900">
-                              <PencilIcon className="h-4 w-4" />
+                              <PencilIcon className="h-5 w-5" />
                             </button>
                             <button className="text-red-600 hover:text-red-900">
-                              <TrashIcon className="h-4 w-4" />
+                              <TrashIcon className="h-5 w-5" />
                             </button>
                           </div>
                         </td>
@@ -647,7 +664,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
             <form className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số đặt chỗ</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số đặt chỗ</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -655,7 +672,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chuyến bay</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Chuyến bay</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="">Chọn chuyến bay</option>
                     <option value="FG001">FG001 - SGN → HAN</option>
@@ -664,7 +681,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên hành khách</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Tên hành khách</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -672,7 +689,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số ghế</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -680,14 +697,14 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại check-in</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Loại check-in</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
                     <option value="Online">Trực tuyến</option>
                     <option value="Airport">Tại sân bay</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trọng lượng hành lý (kg)</label>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trọng lượng hành lý (kg)</label>
                   <input
                     type="number"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
