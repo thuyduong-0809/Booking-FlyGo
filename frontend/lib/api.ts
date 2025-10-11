@@ -33,9 +33,9 @@ export const requestApi = async (
     });
 
     // Nếu login/register trả token thì lưu
-    if (res.data?.access_token) {
-      localStorage.setItem("access_token", res.data.access_token);
-    }
+    // if (res.data?.access_token) {
+    //   localStorage.setItem("access_token", res.data.access_token);
+    // }
 
     return res.data;
   } catch (error: any) {

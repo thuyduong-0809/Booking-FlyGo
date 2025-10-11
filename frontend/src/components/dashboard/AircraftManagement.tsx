@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   RocketLaunchIcon,
   PlusIcon,
@@ -13,6 +13,7 @@ import {
   WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import { Aircraft, Maintenance, Seat, Airline } from '../../types/database';
+import { requestApi } from 'lib/api';
 
 // Extended interfaces for local state management
 interface ExtendedAircraft extends Aircraft {
@@ -38,6 +39,56 @@ interface AircraftManagementProps {
 }
 
 export default function AircraftManagement({ activeSubTab = 'aircraft' }: AircraftManagementProps) {
+
+  const [loading, setLoading] = useState(true);
+  // const [aircrafts,setAircrafts] = useState([])
+  const [AircraftsList, setAircraftsList] = useState([]);
+  const [aircraftCode, setAircraftCode] = useState('');
+  const [model, setModel] = useState('');
+  const [airlineId, setAirlineId] = useState<number | null>(null);
+
+  const [economyCapacity, setEconomyCapacity] = useState<number | null>(null);
+  const [businessCapacity, setBusinessCapacity] = useState<number | null>(null);
+  const [firstClassCapacity, setFirstClassCapacity] = useState<number | null>(null);
+
+  const [seatLayoutJSON, setSeatLayoutJSON] = useState({
+    layout: {
+      Economy: '',
+      Business: '',
+      First: ''
+    },
+    hasWiFi: false,
+    hasPremiumEntertainment: false
+  });
+
+  const [lastMaintenance, setLastMaintenance] = useState('');
+  const [nextMaintenance, setNextMaintenance] = useState('');
+  const [isActive, setIsActive] = useState(true);
+
+
+  useEffect(() => {
+    loadAircrafts()
+    setLoading(false);
+   }, []);
+
+  const loadAircrafts = async () =>{
+     await requestApi("aircrafts", "GET").then((res:any)=>{
+      console.log("res",res);
+      if(res.success){
+        setAircraftsList(res.data)
+      }
+     }).catch((error:any)=>{
+      console.error(error)
+     });
+    }
+
+
+  const addAircraft = ():void => {
+     
+    
+  }
+
+
   const [aircrafts, setAircrafts] = useState<ExtendedAircraft[]>([
     {
       AircraftID: 1,
@@ -229,14 +280,18 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
     }
   };
 
-  const filteredAircrafts = aircrafts.filter(aircraft => {
-    const matchesSearch = aircraft.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      aircraft.AircraftCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      aircraft.manufacturer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || (statusFilter === 'Active' ? aircraft.IsActive : !aircraft.IsActive);
+  const filteredAircrafts = AircraftsList.filter((aircraft:any) => {
+    const matchesSearch = 
+      aircraft.aircraftCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      aircraft.airline.airlineName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !statusFilter || (statusFilter === 'Active' ? aircraft.isActive : !aircraft.isActive);
     return matchesSearch && matchesStatus;
   });
 
+  
+    if (loading) {
+    return <div>Loading...</div>;
+  }
   // Render content based on active sub-tab
   const renderSubContent = () => {
     switch (activeSubTab) {
@@ -666,7 +721,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                         Số đăng ký
                       </th>
                       <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Hãng sản xuất
+                        Hãng hàng không
                       </th>
                       <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Sức chứa
@@ -680,31 +735,32 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredAircrafts.map((aircraft) => (
-                      <tr key={aircraft.AircraftID} className="hover:bg-gray-50">
+                    {filteredAircrafts.map((aircraft:any) => (
+                      // console.log('aircraft', aircraft),
+                      <tr key={aircraft.aircraftId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                               <RocketLaunchIcon className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{aircraft.name}</div>
-                              <div className="text-sm text-gray-500">{aircraft.Model}</div>
+                              <div className="text-sm font-medium text-gray-900">{aircraft.aircraftCode}</div>
+                              <div className="text-sm text-gray-500">{aircraft.model}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {aircraft.AircraftCode}
+                          {aircraft.aircraftCode}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {aircraft.manufacturer}
+                          {aircraft.airline.airlineName}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {aircraft.EconomyCapacity + aircraft.BusinessCapacity + aircraft.FirstClassCapacity} ghế
+                          {aircraft.economyCapacity + aircraft.businessCapacity + aircraft.firstClassCapacity} ghế
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${aircraft.IsActive ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}`}>
-                            {aircraft.IsActive ? 'Hoạt động' : 'Không hoạt động'}
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${aircraft.isActive ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}`}>
+                            {aircraft.isActive ? 'Hoạt động' : 'Không hoạt động'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -777,7 +833,10 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="Boeing 737-800"
-                />
+                  onChange={(val) => {
+                    setModel(val.target.value);
+                  }}
+                 />
               </div>
               <div>
                 <label className="block text-md font-medium text-gray-700 mb-1">Số đăng ký</label>
@@ -785,16 +844,21 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="VN-A001"
+                  onChange={(val)=>{
+                    setAircraftCode(val.target.value)
+                  }}
                 />
               </div>
               <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Hãng sản xuất</label>
+                <label className="block text-md font-medium text-gray-700 mb-1">Hãng hàng không</label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                  <option value="">Chọn hãng sản xuất</option>
-                  <option value="Boeing">Boeing</option>
-                  <option value="Airbus">Airbus</option>
-                  <option value="Embraer">Embraer</option>
-                  <option value="ATR">ATR</option>
+                  <option value="">Chọn hãng hàng không</option>
+                  <option value="1">Vietnam Airlines</option>
+                  <option value="Airbus">VietJet Air</option>
+                  <option value="Embraer">Bamboo Airways</option>
+                  <option value="ATR">Pacific Airlines</option>
+                  <option value="">Vietravel Airlines</option>
+                  <option value="">Singapore Airlines</option>
                 </select>
               </div>
               <div>
