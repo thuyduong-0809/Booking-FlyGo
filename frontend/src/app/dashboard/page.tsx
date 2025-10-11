@@ -17,7 +17,8 @@ import {
   ArrowDownIcon,
   MapPinIcon,
   ChatBubbleLeftRightIcon,
-  PresentationChartLineIcon
+  PresentationChartLineIcon,
+  ArrowRightStartOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { 
   DashboardStats, 
@@ -39,6 +40,9 @@ import CheckinManagement from '../../components/dashboard/CheckinManagement';
 import CustomerManagement from '../../components/dashboard/CustomerManagement';
 import LoyaltyProgram from '../../components/dashboard/LoyaltyProgram';
 import Reports from '../../components/dashboard/Reports';
+import Button from '@/shared/Button';
+import { useAppDispatch } from 'stores/hookStore';
+import { logout } from 'stores/features/masterSlice';
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -51,12 +55,18 @@ export default function DashboardPage() {
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [loyaltyOpen, setLoyaltyOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
+  const dispatch = useAppDispatch();
 
   // Đảm bảo component render nhất quán
   React.useEffect(() => {
     setIsClient(true);
   }, []);
-
+  const handleLogout = () => {
+      dispatch(logout());
+      document.cookie = "access_token=; path=/; max-age=0";
+      // Nếu muốn redirect về trang login:
+      window.location.href = "/login"; 
+     };
   // Helper function để xử lý click navigation
   const handleNavClick = (tab: string, submenu?: string) => {
     if (!sidebarOpen) {
@@ -783,6 +793,14 @@ export default function DashboardPage() {
                   <ChatBubbleLeftRightIcon className="h-6 w-6 mr-3" />
                   Hỗ trợ khách hàng
                 </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors text-gray-700 hover:bg-gray-100"
+                >
+                  <ArrowRightStartOnRectangleIcon className="h-6 w-6 mr-3" />
+                  Đăng xuất
+                </button>
+
               </div>
             )}
           </nav>

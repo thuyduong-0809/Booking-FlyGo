@@ -14,6 +14,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
 
   const handleLogout = () => {
     dispatch(logout());
+    document.cookie = "access_token=; path=/; max-age=0";
     // Nếu muốn redirect về trang login:
     window.location.href = "/login"; 
    };
