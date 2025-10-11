@@ -6,9 +6,9 @@ import ButtonPrimary from "@/shared/ButtonPrimary";
 import Image from "next/image";
 import Link from "next/link";
 import {requestApi } from "lib/api";
-import { loginSuccess, updateLocalStorage } from "stores/features/masterSlice";
+import { loginSuccess, logout, updateLocalStorage } from "stores/features/masterSlice";
 import { useAppDispatch, useAppSelector } from "stores/hookStore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 export interface PageLoginProps {}
@@ -29,10 +29,33 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
   const dispatch = useAppDispatch();
   const masterStore = useAppSelector((state) => state.master);
   const router = useRouter();
+  const [approve, setApprove] = useState(false);
+    const query = useSearchParams();
+  // useEffect(() => {
+  //   console.log("Master store thay đổi:", masterStore);
+  //   if(masterStore.is_login ){
+  //     router.push("/");
+  //   }
+  // }, [masterStore]);
 
-  useEffect(() => {
-    console.log("Master store thay đổi:", masterStore);
-  }, [masterStore]);
+
+   var oneTime = false;
+   useEffect(() => {
+    if (!oneTime) {
+      const action = query.get("action");
+      if (action == "logout") {
+        dispatch(logout());
+        dispatch(updateLocalStorage());
+        setApprove(true);
+      } else if (!masterStore.isAuth) {
+        setApprove(true)
+      } else {
+        router.push("/")
+      }
+
+      oneTime = true;
+    }
+  }, []);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('pendingEmail');
@@ -50,11 +73,22 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
      try {
      const res = await requestApi("auth/login", "POST", { email, password });
      if(res.success){
+      console.log("==> RES LOGIN:", res);
+
       dispatch(loginSuccess({ ...res }));
       dispatch(updateLocalStorage());
+      document.cookie = `access_token=${res.data.accessToken}; path=/; max-age=3600; secure; samesite=strict`;
+      // if(res.data.user.role === "SystemAdmin"){
+      //   router.push("/dashboard")
+      // }
       // console.log("Login success:", res);
+      // if(res.user.role === "SystemAdmin" || res.user.role === "Staff"){
+      //   alert("Bạn không có quyền truy cập trang này")
+      //   dispatch(updateLocalStorage());
+      //   return;
+      // }
       alert("Login thành công 🎉");
-       router.push("/"); 
+      router.push("/"); 
      }else {
          setError("Email hoặc mật khẩu không đúng")
      }
@@ -66,7 +100,11 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
     }
    };
 
-  return (
+    if(!approve){
+      
+      
+    }else{
+        return (
     <div className={`nc-PageLogin`}>
       <div className="container mb-24 lg:mb-32">
         <h2 className="my-20 flex items-center text-3xl md:text-5xl font-semibold justify-center">
@@ -149,6 +187,7 @@ const PageLogin: FC<PageLoginProps> = ({}) => {
       </div>
     </div>
   );
+    }
 };
 
 export default PageLogin;

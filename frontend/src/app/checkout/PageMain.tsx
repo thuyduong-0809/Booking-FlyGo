@@ -9,7 +9,6 @@ import Input from "@/shared/Input";
 import Label from "@/components/Label";
 import Textarea from "@/shared/Textarea";
 import ButtonPrimary from "@/shared/ButtonPrimary";
-import StartRating from "@/components/StartRating";
 import NcModal from "@/shared/NcModal";
 import ModalSelectDate from "@/components/ModalSelectDate";
 import converSelectedDateToString from "@/utils/converSelectedDateToString";
@@ -62,7 +61,6 @@ const CheckOutPagePageMain: FC<CheckOutPagePageMainProps> = ({
               2 beds · 2 baths
             </span>
             <div className="w-10 border-b border-neutral-200  dark:border-neutral-700"></div>
-            <StartRating />
           </div>
         </div>
         <div className="flex flex-col space-y-4">

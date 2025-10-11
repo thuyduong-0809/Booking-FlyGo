@@ -9,7 +9,7 @@ const initialState = {
   is_login: false,
   access_token: "",
   isAdmin:false,
-//   isAuth:false,
+  isAuth:false,
   user: {
     avatar:'',
     id:''

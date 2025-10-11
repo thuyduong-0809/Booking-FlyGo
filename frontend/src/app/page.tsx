@@ -153,22 +153,30 @@ function PageHome() {
 
   const [message, setMessage] = useState("");
   const router = useRouter();
-  const {access_token } = useAppSelector((state) => state.master);
+  const masterStore = useAppSelector((state) => state.master);
 
-  useEffect(() => {
+  // useEffect(() => {
   
 
-    if (!access_token) {
-      router.push("/login"); // nếu chưa login thì quay lại trang login
-      return;
+  //   if (!access_token) {
+  //     router.push("/login"); // nếu chưa login thì quay lại trang login
+  //     return;
+  //   }
+  //   axios
+  //     .get("/", {
+  //       headers: { Authorization: `Bearer ${access_token}` },
+  //     })
+  //     .then((res) => setMessage(res.data.message))
+  //     .catch(() => router.push("/login"));
+  // }, [router]);
+
+  useEffect(() => {
+    if(masterStore.isAdmin){
+      router.push("/dashboard");
     }
-    axios
-      .get("/", {
-        headers: { Authorization: `Bearer ${access_token}` },
-      })
-      .then((res) => setMessage(res.data.message))
-      .catch(() => router.push("/login"));
-  }, [router]);
+  },[masterStore.isAdmin])
+    
+
   return (
     <main className="nc-PageHome relative overflow-hidden">
       {/* GLASSMOPHIN */}
