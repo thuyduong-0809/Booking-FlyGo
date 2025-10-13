@@ -35,6 +35,12 @@ export class AircraftsService {
             async create(createAircraftDto: CreateAircraftDto): Promise<any> {
                     let response = { ...common_response };
                     try {
+                        const existingAircraft = await this.aircraftRepository.findOne({ where: { aircraftCode:createAircraftDto.aircraftCode} });
+                        if(existingAircraft){
+                            response.success = false;
+                            response.message = 'Aircraft existing';
+                            response.errorCode = 'AIRCRAFT_EXISTS';
+                        }
                         const airline = await this.airlineRepository.findOneBy({ airlineId: createAircraftDto.airlineId });
                         if (!airline) {
                             response.success = false;
