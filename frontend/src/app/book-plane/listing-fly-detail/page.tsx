@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useBooking } from '../BookingContext';
 import { Calendar } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
@@ -20,6 +22,8 @@ interface FlightInfo {
 }
 
 const FlightDetailPage = () => {
+  const router = useRouter();
+  const { state, setDates } = useBooking();
   const [selectedDepartureDate, setSelectedDepartureDate] = useState<Date | null>(null);
   const [selectedReturnDate, setSelectedReturnDate] = useState<Date | null>(null);
   const [departureMonth, setDepartureMonth] = useState(10);
@@ -155,7 +159,13 @@ const FlightDetailPage = () => {
               return (
                 <button
                   key={day}
-                  onClick={() => !isDisabled && onChange(date)}
+                  onClick={() => {
+                    if (isDisabled) return;
+                    onChange(date);
+                    const depISO = title.includes("Chuyến đi") ? date.toISOString().split('T')[0] : (selectedDepartureDate ? selectedDepartureDate.toISOString().split('T')[0] : undefined);
+                    const retISO = title.includes("Chuyến về") ? date.toISOString().split('T')[0] : (selectedReturnDate ? selectedReturnDate.toISOString().split('T')[0] : undefined);
+                    setDates(depISO, retISO);
+                  }}
                   disabled={isDisabled}
                   className={`
                     text-center py-4 rounded-lg text-base transition-colors border
@@ -198,10 +208,10 @@ const FlightDetailPage = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-black">CHUYẾN BAY KHỨ HỒI | 2 Người lớn</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-black">CHUYẾN BAY {state.tripType === "oneway" ? "1 CHIỀU" : "KHỨ HỒI"} | {state.passengers} Người lớn</h1>
               <div className="text-base md:text-lg text-black mt-2 font-medium">
-                <div>• Điểm khởi hành Tp. Hồ Chí Minh (SGN)</div>
-                <div>• Điểm đến Hà Nội (HAN)</div>
+                <div>• Điểm khởi hành {state.origin}</div>
+                <div>• Điểm đến {state.destination}</div>
               </div>
             </div>
             <div className="flex space-x-2">
@@ -242,15 +252,18 @@ const FlightDetailPage = () => {
                 "Chuyến đi Tp. Hồ Chí Minh (SGN) → Hà Nội (HAN)"
               )}
 
-              {/* Return Flight */}
-              {renderCalendar(
+              {/* Return Flight - chỉ hiển thị khi là khứ hồi */}
+              {state.tripType === "round" && renderCalendar(
                 selectedReturnDate,
                 setSelectedReturnDate,
                 returnPrices,
                 "Chuyến về Hà Nội (HAN) → Tp. Hồ Chí Minh (SGN)"
               )}
 
-              <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-lg transition-colors text-lg mt-8">
+              <button
+                onClick={() => router.push('/book-plane/select-flight')}
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-lg transition-colors text-lg mt-8"
+              >
                 Đi tiếp
               </button>
             </div>
@@ -314,46 +327,48 @@ const FlightDetailPage = () => {
                 </div>
               </div>
 
-              {/* Return Flight */}
-              <div className="mb-8">
-                <h4 className="font-bold text-lg text-black mb-4 bg-yellow-100 px-3 py-2 rounded">Chuyến về</h4>
-                <div className="space-y-4">
-                  <div className="text-base font-medium text-black">
-                    Hà Nội (HAN) → Tp. Hồ Chí Minh (SGN)
-                  </div>
-                  <div className="text-base text-gray-600 border-b border-dashed pb-3">
-                    {selectedReturnDate 
-                      ? selectedReturnDate.toLocaleDateString('vi-VN')
-                      : 'Chọn ngày về'
-                    }
-                  </div>
+              {/* Return Flight - chỉ hiển thị khi là khứ hồi */}
+              {state.tripType === "round" && (
+                <div className="mb-8">
+                  <h4 className="font-bold text-lg text-black mb-4 bg-yellow-100 px-3 py-2 rounded">Chuyến về</h4>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">Giá vé</label>
-                      <input
-                        type="text"
-                        className="w-full border-2 border-gray-300 rounded px-3 py-2 text-base bg-gray-50"
-                        value={selectedReturnDate ? `${formatPrice(getPriceForDate(selectedReturnDate, returnPrices)?.price || 0)} VND` : ''}
-                        readOnly
-                      />
+                    <div className="text-base font-medium text-black">
+                      Hà Nội (HAN) → Tp. Hồ Chí Minh (SGN)
                     </div>
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">Thuế, phí</label>
-                      <input
-                        type="text"
-                        className="w-full border-2 border-gray-300 rounded px-3 py-2 text-base"
-                        placeholder="0 VND"
-                      />
+                    <div className="text-base text-gray-600 border-b border-dashed pb-3">
+                      {selectedReturnDate 
+                        ? selectedReturnDate.toLocaleDateString('vi-VN')
+                        : 'Chọn ngày về'
+                      }
                     </div>
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">Dịch vụ</label>
-                      <select className="w-full border-2 border-gray-300 rounded px-3 py-2 text-base">
-                        <option>0 VND</option>
-                      </select>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-black mb-2">Giá vé</label>
+                        <input
+                          type="text"
+                          className="w-full border-2 border-gray-300 rounded px-3 py-2 text-base bg-gray-50"
+                          value={selectedReturnDate ? `${formatPrice(getPriceForDate(selectedReturnDate, returnPrices)?.price || 0)} VND` : ''}
+                          readOnly
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-black mb-2">Thuế, phí</label>
+                        <input
+                          type="text"
+                          className="w-full border-2 border-gray-300 rounded px-3 py-2 text-base"
+                          placeholder="0 VND"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-black mb-2">Dịch vụ</label>
+                        <select className="w-full border-2 border-gray-300 rounded px-3 py-2 text-base">
+                          <option>0 VND</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Total */}
               <div className="bg-red-600 text-white p-6 rounded-lg text-center shadow-lg">

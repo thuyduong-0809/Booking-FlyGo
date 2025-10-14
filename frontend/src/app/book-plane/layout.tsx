@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { BookingProvider } from "./BookingContext";
 
 export const metadata: Metadata = {
   title: "Đặt vé máy bay - FlyGo",
@@ -10,5 +11,5 @@ export default function BookPlaneLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <BookingProvider>{children}</BookingProvider>;
 }

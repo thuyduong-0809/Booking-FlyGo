@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useBooking } from '../BookingContext';
 
 interface Passenger {
   id: number;
@@ -20,8 +23,9 @@ interface Passenger {
 }
 
 export default function PassengersPage() {
-  // Mock data - in real app, this would come from previous booking step
-  const totalPassengers = 2; // This should come from booking context
+  const router = useRouter();
+  const { state, grandTotal } = useBooking();
+  const totalPassengers = state.passengers;
   
   const [passengers, setPassengers] = useState<Passenger[]>(
     Array.from({ length: totalPassengers }, (_, index) => ({
@@ -58,26 +62,8 @@ export default function PassengersPage() {
     return new Intl.NumberFormat('vi-VN').format(amount);
   };
 
-  // Mock flight data
-  const departureFlight = {
-    route: "Tp. Hồ Chí Minh (SGN) ✈ Hà Nội (HAN)",
-    details: "T3, 14/10/2025 | 06:00 - 08:10 | VJ1128 | Business",
-    ticketPrice: 11642400,
-    tax: 1166800,
-    service: 0,
-    total: 12809200
-  };
-
-  const returnFlight = {
-    route: "Hà Nội (HAN) ✈ Tp. Hồ Chí Minh (SGN)",
-    details: "T4, 15/10/2025 | 04:30 - 06:40 | VJ181 | Deluxe",
-    ticketPrice: 3628800,
-    tax: 1166800,
-    service: 0,
-    total: 4795600
-  };
-
-  const grandTotal = departureFlight.total + returnFlight.total;
+  const departureFlight = state.selectedDeparture;
+  const returnFlight = state.selectedReturn;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -92,11 +78,11 @@ export default function PassengersPage() {
               <div className="text-black mt-2 font-medium">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                  <span>Điểm khởi hành Tp. Hồ Chí Minh (SGN)</span>
+                  <span>Điểm khởi hành {state.origin}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  <span>Điểm đến Hà Nội (HAN)</span>
+                  <span>Điểm đến {state.destination}</span>
                 </div>
               </div>
             </div>
@@ -172,13 +158,13 @@ export default function PassengersPage() {
                   <div className="space-y-6">
                     <div>
                       <label className="block text-base font-bold text-black mb-2">
-                        Họ* <span className="text-red-500">*</span>
+                        Họ <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={passenger.lastName}
                         onChange={(e) => updatePassenger(passenger.id, 'lastName', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3  text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                         placeholder="Nhập họ"
                       />
                       <p className="text-sm text-gray-500 mt-1">
@@ -188,30 +174,30 @@ export default function PassengersPage() {
 
                     <div>
                       <label className="block text-base font-bold text-black mb-2">
-                        Ngày sinh* <span className="text-red-500">*</span>
+                        Ngày sinh <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={passenger.dateOfBirth}
                         onChange={(e) => updatePassenger(passenger.id, 'dateOfBirth', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                         placeholder="DD/MM/YYYY"
                       />
                     </div>
 
                     <div>
                       <label className="block text-base font-bold text-black mb-2">
-                        Số điện thoại* <span className="text-red-500">*</span>
+                        Số điện thoại  <span className="text-red-500">*</span>
                       </label>
                       <div className="flex">
-                        <select className="border-2 border-gray-300 border-r-0 rounded-l-xl px-3 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
-                          <option value="+84">🇻🇳 +84</option>
+                        <select className="border-2 border-gray-300 border-r-0 rounded-l-xl px-3 py-3 text-gray-700 focus:border-blue-500 focus:ring-3 focus:ring-blue-200">
+                          <option value="+84 ">🇻🇳 +84 </option>
                         </select>
                         <input
                           type="tel"
                           value={passenger.phoneNumber}
                           onChange={(e) => updatePassenger(passenger.id, 'phoneNumber', e.target.value)}
-                          className="flex-1 border-2 border-gray-300 rounded-r-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          className="flex-1 border-2 border-gray-300 rounded-r-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                           placeholder="Nhập số điện thoại"
                         />
                       </div>
@@ -225,7 +211,7 @@ export default function PassengersPage() {
                         type="text"
                         value={passenger.idNumber}
                         onChange={(e) => updatePassenger(passenger.id, 'idNumber', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                         placeholder="Nhập CCCD hoặc số hộ chiếu"
                       />
                     </div>
@@ -238,7 +224,7 @@ export default function PassengersPage() {
                         type="text"
                         value={passenger.currentResidence}
                         onChange={(e) => updatePassenger(passenger.id, 'currentResidence', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                         placeholder="Nhập địa chỉ hiện tại"
                       />
                     </div>
@@ -251,7 +237,7 @@ export default function PassengersPage() {
                         type="text"
                         value={passenger.skyjoyMemberCode}
                         onChange={(e) => updatePassenger(passenger.id, 'skyjoyMemberCode', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                         placeholder="SJxxxxxxxxxx"
                       />
                     </div>
@@ -259,41 +245,41 @@ export default function PassengersPage() {
 
                   {/* Right Column */}
                   <div className="space-y-6">
-                    <div>
+                    <div >
                       <label className="block text-base font-bold text-black mb-2">
-                        Tên đệm & tên* <span className="text-red-500">*</span>
+                        Tên đệm & tên <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={passenger.firstName}
                         onChange={(e) => updatePassenger(passenger.id, 'firstName', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className="mb-6 w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all "
                         placeholder="Nhập tên đệm và tên"
                       />
                     </div>
 
-                    <div>
+                    <div >
                       <label className="block text-base font-bold text-black mb-2">
-                        Quốc gia* <span className="text-red-500">*</span>
+                        Quốc gia <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={passenger.country}
                         onChange={(e) => updatePassenger(passenger.id, 'country', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                         placeholder="Việt Nam"
                       />
                     </div>
 
                     <div>
                       <label className="block text-base font-bold text-black mb-2">
-                        Email* <span className="text-red-500">*</span>
+                        Email <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
                         value={passenger.email}
                         onChange={(e) => updatePassenger(passenger.id, 'email', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                         placeholder="Nhập email"
                       />
                     </div>
@@ -377,17 +363,18 @@ export default function PassengersPage() {
               <h4 className="text-lg font-bold text-black mb-3">Chuyến đi</h4>
               <div className="bg-gray-50 rounded-xl p-4">
                 <div className="text-lg font-bold text-red-600 mb-2">
-                  {formatVnd(departureFlight.total)} VND
+                  {formatVnd((departureFlight?.price || 0) + (departureFlight?.tax || 0) + (departureFlight?.service || 0))} VND
                 </div>
-                <div className="text-base text-gray-700 mb-1">{departureFlight.route}</div>
-                <div className="text-sm text-gray-600">{departureFlight.details}</div>
+                <div className="text-base text-gray-700 mb-1">{state.origin} ✈ {state.destination}</div>
+                <div className="text-sm text-gray-600">{state.departureDate} | {departureFlight?.departTime} - {departureFlight?.arriveTime} | {departureFlight?.code} | {departureFlight?.fareName}
+                </div>
                 
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Giá vé</span>
                     <div className="flex items-center">
-                      <span className="font-semibold">{formatVnd(departureFlight.ticketPrice)}</span>
-                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="font-semibold  text-gray-700">{formatVnd(departureFlight?.price || 0)}</span>
+                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
@@ -395,8 +382,8 @@ export default function PassengersPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Thuế, phí</span>
                     <div className="flex items-center">
-                      <span className="font-semibold">{formatVnd(departureFlight.tax)}</span>
-                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="font-semibold  text-gray-700">{formatVnd(departureFlight?.tax || 0)}</span>
+                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
@@ -404,8 +391,8 @@ export default function PassengersPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Dịch vụ</span>
                     <div className="flex items-center">
-                      <span className="font-semibold">{formatVnd(departureFlight.service)}</span>
-                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="font-semibold  text-gray-700">{formatVnd(departureFlight?.service || 0)}</span>
+                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
@@ -419,17 +406,18 @@ export default function PassengersPage() {
               <h4 className="text-lg font-bold text-black mb-3">Chuyến về</h4>
               <div className="bg-gray-50 rounded-xl p-4">
                 <div className="text-lg font-bold text-red-600 mb-2">
-                  {formatVnd(returnFlight.total)} VND
+                  {formatVnd((returnFlight?.price || 0) + (returnFlight?.tax || 0) + (returnFlight?.service || 0))} VND
                 </div>
-                <div className="text-base text-gray-700 mb-1">{returnFlight.route}</div>
-                <div className="text-sm text-gray-600">{returnFlight.details}</div>
+                <div className="text-base text-gray-700 mb-1">{state.destination} ✈ {state.origin}</div>
+                <div className="text-sm text-gray-600">{state.returnDate} | {returnFlight?.departTime} - {returnFlight?.arriveTime} | {returnFlight?.code} | {returnFlight?.fareName}
+                </div>
                 
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Giá vé</span>
                     <div className="flex items-center">
-                      <span className="font-semibold">{formatVnd(returnFlight.ticketPrice)}</span>
-                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="font-semibold  text-gray-700">{formatVnd(returnFlight?.price || 0)}</span>
+                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
@@ -437,8 +425,8 @@ export default function PassengersPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Thuế, phí</span>
                     <div className="flex items-center">
-                      <span className="font-semibold">{formatVnd(returnFlight.tax)}</span>
-                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="font-semibold  text-gray-700">{formatVnd(returnFlight?.tax || 0)}</span>
+                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
@@ -446,8 +434,8 @@ export default function PassengersPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Dịch vụ</span>
                     <div className="flex items-center">
-                      <span className="font-semibold">{formatVnd(returnFlight.service)}</span>
-                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="font-semibold  text-gray-700">{formatVnd(returnFlight?.service || 0)}</span>
+                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
@@ -465,9 +453,9 @@ export default function PassengersPage() {
               <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
             </div>
 
-            <button className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+            <Link href="/book-plane/payment" className="w-full block text-center bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
               Đi tiếp
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -475,7 +463,7 @@ export default function PassengersPage() {
       {/* Bottom bar */}
       <div className="bg-white border-t border-gray-200 py-4">
         <div className="container mx-auto px-4 flex items-center justify-between">
-          <button className="px-6 py-3 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <button onClick={() => router.back()} className="px-6 py-3 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             Quay lại
           </button>
           
@@ -484,9 +472,9 @@ export default function PassengersPage() {
             <div className="text-2xl font-bold text-red-600">{formatVnd(grandTotal)} VND</div>
           </div>
           
-          <button className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+          <Link href="/book-plane/payment" className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
             Đi tiếp
-          </button>
+          </Link>
         </div>
       </div>
     </div>

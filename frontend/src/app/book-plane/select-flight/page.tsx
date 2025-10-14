@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from 'next/link';
+import { useBooking } from "../BookingContext";
 
 interface FareOption {
   name: string; // Business, SkyBoss, Deluxe, Eco
@@ -318,6 +319,7 @@ function formatVnd(n: number) {
 }
 
 export default function SelectFlightPage() {
+  const { state, setSelectedDeparture, setSelectedReturn, grandTotal } = useBooking();
   const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<{flightId: string, fareIndex: number} | null>(null);
   const [selectedReturnFlight, setSelectedReturnFlight] = useState<{flightId: string, fareIndex: number} | null>(null);
   const [selectedDate, setSelectedDate] = useState(14); // Thứ ba 14 tháng 10
@@ -339,7 +341,7 @@ export default function SelectFlightPage() {
     return returnFare.price + returnFare.tax + returnFare.service;
   }, [returnFare]);
 
-  const grandTotal = totalDeparture + totalReturn;
+  const computedGrandTotal = totalDeparture + totalReturn;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -349,16 +351,16 @@ export default function SelectFlightPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-black">
-                CHUYẾN BAY KHỨ HỒI | 2 Người lớn
+                Chuyến bay khứ hồi | {state.passengers} Người lớn
               </h1>
               <div className="text-black mt-2 font-medium">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                  <span>Điểm khởi hành Hà Nội (HAN)</span>
+                  <span>Điểm khởi hành {state.origin}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  <span>Điểm đến Cần Thơ (VCA)</span>
+                  <span>Điểm đến {state.destination}</span>
                 </div>
               </div>
             </div>
@@ -378,9 +380,7 @@ export default function SelectFlightPage() {
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-12 h-0.5 bg-gray-300"></div>
-                <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M8 16l3-3-3-3v6z"/>
-                </svg>
+                <span className="text-2xl text-gray-600">✈</span>
                 <div className="w-12 h-0.5 bg-gray-300"></div>
               </div>
               <div className="text-center">
@@ -453,9 +453,7 @@ export default function SelectFlightPage() {
                     <div className="text-lg text-gray-700 font-medium">{f.departTime} - {f.arriveTime}</div>
                     <div className="text-base text-gray-600 mb-1">{f.aircraft}</div>
                     <div className="text-base text-blue-600 font-semibold flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M8 16l3-3-3-3v6z"/>
-                      </svg>
+                      <span className="text-2xl text-blue-600">✈ </span> 
                       {f.note}
                     </div>
                   </div>
@@ -482,6 +480,17 @@ export default function SelectFlightPage() {
                           
                           // Also select this fare
                           setSelectedDepartureFlight({flightId: f.id, fareIndex});
+                          setSelectedDeparture({
+                            flightId: f.id,
+                            fareIndex,
+                            fareName: fare.name,
+                            price: fare.price,
+                            tax: fare.tax,
+                            service: fare.service,
+                            code: f.code,
+                            departTime: f.departTime,
+                            arriveTime: f.arriveTime,
+                          });
                         }}
                         className={
                           "rounded-xl p-6 text-center shadow-lg border transition-all duration-200 relative " +
@@ -540,17 +549,15 @@ export default function SelectFlightPage() {
                       {/* Flight route and duration */}
                       <div className="flex items-center justify-between mb-6">
                         <div className="text-base text-gray-700 font-medium">
-                          VCA Cần Thơ {f.departTime}, 15/10/2025
+                          {state.origin} {f.departTime}, {state.departureDate}
                         </div>
                         <div className="flex items-center space-x-2">
                           <div className="text-base text-gray-700 font-medium">2 giờ 10 phút</div>
-                          <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M8 16l3-3-3-3v6z"/>
-                          </svg>
+                          <span className="text-xl text-gray-600">✈</span>
                           <div className="text-base text-blue-600 font-medium">Bay thẳng</div>
                         </div>
                         <div className="text-base text-gray-700 font-medium">
-                          HAN Hà Nội {f.arriveTime}, 15/10/2025
+                          {state.destination} {f.arriveTime}, {state.departureDate}
                         </div>
                       </div>
 
@@ -652,8 +659,8 @@ export default function SelectFlightPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Giá vé</span>
                   <div className="flex items-center">
-                    <span className="font-semibold">{formatVnd(departureFare?.price || 0)}</span>
-                    <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="font-semibold  text-gray-700">{formatVnd(departureFare?.price || 0)}</span>
+                    <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -661,8 +668,8 @@ export default function SelectFlightPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Thuế, phí</span>
                   <div className="flex items-center">
-                    <span className="font-semibold">{formatVnd(departureFare?.tax || 0)}</span>
-                    <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="font-semibold  text-gray-700">{formatVnd(departureFare?.tax || 0)}</span>
+                    <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -670,8 +677,8 @@ export default function SelectFlightPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Dịch vụ</span>
                   <div className="flex items-center">
-                    <span className="font-semibold">{formatVnd(departureFare?.service || 0)}</span>
-                    <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="font-semibold  text-gray-700">{formatVnd(departureFare?.service || 0)}</span>
+                    <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -692,18 +699,18 @@ export default function SelectFlightPage() {
               </div>
               
               <div className="text-base text-gray-700 mb-2">
-                Cần Thơ (VCA) ✈ Hà Nội (HAN)
+                {state.destination} ✈ {state.origin}
               </div>
               <div className="text-base text-gray-700 mb-3">
-                T4, 15/10/2025 | {returnFlight?.departTime} - {returnFlight?.arriveTime} | {returnFlight?.code} | {returnFare?.name}
+                {state.returnDate} | {returnFlight?.departTime} - {returnFlight?.arriveTime} | {returnFlight?.code} | {returnFare?.name}
               </div>
               
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Giá vé</span>
                   <div className="flex items-center">
-                    <span className="font-semibold">{formatVnd(returnFare?.price || 0)}</span>
-                    <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="font-semibold  text-gray-700">{formatVnd(returnFare?.price || 0)}</span>
+                    <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -711,8 +718,8 @@ export default function SelectFlightPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Thuế, phí</span>
                   <div className="flex items-center">
-                    <span className="font-semibold">{formatVnd(returnFare?.tax || 0)}</span>
-                    <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="font-semibold  text-gray-700">{formatVnd(returnFare?.tax || 0)}</span>
+                    <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -720,7 +727,7 @@ export default function SelectFlightPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Dịch vụ</span>
                   <div className="flex items-center">
-                    <span className="font-semibold">{formatVnd(returnFare?.service || 0)}</span>
+                    <span className="font-semibold  text-gray-700">{formatVnd(returnFare?.service || 0)}</span>
                     <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -733,7 +740,7 @@ export default function SelectFlightPage() {
             <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8 rounded-2xl text-center mb-8 shadow-xl">
               <div className="text-xl font-semibold mb-3">Tổng tiền</div>
               <div className="text-4xl md:text-5xl font-bold">
-                {formatVnd(grandTotal)}
+                {formatVnd(grandTotal || computedGrandTotal)}
               </div>
               <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
             </div>
