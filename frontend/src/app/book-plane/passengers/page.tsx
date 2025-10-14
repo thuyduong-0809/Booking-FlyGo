@@ -1,0 +1,509 @@
+'use client';
+
+import { useState } from 'react';
+
+interface Passenger {
+  id: number;
+  gender: 'male' | 'female' | 'other';
+  lastName: string;
+  firstName: string;
+  dateOfBirth: string;
+  phoneNumber: string;
+  email: string;
+  country: string;
+  idNumber: string;
+  currentResidence: string;
+  skyjoyMemberCode: string;
+  buyForMe: boolean;
+  ottPreference: 'none' | 'zalo' | 'whatsapp';
+  rememberDetails: boolean;
+}
+
+export default function PassengersPage() {
+  // Mock data - in real app, this would come from previous booking step
+  const totalPassengers = 2; // This should come from booking context
+  
+  const [passengers, setPassengers] = useState<Passenger[]>(
+    Array.from({ length: totalPassengers }, (_, index) => ({
+      id: index + 1,
+      gender: 'male' as const,
+      lastName: '',
+      firstName: '',
+      dateOfBirth: '',
+      phoneNumber: '',
+      email: '',
+      country: 'Việt Nam',
+      idNumber: '',
+      currentResidence: '',
+      skyjoyMemberCode: '',
+      buyForMe: false,
+      ottPreference: 'none' as const,
+      rememberDetails: false,
+    }))
+  );
+
+  const [surveyChecked, setSurveyChecked] = useState(false);
+
+  const updatePassenger = (passengerId: number, field: keyof Passenger, value: any) => {
+    setPassengers(prev => 
+      prev.map(passenger => 
+        passenger.id === passengerId 
+          ? { ...passenger, [field]: value }
+          : passenger
+      )
+    );
+  };
+
+  const formatVnd = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN').format(amount);
+  };
+
+  // Mock flight data
+  const departureFlight = {
+    route: "Tp. Hồ Chí Minh (SGN) ✈ Hà Nội (HAN)",
+    details: "T3, 14/10/2025 | 06:00 - 08:10 | VJ1128 | Business",
+    ticketPrice: 11642400,
+    tax: 1166800,
+    service: 0,
+    total: 12809200
+  };
+
+  const returnFlight = {
+    route: "Hà Nội (HAN) ✈ Tp. Hồ Chí Minh (SGN)",
+    details: "T4, 15/10/2025 | 04:30 - 06:40 | VJ181 | Deluxe",
+    ticketPrice: 3628800,
+    tax: 1166800,
+    service: 0,
+    total: 4795600
+  };
+
+  const grandTotal = departureFlight.total + returnFlight.total;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
+      {/* Top banner */}
+      <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 py-6 shadow-lg">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-black">
+                CHUYẾN BAY KHỨ HỒI | {totalPassengers} Người lớn
+              </h1>
+              <div className="text-black mt-2 font-medium">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                  <span>Điểm khởi hành Tp. Hồ Chí Minh (SGN)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  <span>Điểm đến Hà Nội (HAN)</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
+                <span className="text-lg">✈️</span>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
+                <span className="text-lg">👤</span>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
+                <span className="text-lg">🛒</span>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
+                <span className="text-lg">$</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left: Passenger Forms */}
+        <div className="lg:col-span-2">
+          {/* Survey checkbox */}
+          <div className="bg-white rounded-xl p-6 mb-6 shadow-lg border border-gray-100">
+            <label className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                checked={surveyChecked}
+                onChange={(e) => setSurveyChecked(e.target.checked)}
+                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className="text-base text-gray-700">
+                Thực hiện khảo sát và chăm sóc khách hàng
+              </span>
+            </label>
+          </div>
+
+          {/* Passenger Forms */}
+          <div className="space-y-8">
+            {passengers.map((passenger, index) => (
+              <div key={passenger.id} className="bg-white rounded-xl p-8 shadow-xl border border-gray-100">
+                {/* Passenger Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800">Người lớn</h3>
+                  </div>
+                  <button className="p-2 hover:bg-gray-100 rounded-full">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Gender Selection */}
+                <div className="mb-6">
+                  <div className="flex space-x-6">
+                    {[
+                      { value: 'male', label: 'Nam' },
+                      { value: 'female', label: 'Nữ' },
+                      { value: 'other', label: 'Khác' }
+                    ].map((option) => (
+                      <label key={option.value} className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name={`gender-${passenger.id}`}
+                          value={option.value}
+                          checked={passenger.gender === option.value}
+                          onChange={(e) => updatePassenger(passenger.id, 'gender', e.target.value)}
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-base text-gray-700">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Form Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Left Column */}
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-base font-bold text-black mb-2">
+                        Họ* <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={passenger.lastName}
+                        onChange={(e) => updatePassenger(passenger.id, 'lastName', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="Nhập họ"
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        ① Hướng dẫn nhập họ, tên đệm và tên.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-bold text-black mb-2">
+                        Ngày sinh* <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={passenger.dateOfBirth}
+                        onChange={(e) => updatePassenger(passenger.id, 'dateOfBirth', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="DD/MM/YYYY"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-bold text-black mb-2">
+                        Số điện thoại* <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex">
+                        <select className="border-2 border-gray-300 border-r-0 rounded-l-xl px-3 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                          <option value="+84">🇻🇳 +84</option>
+                        </select>
+                        <input
+                          type="tel"
+                          value={passenger.phoneNumber}
+                          onChange={(e) => updatePassenger(passenger.id, 'phoneNumber', e.target.value)}
+                          className="flex-1 border-2 border-gray-300 rounded-r-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          placeholder="Nhập số điện thoại"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-bold text-black mb-2">
+                        CCCD / Hộ chiếu
+                      </label>
+                      <input
+                        type="text"
+                        value={passenger.idNumber}
+                        onChange={(e) => updatePassenger(passenger.id, 'idNumber', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="Nhập CCCD hoặc số hộ chiếu"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-bold text-black mb-2">
+                        Nơi ở hiện tại
+                      </label>
+                      <input
+                        type="text"
+                        value={passenger.currentResidence}
+                        onChange={(e) => updatePassenger(passenger.id, 'currentResidence', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="Nhập địa chỉ hiện tại"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-bold text-black mb-2">
+                        Nhập mã hội viên SkyJoy (SJxxxxxxxxxx)
+                      </label>
+                      <input
+                        type="text"
+                        value={passenger.skyjoyMemberCode}
+                        onChange={(e) => updatePassenger(passenger.id, 'skyjoyMemberCode', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="SJxxxxxxxxxx"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-base font-bold text-black mb-2">
+                        Tên đệm & tên* <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={passenger.firstName}
+                        onChange={(e) => updatePassenger(passenger.id, 'firstName', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="Nhập tên đệm và tên"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-bold text-black mb-2">
+                        Quốc gia* <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={passenger.country}
+                        onChange={(e) => updatePassenger(passenger.id, 'country', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="Việt Nam"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-bold text-black mb-2">
+                        Email* <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={passenger.email}
+                        onChange={(e) => updatePassenger(passenger.id, 'email', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="Nhập email"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Buy for me toggle */}
+                <div className="mt-6 flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={passenger.buyForMe}
+                    onChange={(e) => updatePassenger(passenger.id, 'buyForMe', e.target.checked)}
+                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-base text-gray-700">Mua vé cho tôi</span>
+                </div>
+
+                {/* OTT Communication */}
+                <div className="mt-6">
+                  <label className="block text-base font-bold text-black mb-3">
+                    Nhận thông tin hành trình qua tin nhắn OTT
+                  </label>
+                  <div className="flex space-x-6">
+                    {[
+                      { value: 'none', label: 'Không chọn' },
+                      { value: 'zalo', label: 'Zalo OA' },
+                      { value: 'whatsapp', label: 'WhatsApp' }
+                    ].map((option) => (
+                      <label key={option.value} className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name={`ott-${passenger.id}`}
+                          value={option.value}
+                          checked={passenger.ottPreference === option.value}
+                          onChange={(e) => updatePassenger(passenger.id, 'ottPreference', e.target.value)}
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-base text-gray-700">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Remember details */}
+                <div className="mt-6 flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={passenger.rememberDetails}
+                    onChange={(e) => updatePassenger(passenger.id, 'rememberDetails', e.target.checked)}
+                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-base text-gray-700">
+                    Ghi nhớ các chi tiết hành khách trên cho các lần đặt vé trong tương lai
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Privacy Policy */}
+          <div className="mt-8 bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+            <p className="text-base text-gray-700">
+              Bằng cách chọn "Đi tiếp", Quý khách xác nhận đã đọc, hiểu và đồng ý với việc xử lý dữ liệu cá nhân theo các mục đích đã chọn và{' '}
+              <a href="#" className="text-blue-600 underline hover:text-blue-800">
+                Chính sách Quyền riêng tư
+              </a>{' '}
+              của Vietjet.
+            </p>
+          </div>
+        </div>
+
+        {/* Right: Booking Summary */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl border border-gray-100 sticky top-4">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent mb-8 text-center">
+              THÔNG TIN ĐẶT CHỖ
+            </h3>
+
+            {/* Departure Flight */}
+            <div className="mb-6">
+              <h4 className="text-lg font-bold text-black mb-3">Chuyến đi</h4>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="text-lg font-bold text-red-600 mb-2">
+                  {formatVnd(departureFlight.total)} VND
+                </div>
+                <div className="text-base text-gray-700 mb-1">{departureFlight.route}</div>
+                <div className="text-sm text-gray-600">{departureFlight.details}</div>
+                
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-700">Giá vé</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold">{formatVnd(departureFlight.ticketPrice)}</span>
+                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-700">Thuế, phí</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold">{formatVnd(departureFlight.tax)}</span>
+                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-700">Dịch vụ</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold">{formatVnd(departureFlight.service)}</span>
+                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Return Flight */}
+            <div className="mb-6">
+              <h4 className="text-lg font-bold text-black mb-3">Chuyến về</h4>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="text-lg font-bold text-red-600 mb-2">
+                  {formatVnd(returnFlight.total)} VND
+                </div>
+                <div className="text-base text-gray-700 mb-1">{returnFlight.route}</div>
+                <div className="text-sm text-gray-600">{returnFlight.details}</div>
+                
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-700">Giá vé</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold">{formatVnd(returnFlight.ticketPrice)}</span>
+                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-700">Thuế, phí</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold">{formatVnd(returnFlight.tax)}</span>
+                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-700">Dịch vụ</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold">{formatVnd(returnFlight.service)}</span>
+                      <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Total */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8 rounded-2xl text-center mb-8 shadow-xl">
+              <div className="text-xl font-semibold mb-3">Tổng tiền</div>
+              <div className="text-4xl md:text-5xl font-bold">
+                {formatVnd(grandTotal)} VND
+              </div>
+              <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
+            </div>
+
+            <button className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+              Đi tiếp
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="bg-white border-t border-gray-200 py-4">
+        <div className="container mx-auto px-4 flex items-center justify-between">
+          <button className="px-6 py-3 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            Quay lại
+          </button>
+          
+          <div className="text-center">
+            <div className="text-lg font-bold text-gray-800">Tổng tiền</div>
+            <div className="text-2xl font-bold text-red-600">{formatVnd(grandTotal)} VND</div>
+          </div>
+          
+          <button className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+            Đi tiếp
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
