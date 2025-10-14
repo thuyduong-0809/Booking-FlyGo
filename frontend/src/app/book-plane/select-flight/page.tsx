@@ -362,20 +362,6 @@ export default function SelectFlightPage() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-3">
-              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
-                <span className="text-lg">✈️</span>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
-                <span className="text-lg">👤</span>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
-                <span className="text-lg">🛒</span>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
-                <span className="text-lg">$</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -753,7 +739,7 @@ export default function SelectFlightPage() {
             </div>
 
             <Link
-              href="/passengers"
+              href="/book-plane/passengers"
               className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center"
             >
               Đi tiếp

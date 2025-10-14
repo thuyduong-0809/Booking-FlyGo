@@ -100,20 +100,6 @@ export default function PassengersPage() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-3">
-              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
-                <span className="text-lg">✈️</span>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
-                <span className="text-lg">👤</span>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
-                <span className="text-lg">🛒</span>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors">
-                <span className="text-lg">$</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

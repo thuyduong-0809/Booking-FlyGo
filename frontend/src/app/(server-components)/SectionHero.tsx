@@ -21,7 +21,7 @@ const SectionHero: FC<SectionHeroProps> = ({ className = "" }) => {
           <span className="text-base md:text-lg text-neutral-500 dark:text-neutral-400">
            Khám phá thế giới bắt đầu từ một chiếc vé máy bay – FlyGo giúp bạn bay dễ dàng hơn
           </span>
-          <ButtonPrimary href="/listing-fly-detail" sizeClass="px-5 py-4 sm:px-7">
+          <ButtonPrimary href="/book-plane/listing-fly-detail" sizeClass="px-5 py-4 sm:px-7">
             Khám phá ngay
           </ButtonPrimary>
         </div>

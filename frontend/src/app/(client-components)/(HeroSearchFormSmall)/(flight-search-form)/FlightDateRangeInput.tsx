@@ -83,7 +83,7 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
               {/* BUTTON SUBMIT OF FORM */}
               {hasButtonSubmit && (
                 <div className="pr-2 xl:pr-4">
-                  <ButtonSubmit href="/listing-fly-detail" />
+                  <ButtonSubmit href="/book-plane/listing-fly-detail" />
                 </div>
               )}
             </div>
