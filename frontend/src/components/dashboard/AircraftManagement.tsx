@@ -898,16 +898,10 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                             </label>
                             <input
                               type="text"
+                              readOnly
                               value={aircraftUpdateData.aircraftCode}
-                              onChange={(e) => {
-                                  handleChange("aircraftCode", e.target.value),
-                                  setUpdateErrors((prev: any) => ({ ...prev, aircraftCode: "" }))
-                              }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
                             />
-                            {updateErrors.aircraftCode && (
-                              <p className="text-red-500 text-sm mt-1">{updateErrors.aircraftCode}</p>
-                            )}
                           </div>
 
                           {/* Model */}
@@ -1773,16 +1767,10 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   </label>
                    <input
                       type="text"
+                       readOnly
                       value={aircraftUpdateData.aircraftCode}
-                      onChange={(e) => {
-                      handleChange("aircraftCode", e.target.value),
-                      setUpdateErrors((prev: any) => ({ ...prev, aircraftCode: "" }))
-                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
                       />
-                    {updateErrors.aircraftCode && (
-                    <p className="text-red-500 text-sm mt-1">{updateErrors.aircraftCode}</p>
-                    )}
                 </div>
 
                 {/* --- Model --- */}
