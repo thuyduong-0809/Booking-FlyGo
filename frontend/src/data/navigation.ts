@@ -181,7 +181,7 @@ export const NAVIGATION_DEMO: NavItemType[] = [
   
       {
         id: ncNanoId(),
-        href: "/listing-real-estate",
+        href: "/listing-real-estate" as Route,
         name: "Real Estate Listings",
         type: "dropdown",
         children: [
@@ -200,8 +200,13 @@ export const NAVIGATION_DEMO: NavItemType[] = [
       //
       {
         id: ncNanoId(),
-        href: "/listing-flights",
+        href: "/listing-flights" as Route,
         name: "Flights listings",
+      },
+      {
+        id: ncNanoId(),
+        href: "/listing-fly-detail" as Route,
+        name: "Flight Detail Booking",
       },
     ],
   },

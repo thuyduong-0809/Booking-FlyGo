@@ -234,6 +234,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({}) => {
           <FlightDateRangeInput
             selectsRange={dropOffLocationType !== "oneWay"}
             className="flex-1"
+            hasButtonSubmit={true}
           />
         </div>
       </form>

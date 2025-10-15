@@ -29,7 +29,8 @@ let OPTIONS = {
 let OBSERVER: IntersectionObserver | null = null;
 const PAGES_HIDE_HEADER_BORDER: PathName[] = [
   "/home-3",
-  // "/listing-car-detail",
+  "/listing-fly-detail",
+  // "/listing-fly-detail",
   // "/listing-experiences-detail",
   // "/listing-stay-detail",
 ];
