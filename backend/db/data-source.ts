@@ -13,6 +13,13 @@ export const dataSourceOptions :DataSourceOptions = {
     synchronize:false,
     timezone: '+07:00', // Set to UTC+7 for Ho Chi Minh City
     // logging: true
+    extra: {
+    connectionLimit: 10,
+    connectTimeout: 10000,
+    // Giữ kết nối luôn mở
+    keepAliveInitialDelay: 10000,
+    enableKeepAlive: true,
+  },
 } 
 
 console.log('dataSourceOptions: ', dataSourceOptions);

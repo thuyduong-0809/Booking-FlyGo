@@ -61,11 +61,27 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
     hasPremiumEntertainment: false
   });
 
- const [lastMaintenance, setLastMaintenance] = useState("");
-const [nextMaintenance, setNextMaintenance] = useState("");
+  const [lastMaintenance, setLastMaintenance] = useState("");
+  const [nextMaintenance, setNextMaintenance] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [errors, setErrors] = useState<any>({});
-
+  const [ updateErrors, setUpdateErrors] = useState<any>({});
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [aircraftUpdateData, setAircraftUpdateData] = useState({
+      aircraftCode: "",
+      model: "",
+      economyCapacity: 0,
+      businessCapacity: 0,
+      firstClassCapacity: 0,
+      seatLayoutJSON: {
+        layout: { Economy: "", Business: "", First: "" },
+        hasWiFi: false,
+        hasPremiumEntertainment: false,
+      },
+      lastMaintenance: "",
+      nextMaintenance: "",
+      isActive: true,
+    });
 
   useEffect(() => {
     loadAircrafts()
@@ -151,69 +167,204 @@ const [nextMaintenance, setNextMaintenance] = useState("");
    };
 
 
-const addAircraft = (): void => {
-  const isValid = validateInputs();
-  if (!isValid) return; // Dừng nếu có lỗi
 
-  const aircraftData = {
-    aircraftCode,
-    model,
-    airlineId,
-    economyCapacity,
-    businessCapacity,
-    firstClassCapacity,
-    seatLayoutJSON,
-    lastMaintenance: lastMaintenance ? lastMaintenance : null,
-    nextMaintenance: nextMaintenance ? nextMaintenance : null,
-    isActive,
-  };
 
-  requestApi("aircrafts", "POST", aircraftData)
-    .then((res: any) => {
-      console.log("paload",res)
-      if (res.success) {
-        alert("Thêm máy bay thành công");
-        loadAircrafts();
+    const addAircraft = (): void => {
+      const isValid = validateInputs();
+      if (!isValid) return; // Dừng nếu có lỗi
 
-        // reset form
-        setAircraftCode("");
-        setModel("");
-        setAirlineId(null);
-        setEconomyCapacity(null);
-        setBusinessCapacity(null);
-        setFirstClassCapacity(null);
-        setSeatLayoutJSON({
-          layout: { Economy: "", Business: "", First: "" },
-          hasWiFi: false,
-          hasPremiumEntertainment: false,
+      const aircraftData = {
+        aircraftCode,
+        model,
+        airlineId,
+        economyCapacity,
+        businessCapacity,
+        firstClassCapacity,
+        seatLayoutJSON,
+        lastMaintenance: lastMaintenance ? lastMaintenance : null,
+        nextMaintenance: nextMaintenance ? nextMaintenance : null,
+        isActive,
+      };
+
+      requestApi("aircrafts", "POST", aircraftData)
+        .then((res: any) => {
+          console.log("paload",res)
+          if (res.success) {
+            alert("Thêm máy bay thành công");
+            loadAircrafts();
+
+            // reset form
+            setAircraftCode("");
+            setModel("");
+            setAirlineId(null);
+            setEconomyCapacity(null);
+            setBusinessCapacity(null);
+            setFirstClassCapacity(null);
+            setSeatLayoutJSON({
+              layout: { Economy: "", Business: "", First: "" },
+              hasWiFi: false,
+              hasPremiumEntertainment: false,
+            });
+            setLastMaintenance("");
+            setNextMaintenance("");
+            setIsActive(true);
+            setShowAddModal(false);
+            setErrors({});
+          }else if(res.errorCode === 'AIRCRAFT_EXISTS'){
+              setErrors((prev:any) => ({
+              ...prev,
+              aircraftCode: "Mã máy bay đã tồn tại. Vui lòng nhập mã khác.",
+            }));
+          }
+          else {
+            alert("Thêm thất bại");
+          }
+        })
+        .catch((error: any) => {
+          console.error(error);
+          // Phòng khi server trả lỗi dạng exception
+          if (error?.response?.data?.errorCode === "AIRCRAFT_EXISTS") {
+            setErrors((prev: any) => ({
+              ...prev,
+              aircraftCode: "Mã máy bay đã tồn tại. Vui lòng nhập mã khác.",
+            }));
+          }
         });
-        setLastMaintenance("");
-        setNextMaintenance("");
-        setIsActive(true);
-        setShowAddModal(false);
-        setErrors({});
-      }else if(res.errorCode === 'AIRCRAFT_EXISTS'){
-          setErrors((prev:any) => ({
-          ...prev,
-          aircraftCode: "Mã máy bay đã tồn tại. Vui lòng nhập mã khác.",
-        }));
-      }
-      else {
-        alert("Thêm thất bại");
-      }
-    })
-    .catch((error: any) => {
-      console.error(error);
-      // Phòng khi server trả lỗi dạng exception
-      if (error?.response?.data?.errorCode === "AIRCRAFT_EXISTS") {
-        setErrors((prev: any) => ({
-          ...prev,
-          aircraftCode: "Mã máy bay đã tồn tại. Vui lòng nhập mã khác.",
-        }));
-      }
+    };
+
+
+
+
+     // Khi chọn 1 máy bay → load dữ liệu vào form
+  const handleSelectAircraft = (id: string) => {
+  const aircraft:any = AircraftsList.find((a:any) => a.aircraftId === Number(id));
+  if (aircraft) {
+     setSelectedId(aircraft.aircraftId);
+     setAircraftUpdateData({
+      aircraftCode: aircraft.aircraftCode || "",
+      model: aircraft.model || "",
+      economyCapacity: aircraft.economyCapacity || 0,
+      businessCapacity: aircraft.businessCapacity || 0,
+      firstClassCapacity: aircraft.firstClassCapacity || 0,
+      seatLayoutJSON: aircraft.seatLayoutJSON || {
+        layout: { Economy: "", Business: "", First: "" },
+        hasWiFi: false,
+        hasPremiumEntertainment: false,
+      },
+      lastMaintenance: aircraft.lastMaintenance
+        ? aircraft.lastMaintenance.slice(0, 10)
+        : null,
+      nextMaintenance: aircraft.nextMaintenance
+        ? aircraft.nextMaintenance.slice(0, 10)
+        : null,
+      isActive: aircraft.isActive ?? true,
     });
+  }
 };
 
+    const handleChange = (field: string, value: any) => {
+    setAircraftUpdateData((prev) => ({ ...prev, [field]: value }));
+    };
+
+  const handleSeatLayoutChange = (cls: string, value: string) => {
+    setAircraftUpdateData((prev) => ({
+      ...prev,
+      seatLayoutJSON: {
+        ...prev.seatLayoutJSON,
+        layout: { ...prev.seatLayoutJSON.layout, [cls]: value },
+      },
+    }));
+  };
+
+
+  const validateUpdateInputs = () => {
+  const newErrors: any = {};
+
+    if (!aircraftUpdateData.aircraftCode || aircraftUpdateData.aircraftCode.trim() === "") {
+      newErrors.aircraftCode = "Vui lòng nhập mã máy bay.";
+    } else if (
+      aircraftUpdateData.aircraftCode.length < 2 ||
+      aircraftUpdateData.aircraftCode.length > 10
+    ) {
+      newErrors.aircraftCode = "Mã máy bay phải từ 2–10 ký tự.";
+    }
+
+    if (!aircraftUpdateData.model || aircraftUpdateData.model.trim() === "") {
+      newErrors.model = "Vui lòng nhập model máy bay.";
+    } else if (aircraftUpdateData.model.length > 100) {
+      newErrors.model = "Tên model không được dài quá 100 ký tự.";
+    }
+
+    if (
+      aircraftUpdateData.economyCapacity === null ||
+      aircraftUpdateData.economyCapacity < 0
+    ) {
+      newErrors.economyCapacity = "Sức chứa Economy không hợp lệ.";
+    }
+
+    if (
+      aircraftUpdateData.businessCapacity === null ||
+      aircraftUpdateData.businessCapacity < 0
+    ) {
+      newErrors.businessCapacity = "Sức chứa Business không hợp lệ.";
+    }
+
+    if (
+      aircraftUpdateData.firstClassCapacity === null ||
+      aircraftUpdateData.firstClassCapacity < 0
+    ) {
+      newErrors.firstClassCapacity = "Sức chứa First Class không hợp lệ.";
+    }
+
+    // Kiểm tra bố trí ghế (layout)
+    const { layout } = aircraftUpdateData.seatLayoutJSON;
+    const validLayout = (value: string) =>
+      value === "" || /^[0-9]+(-[0-9]+)*$/.test(value);
+
+    if (layout) {
+      if (!validLayout(layout.Economy)) newErrors.layoutEconomy = "Định dạng không hợp lệ (VD: 3-3-3).";
+      if (!validLayout(layout.Business)) newErrors.layoutBusiness = "Định dạng không hợp lệ (VD: 2-2-2).";
+      if (!validLayout(layout.First)) newErrors.layoutFirst = "Định dạng không hợp lệ (VD: 1-2-1).";
+    }
+
+    // Ngày bảo trì
+    if (aircraftUpdateData.lastMaintenance && aircraftUpdateData.nextMaintenance) {
+      const last = new Date(aircraftUpdateData.lastMaintenance);
+      const next = new Date(aircraftUpdateData.nextMaintenance);
+      if (next < last) newErrors.nextMaintenance = "Ngày bảo trì tiếp theo phải sau ngày gần nhất.";
+    }
+
+    setUpdateErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+ };
+
+
+  const updateAircraft = (): void => {
+  const isValid = validateUpdateInputs();
+  if (!isValid) return; // nếu có lỗi thì dừng
+  // console.log('select',String(selectedId))
+  requestApi(`aircrafts/${String(selectedId)}`, "PUT", aircraftUpdateData)
+    .then((res: any) => {
+      if (res.success) {
+        alert("Cập nhật thông tin máy bay thành công!");
+        loadAircrafts();
+        setShowUpdateModal(false)
+      } else {
+        alert("Cập nhật thất bại");
+      }
+    })
+    .catch((error: any) => console.log('error aircraft',error));
+ };
+ const deleteAicraft = (id:string) : void =>{
+     requestApi(`aircrafts/${id}`,"DELETE").then((res:any)=>{
+        if(res.success){
+           alert("Xóa máy bay thành công!");
+           loadAircrafts();
+        }else{
+          alert("Xóa thất bại");
+        }
+     }).catch((error:any)=> console.log(error))
+ }
 
   const [aircrafts, setAircrafts] = useState<ExtendedAircraft[]>([
     {
@@ -373,6 +524,7 @@ const addAircraft = (): void => {
   ]);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -706,100 +858,270 @@ const addAircraft = (): void => {
 
       case 'aircraft-edit':
         return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Sửa thông tin máy bay</h3>
-              <div className="mb-4">
-                <label className="block text-md font-medium text-gray-700 mb-1">Chọn máy bay để chỉnh sửa</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                  <option value="">Chọn máy bay</option>
-                  {aircrafts.map((aircraft) => (
-                    <option key={aircraft.AircraftID} value={aircraft.AircraftID}>
-                      {aircraft.name} - {aircraft.registrationNumber}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Tên máy bay</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Boeing 737-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Số đăng ký</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="VN-A001"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Hãng sản xuất</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="Boeing">Boeing</option>
-                    <option value="Airbus">Airbus</option>
-                    <option value="Embraer">Embraer</option>
-                    <option value="ATR">ATR</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Model</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="737-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Năm sản xuất</label>
-                  <input
-                    type="number"
-                    min="1950"
-                    max="2024"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="2018"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Loại máy bay</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="Narrow-body">Narrow-body</option>
-                    <option value="Wide-body">Wide-body</option>
-                    <option value="Regional">Regional</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Sức chứa</label>
-                  <input
-                    type="number"
-                    min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="Active">Hoạt động</option>
-                    <option value="Maintenance">Bảo trì</option>
-                    <option value="Inactive">Không hoạt động</option>
-                  </select>
-                </div>
-              </form>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                  Hủy
-                </button>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  Cập nhật thông tin
-                </button>
-              </div>
-            </div>
-          </div>
+                 <div className="space-y-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        Sửa thông tin máy bay
+                      </h3>
+
+                      {/* Chọn máy bay */}
+                      <div className="mb-4">
+                        <label className="block text-md font-medium text-gray-700 mb-1">
+                          Chọn máy bay để chỉnh sửa
+                        </label>
+                        <select
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                          onChange={(e) => handleSelectAircraft(e.target.value)}
+                          value={selectedId || ""}
+                        >
+                          <option value="">Chọn máy bay</option>
+                          {AircraftsList.map((aircraft:any) => (
+                            <option key={aircraft.aircraftId} value={aircraft.aircraftId}>
+                              {aircraft.aircraftCode} - {aircraft.model}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Form chỉnh sửa */}
+                        <form
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            updateAircraft();
+                          }}
+                        >
+                          {/* Mã máy bay */}
+                          <div>
+                            <label className="block text-md font-medium text-gray-700 mb-1">
+                              Mã máy bay
+                            </label>
+                            <input
+                              type="text"
+                              value={aircraftUpdateData.aircraftCode}
+                              onChange={(e) => {
+                                  handleChange("aircraftCode", e.target.value),
+                                  setUpdateErrors((prev: any) => ({ ...prev, aircraftCode: "" }))
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                            />
+                            {updateErrors.aircraftCode && (
+                              <p className="text-red-500 text-sm mt-1">{updateErrors.aircraftCode}</p>
+                            )}
+                          </div>
+
+                          {/* Model */}
+                          <div>
+                            <label className="block text-md font-medium text-gray-700 mb-1">Model</label>
+                            <input
+                              type="text"
+                              value={aircraftUpdateData.model}
+                              onChange={(e) => {
+                                handleChange("model", e.target.value)
+                                setUpdateErrors((prev: any) => ({ ...prev, model: "" }))
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                            />
+                            {updateErrors.model && (
+                              <p className="text-red-500 text-sm mt-1">{updateErrors.model}</p>
+                            )}
+                          </div>
+
+                          {/* Sức chứa Economy */}
+                          <div>
+                            <label className="block text-md font-medium text-gray-700 mb-1">
+                              Sức chứa Economy
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={aircraftUpdateData.economyCapacity ?? ""}
+                              onChange={(e) => {
+                                handleChange("economyCapacity", Number(e.target.value))
+                                setUpdateErrors((prev: any) => ({ ...prev, economyCapacity: "" }))
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                            />
+                            {updateErrors.economyCapacity && (
+                              <p className="text-red-500 text-sm mt-1">{updateErrors.economyCapacity}</p>
+                            )}
+                          </div>
+
+                          {/* Sức chứa Business */}
+                          <div>
+                            <label className="block text-md font-medium text-gray-700 mb-1">
+                              Sức chứa Business
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={aircraftUpdateData.businessCapacity}
+                              onChange={(e) =>{
+                                handleChange("businessCapacity", Number(e.target.value))
+                                setUpdateErrors((prev: any) => ({ ...prev, businessCapacity: "" }))
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                            />
+                            {updateErrors.businessCapacity && (
+                              <p className="text-red-500 text-sm mt-1">{updateErrors.businessCapacity}</p>
+                            )}
+                          </div>
+
+                          {/* Sức chứa First Class */}
+                          <div>
+                            <label className="block text-md font-medium text-gray-700 mb-1">
+                              Sức chứa First Class
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={aircraftUpdateData.firstClassCapacity}
+                              onChange={(e) =>
+                                handleChange("firstClassCapacity", Number(e.target.value))
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                            />
+                            {errors.firstClassCapacity && (
+                              <p className="text-red-500 text-sm mt-1">
+                                {errors.firstClassCapacity}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Bố trí ghế */}
+                          <div className="md:col-span-2 border-t pt-4">
+                            <h4 className="text-md font-medium text-gray-700 mb-1">Bố trí ghế</h4>
+                            <div className="grid grid-cols-3 gap-3">
+                              {(["Economy", "Business", "First"] as const).map((cls) => (
+                                <div key={cls}>
+                                  <input
+                                    type="text"
+                                    placeholder={`${cls} (VD: ${
+                                      cls === "Economy"
+                                        ? "3-3-3"
+                                        : cls === "Business"
+                                        ? "2-2-2"
+                                        : "1-2-1"
+                                    })`}
+                                    value={aircraftUpdateData.seatLayoutJSON.layout[cls] || ""}
+                                    onChange={(e) => handleSeatLayoutChange(cls, e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                                  />
+                                  {errors[`layout${cls}`] && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                      {errors[`layout${cls}`]}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Tùy chọn tiện ích */}
+                            <div className="flex items-center gap-4 mt-3">
+                              <label className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={aircraftUpdateData.seatLayoutJSON.hasWiFi}
+                                  onChange={(e) =>
+                                    setAircraftUpdateData((prev) => ({
+                                      ...prev,
+                                      seatLayoutJSON: {
+                                        ...prev.seatLayoutJSON,
+                                        hasWiFi: e.target.checked,
+                                      },
+                                    }))
+                                  }
+                                />
+                                <span className="text-md font-medium text-gray-700 mb-1">Có WiFi</span>
+                              </label>
+
+                              <label className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    aircraftUpdateData.seatLayoutJSON.hasPremiumEntertainment
+                                  }
+                                  onChange={(e) =>
+                                    setAircraftUpdateData((prev) => ({
+                                      ...prev,
+                                      seatLayoutJSON: {
+                                        ...prev.seatLayoutJSON,
+                                        hasPremiumEntertainment: e.target.checked,
+                                      },
+                                    }))
+                                  }
+                                />
+                                <span className="text-md font-medium text-gray-700 mb-1">
+                                  Giải trí cao cấp
+                                </span>
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* Ngày bảo trì */}
+                          <div>
+                            <label className="block text-md font-medium text-gray-700 mb-1">
+                              Ngày bảo trì gần nhất
+                            </label>
+                            <input
+                              type="date"
+                              value={aircraftUpdateData.lastMaintenance}
+                              onChange={(e) => handleChange("lastMaintenance", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-md font-medium text-gray-700 mb-1">
+                              Ngày bảo trì tiếp theo
+                            </label>
+                            <input
+                              type="date"
+                              value={aircraftUpdateData.nextMaintenance}
+                              onChange={(e) => handleChange("nextMaintenance", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                            />
+                            {errors.nextMaintenance && (
+                              <p className="text-red-500 text-sm mt-1">{errors.nextMaintenance}</p>
+                            )}
+                          </div>
+
+                          {/* Trạng thái */}
+                          <div>
+                            <label className="block text-md font-medium text-gray-700 mb-1">
+                              Trạng thái
+                            </label>
+                            <select
+                              value={aircraftUpdateData.isActive ? "true" : "false"}
+                              onChange={(e) => handleChange("isActive", e.target.value === "true")}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                            >
+                              <option value="true">Đang hoạt động</option>
+                              <option value="false">Ngưng hoạt động</option>
+                            </select>
+                          </div>
+
+                          {/* Buttons */}
+                          <div className="mt-6 flex justify-end space-x-3 md:col-span-2">
+                            <button
+                              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                              onClick={() => setSelectedId(null)}
+                            >
+                              Hủy
+                            </button>
+                            <button
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                              type="submit"
+                            >
+                              Cập nhật thông tin
+                            </button>
+                          </div>
+                        </form>
+
+
+  
+                    </div>
+                  </div>
         );
 
       case 'aircraft-seats':
@@ -1088,10 +1410,10 @@ const addAircraft = (): void => {
                             <button className="text-blue-600 hover:text-blue-900">
                               <EyeIcon className="h-5 w-5" />
                             </button>
-                            <button className="text-green-600 hover:text-green-900">
+                            <button className="text-green-600 hover:text-green-900" onClick={()=>{setShowUpdateModal(true),handleSelectAircraft(aircraft.aircraftId)}}>
                               <PencilIcon className="h-5 w-5" />
                             </button>
-                            <button className="text-red-600 hover:text-red-900">
+                            <button className="text-red-600 hover:text-red-900" onClick={()=> deleteAicraft(aircraft.aircraftId)}>
                               <TrashIcon className="h-5 w-5" />
                             </button>
                           </div>
@@ -1427,6 +1749,230 @@ const addAircraft = (): void => {
       </div>
 
       )}
+      
+      {/* Update Aircraft Modal */}
+      {showUpdateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-3xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Cập nhật thông tin máy bay
+            </h3>
+            {/* Form update */}
+            {selectedId && (
+              <form
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  updateAircraft();
+                }}
+              >
+                {/* --- Mã máy bay --- */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Mã máy bay
+                  </label>
+                   <input
+                      type="text"
+                      value={aircraftUpdateData.aircraftCode}
+                      onChange={(e) => {
+                      handleChange("aircraftCode", e.target.value),
+                      setUpdateErrors((prev: any) => ({ ...prev, aircraftCode: "" }))
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                      />
+                    {updateErrors.aircraftCode && (
+                    <p className="text-red-500 text-sm mt-1">{updateErrors.aircraftCode}</p>
+                    )}
+                </div>
+
+                {/* --- Model --- */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Model
+                  </label>
+                  <input
+                      type="text"
+                      value={aircraftUpdateData.model}
+                      onChange={(e) => {
+                      handleChange("model", e.target.value),
+                      setUpdateErrors((prev: any) => ({ ...prev, model: "" }))
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                      />
+                    {updateErrors.model&& (
+                    <p className="text-red-500 text-sm mt-1">{updateErrors.model}</p>
+                    )}
+                </div>
+
+                {/* --- Sức chứa --- */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Sức chứa Economy
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={aircraftUpdateData.economyCapacity}
+                    onChange={(e) =>
+                      handleChange("economyCapacity", Number(e.target.value))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Sức chứa Business
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={aircraftUpdateData.businessCapacity}
+                    onChange={(e) =>
+                      handleChange("businessCapacity", Number(e.target.value))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Sức chứa First Class
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={aircraftUpdateData.firstClassCapacity}
+                    onChange={(e) =>
+                      handleChange("firstClassCapacity", Number(e.target.value))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                  />
+                </div>
+
+                {/* --- Bố trí ghế --- */}
+                <div className="md:col-span-2 border-t pt-4">
+                  <h4 className="text-md font-medium text-gray-700 mb-1">Bố trí ghế</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(["Economy", "Business", "First"] as const).map((cls) => (
+                      <input
+                        key={cls}
+                        type="text"
+                        placeholder={`${cls} (VD: ${
+                          cls === "Economy" ? "3-3-3" : cls === "Business" ? "2-2-2" : "1-2-1"
+                        })`}
+                        value={aircraftUpdateData.seatLayoutJSON.layout[cls] || ""}
+                        onChange={(e) => handleSeatLayoutChange(cls, e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                      />
+                    ))}
+                  </div>
+
+                  {/* --- Tiện ích --- */}
+                  <div className="flex items-center gap-4 mt-3">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={aircraftUpdateData.seatLayoutJSON.hasWiFi}
+                        onChange={(e) =>
+                          setAircraftUpdateData((prev) => ({
+                            ...prev,
+                            seatLayoutJSON: {
+                              ...prev.seatLayoutJSON,
+                              hasWiFi: e.target.checked,
+                            },
+                          }))
+                        }
+                      />
+                      <span className="text-md font-medium text-gray-700">Có WiFi</span>
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={aircraftUpdateData.seatLayoutJSON.hasPremiumEntertainment}
+                        onChange={(e) =>
+                          setAircraftUpdateData((prev) => ({
+                            ...prev,
+                            seatLayoutJSON: {
+                              ...prev.seatLayoutJSON,
+                              hasPremiumEntertainment: e.target.checked,
+                            },
+                          }))
+                        }
+                      />
+                      <span className="text-md font-medium text-gray-700">
+                        Giải trí cao cấp
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* --- Bảo trì --- */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Ngày bảo trì gần nhất
+                  </label>
+                  <input
+                    type="date"
+                    value={aircraftUpdateData.lastMaintenance}
+                    onChange={(e) => handleChange("lastMaintenance", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Ngày bảo trì tiếp theo
+                  </label>
+                  <input
+                    type="date"
+                    value={aircraftUpdateData.nextMaintenance}
+                    onChange={(e) => handleChange("nextMaintenance", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                  />
+                </div>
+
+                {/* --- Trạng thái --- */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Trạng thái
+                  </label>
+                  <select
+                    value={aircraftUpdateData.isActive ? "true" : "false"}
+                    onChange={(e) =>
+                      handleChange("isActive", e.target.value === "true")
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                  >
+                    <option value="true">Đang hoạt động</option>
+                    <option value="false">Ngưng hoạt động</option>
+                  </select>
+                </div>
+
+                {/* --- Buttons --- */}
+                <div className="md:col-span-2 flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowUpdateModal(false)}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Cập nhật thông tin
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }
