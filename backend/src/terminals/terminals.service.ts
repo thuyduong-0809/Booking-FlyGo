@@ -82,6 +82,33 @@ export class TerminalsService {
                 }
                 return response;
             }
+
+            async findByAirportId(id: number): Promise<any> {
+                let response = { ...common_response };
+                try {
+                    const terminals = await this.terminalRepository.find({
+                    where: { airport: { airportId: id } },
+                    relations: ['airport'],
+                    });
+
+                    if (terminals.length > 0) {
+                    response.success = true;
+                    response.data = terminals;
+                    response.message = 'Successfully retrieved terminals for this airport';
+                    } else {
+                    response.success = false;
+                    response.message = 'No terminals found for this airport';
+                    response.errorCode = 'TERMINAL_EXISTS';
+                    }
+                } catch (error) {
+                    console.error(error);
+                    response.success = false;
+                    response.message = 'Error while retrieving terminal by airport ID';
+                }
+                return response;
+                }
+
+        
         
             async update(
                 id: number,

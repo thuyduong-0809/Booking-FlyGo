@@ -21,6 +21,11 @@ export class TerminalsController {
     findOne(@Param('id') id:string) {
         return this.terminalsService.findOne(Number(id));
     }
+
+    @Get('airport/:id')
+    findByAirportId(@Param('id') id:string) {
+        return this.terminalsService.findByAirportId(Number(id));
+    }
     
     @UsePipes(ValidationPipe)
     @Put(':id')
