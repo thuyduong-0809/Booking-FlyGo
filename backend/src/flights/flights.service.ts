@@ -65,6 +65,13 @@ export class FlightsService {
     async create(createFlightDto:CreateFlightDto):Promise<any>{
         let response = {...common_response}
         try {
+            const flightNumberExisting = await this.flightRepository.findOne({where:{flightNumber:createFlightDto.flightNumber}})
+            if(flightNumberExisting){
+                response.success = false;
+                response.message = 'flight number duplicate';
+                response.errorCode = 'FLIGHT_EXISTS';
+                return response;
+            }
             const airline = await this.airlineRepository.findOne({where:{airlineId:createFlightDto.airlineId}});
             if(!airline) {
                 response.success = false;

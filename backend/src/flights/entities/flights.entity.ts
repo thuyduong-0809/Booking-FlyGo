@@ -21,7 +21,7 @@ export class Flight {
   @PrimaryGeneratedColumn()
   flightId: number;
 
-  @Column({ length: 10 })
+  @Column({ length: 10 ,unique:true})
   flightNumber: string;
 
   @Column({ type: 'datetime' })

@@ -84,6 +84,32 @@ export class AircraftsService {
                     }
                     return response;
                 }
+
+                async findByAirlineId(id: number): Promise<any> {
+                    let response = { ...common_response };
+                    try {
+                        const aicrafts = await this.aircraftRepository.find({
+                        where: { airline: { airlineId: id } },
+                        relations: ['airline'],
+                        });
+
+                        if(aicrafts.length > 0) {
+                        response.success = true;
+                        response.data = aicrafts;
+                        response.message = 'Successfully retrieved aicrafts for this airline';
+                        } else {
+                        response.success = false;
+                        response.message = 'No aicrafts found for this airline';
+                        response.errorCode = 'AICRAFTS_EXISTS';
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        response.success = false;
+                        response.message = 'Error while retrieving aicraft by airline ID';
+                    }
+                    return response;
+                    }
+
             
                 async update(
                     id: number,
