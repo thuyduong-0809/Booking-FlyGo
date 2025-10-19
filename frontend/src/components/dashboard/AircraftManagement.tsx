@@ -515,6 +515,38 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
     return matchesSearch && matchesStatus;
   });
 
+  const generateAircraftCode = (airlineId: number, model: string) => {
+      // Tìm hãng hàng không tương ứng
+      const selectedAirline: any = airlines.find((a: any) => a.airlineId === Number(airlineId));
+      if (!selectedAirline) return "";
+
+      const airlineCode = selectedAirline.airlineCode || "XX";
+
+      // Lấy ký tự đầu tiên trong model (VD: Boeing → B, Airbus → A)
+      const typeInitial = model?.trim()?.charAt(0).toUpperCase() || "X";
+
+      // Lọc danh sách aircraft có cùng airlineCode và typeInitial
+      const filteredAircrafts = AircraftsList.filter((ac: any) =>
+        ac.aircraftCode?.startsWith(`${airlineCode}-${typeInitial}`)
+      );
+
+      // Lấy số thứ tự lớn nhất hiện tại
+      let maxNumber = 0;
+      filteredAircrafts.forEach((ac: any) => {
+        const match = ac.aircraftCode?.match(/\d+$/); // lấy phần số ở cuối mã
+        if (match) {
+          const num = parseInt(match[0], 10);
+          if (num > maxNumber) maxNumber = num;
+        }
+      });
+
+      //Tạo mã mới
+      const nextNumber = (maxNumber + 1).toString().padStart(3, "0");
+      const newCode = `${airlineCode}-${typeInitial}${nextNumber}`;
+
+      return newCode;
+    };
+
   
     if (loading) {
     return <div>Loading...</div>;
@@ -535,7 +567,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   }}
                 >
                   {/* --- MÃ MÁY BAY --- */}
-                  <div>
+                  {/* <div>
                     <label className="block text-md font-medium text-gray-700 mb-1">Mã máy bay</label>
                     <input
                       type="text"
@@ -552,7 +584,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                     {errors.aircraftCode && (
                       <p className="text-red-500 text-sm mt-1">{errors.aircraftCode}</p>
                     )}
-                  </div>
+                  </div> */}
 
                   {/* --- MODEL --- */}
                   <div>
@@ -561,9 +593,14 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       type="text"
                       value={model}
                       onChange={(e) => {
-                        setModel(e.target.value);
-                        setErrors((prev: any) => ({ ...prev, model: "" }));
-                      }}
+                      const value = e.target.value;
+                      setModel(value);
+                      setErrors((prev: any) => ({ ...prev, model: "" }));
+                      if (airlineId) {
+                        const code = generateAircraftCode(airlineId, value);
+                        setAircraftCode(code);
+                      }
+                     }}
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.model ? "border-red-500" : "border-gray-300"
                       }`}
@@ -578,9 +615,14 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                     <select
                       value={airlineId ?? ""}
                       onChange={(e) => {
-                        setAirlineId(Number(e.target.value));
-                        setErrors((prev: any) => ({ ...prev, airlineId: "" }));
-                      }}
+                      const id = Number(e.target.value);
+                      setAirlineId(id);
+                      setErrors((prev: any) => ({ ...prev, airlineId: "" }));
+                      if (model) {
+                        const code = generateAircraftCode(id, model);
+                        setAircraftCode(code);
+                      }
+                    }}
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.airlineId ? "border-red-500" : "border-gray-300"
                       }`}
@@ -1308,7 +1350,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                         Máy bay
                       </th>
                       <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Số đăng ký
+                        Mẫu
                       </th>
                       <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                         Hãng hàng không
@@ -1340,7 +1382,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {aircraft.aircraftCode}
+                          {aircraft.model}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {aircraft.airline.airlineName}
@@ -1424,36 +1466,20 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                     addAircraft();
                   }}
                 >
-                  {/* --- MÃ MÁY BAY --- */}
-                  <div>
-                    <label className="block text-md font-medium text-gray-700 mb-1">Mã máy bay</label>
-                    <input
-                      type="text"
-                      value={aircraftCode}
-                      onChange={(e) => {
-                         setAircraftCode(e.target.value);
-                         setErrors((prev: any) => ({ ...prev, aircraftCode: "" }))
-                      }}
-                      placeholder="Nhập mã máy bay"
-                      className={`w-full px-3 py-2 border rounded-lg text-black ${
-                        errors.aircraftCode ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                    {errors.aircraftCode && (
-                      <p className="text-red-500 text-sm mt-1">{errors.aircraftCode}</p>
-                    )}
-                  </div>
-
-                  {/* --- MODEL --- */}
                   <div>
                     <label className="block text-md font-medium text-gray-700 mb-1">Model</label>
                     <input
                       type="text"
                       value={model}
                       onChange={(e) => {
-                        setModel(e.target.value);
-                        setErrors((prev: any) => ({ ...prev, model: "" }));
-                      }}
+                      const value = e.target.value;
+                      setModel(value);
+                      setErrors((prev: any) => ({ ...prev, model: "" }));
+                      if (airlineId) {
+                        const code = generateAircraftCode(airlineId, value);
+                        setAircraftCode(code);
+                      }
+                     }}
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.model ? "border-red-500" : "border-gray-300"
                       }`}
@@ -1468,19 +1494,24 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                     <select
                       value={airlineId ?? ""}
                       onChange={(e) => {
-                        setAirlineId(Number(e.target.value));
-                        setErrors((prev: any) => ({ ...prev, airlineId: "" }));
-                      }}
+                      const id = Number(e.target.value);
+                      setAirlineId(id);
+                      setErrors((prev: any) => ({ ...prev, airlineId: "" }));
+                      if (model) {
+                        const code = generateAircraftCode(id, model);
+                        setAircraftCode(code);
+                      }
+                    }}
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.airlineId ? "border-red-500" : "border-gray-300"
                       }`}
                     >
                       <option value="">Chọn hãng hàng không</option>
-                      <option value="1">Vietnam Airlines</option>
-                      <option value="2">VietJet Air</option>
-                      <option value="3">Bamboo Airways</option>
-                      <option value="4">Pacific Airlines</option>
-                      <option value="5">Vietravel Airlines</option>
+                      {airlines.map((airline:any)=>{
+                        return(
+                           <option key={airline.airlineId} value={airline.airlineId}>{airline.airlineName}</option>
+                        )
+                      })}
                     </select>
                     {errors.airlineId && (
                       <p className="text-red-500 text-sm mt-1">{errors.airlineId}</p>
