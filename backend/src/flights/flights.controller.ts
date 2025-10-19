@@ -33,4 +33,8 @@ export class FlightsController {
     async delete(@Param('id') id:string): Promise<any> {
         return this.flightsService.delete(Number(id));
     }
+    @Get('generate-flight-number/:airlineId')
+        async generateFlightNumber(@Param('airlineId') airlineId: number) {
+        return this.flightsService.generateFlightNumber(airlineId);
+    }
 }

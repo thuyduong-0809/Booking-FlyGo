@@ -46,12 +46,12 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
         arrivalTime: "",
         duration: "",
         status: "Scheduled",
-        economyPrice: "",
-        businessPrice: "",
-        firstClassPrice: "",
-        availableEconomySeats: "",
-        availableBusinessSeats: "",
-        availableFirstClassSeats: "",
+        economyPrice: 0.0||null,
+        businessPrice: 0.0||null,
+        firstClassPrice: 0.0||null,
+        availableEconomySeats: 0||null,
+        availableBusinessSeats: 0||null,
+        availableFirstClassSeats: 0||null,
       });
 
 
@@ -112,6 +112,9 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
   const [airports,setAirports] = useState([])
   const [aircrafts,setAircrafts] = useState([])
   const [terminals,setTerminals] = useState([])
+  const [errors, setErrors] = useState<any>({});
+  const [ updateErrors, setUpdateErrors] = useState<any>({});
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   // const [loading,setLoading] = useState(true)
 
   useEffect(()=>{
@@ -214,6 +217,129 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
       }
     };
 
+  const validateInputs = () => {
+      const newErrors: any = {};
+
+      // --- Mã chuyến bay ---
+      // if (!flightData.flightNumber || flightData.flightNumber.trim() === "") {
+      //   newErrors.flightNumber = "Vui lòng nhập mã chuyến bay.";
+      // } else if (flightData.flightNumber.length > 10) {
+      //   newErrors.flightNumber = "Mã chuyến bay không được dài quá 10 ký tự.";
+      // }
+
+      // --- Hãng hàng không ---
+      if (!flightData.airlineId) {
+        newErrors.airlineId = "Vui lòng chọn hãng hàng không.";
+      }
+
+      // --- Máy bay ---
+      if (!flightData.aircraftId) {
+        newErrors.aircraftId = "Vui lòng chọn máy bay.";
+      }
+
+      // --- Sân bay khởi hành / đến ---
+      if (!flightData.departureAirportId) {
+        newErrors.departureAirportId = "Vui lòng chọn sân bay khởi hành.";
+      }
+
+      if (!flightData.arrivalAirportId) {
+        newErrors.arrivalAirportId = "Vui lòng chọn sân bay đến.";
+      }
+
+      if (
+        flightData.departureAirportId &&
+        flightData.arrivalAirportId &&
+        flightData.departureAirportId === flightData.arrivalAirportId
+      ) {
+        newErrors.arrivalAirportId = "Sân bay đi và đến không được trùng nhau.";
+      }
+
+      // --- Terminal (tùy bạn muốn bắt buộc hay không) ---
+      if (!flightData.departureTerminalId) {
+        newErrors.departureTerminalId = "Vui lòng chọn terminal khởi hành.";
+      }
+
+      if (!flightData.arrivalTerminalId) {
+        newErrors.arrivalTerminalId = "Vui lòng chọn terminal đến.";
+      }
+
+      if (!flightData.departureTime) {
+          newErrors.departureTime = "Vui lòng chọn thời gian khởi hành.";
+        }
+        if (!flightData.arrivalTime) {
+          newErrors.arrivalTime = "Vui lòng chọn thời gian đến.";
+        } else if (new Date(flightData.arrivalTime) <= new Date(flightData.departureTime)) {
+          newErrors.arrivalTime = "Thời gian đến phải sau thời gian khởi hành.";
+       }
+
+
+
+      // --- Trạng thái chuyến bay ---
+      if (!flightData.status) {
+        newErrors.status = "Vui lòng chọn trạng thái chuyến bay.";
+      }
+
+        // --- Giá vé ---
+      if (!flightData.economyPrice || Number(flightData.economyPrice) <= 0) {
+        newErrors.economyPrice = "Vui lòng nhập giá Economy hợp lệ (> 0).";
+      }
+      if (!flightData.businessPrice || Number(flightData.businessPrice) <= 0) {
+        newErrors.businessPrice = "Vui lòng nhập giá Business hợp lệ (> 0).";
+      }
+      if (!flightData.firstClassPrice || Number(flightData.firstClassPrice) <= 0) {
+        newErrors.firstClassPrice = "Vui lòng nhập giá First Class hợp lệ (> 0).";
+      }
+              if (
+          flightData.availableEconomySeats === "" ||
+          flightData.availableEconomySeats === null ||
+          Number(flightData.availableEconomySeats) < 0
+        ) {
+          newErrors.availableEconomySeats = "Vui lòng nhập số ghế Economy hợp lệ (≥ 0).";
+        }
+
+        if (
+          flightData.availableBusinessSeats === "" ||
+          flightData.availableBusinessSeats === null ||
+          Number(flightData.availableBusinessSeats) < 0
+        ) {
+          newErrors.availableBusinessSeats = "Vui lòng nhập số ghế Business hợp lệ (≥ 0).";
+        }
+
+        if (
+          flightData.availableFirstClassSeats === "" ||
+          flightData.availableFirstClassSeats === null ||
+          Number(flightData.availableFirstClassSeats) < 0
+        ) {
+          newErrors.availableFirstClassSeats = "Vui lòng nhập số ghế First Class hợp lệ (≥ 0).";
+        }
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0; // true nếu không có lỗi
+    };
+
+    const clearFlightData = () => {
+      setFlightData({
+        flightNumber: "",
+        airlineId: "",
+        departureAirportId: "",
+        arrivalAirportId: "",
+        departureTerminalId: "",
+        arrivalTerminalId: "",
+        aircraftId: "",
+        departureTime: "",
+        arrivalTime: "",
+        duration: "",
+        status: "Scheduled",
+        economyPrice: null,
+        businessPrice: null,
+        firstClassPrice: null,
+        availableEconomySeats: null,
+        availableBusinessSeats: null,
+        availableFirstClassSeats: null,
+      });
+      setErrors({}); // đồng thời xóa lỗi (nếu có)
+    };
+
+
 
 
   
@@ -222,11 +348,30 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
       ...prev,
       [field]: value,
     }));
-   };
+      // Xóa lỗi của field đó khi người dùng nhập lại
+    setErrors((prev: any) => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  };
 
+  const generateFlightNumberByAirline = async (airlineId: string) => {
+    if (!airlineId) return;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    try {
+      const res = await requestApi(`flights/generate-flight-number/${airlineId}`, 'GET');
+      if (res.success && res.data?.flightNumber) {
+        handleChange('flightNumber', res.data.flightNumber);
+      }
+    } catch (error) {
+      console.error('Error generating flight number:', error);
+    }
+  };
+
+  const handleAddFlight= ():void => {
+    const isValid = validateInputs();
+    if (!isValid) return; // Dừng nếu có lỗi
 
     const formattedData = {
       ...flightData,
@@ -250,29 +395,17 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
     };
 
     requestApi("flights","POST",formattedData).then((res:any)=>{
+       console.log("API response:", res);
        if(res.success){
          alert("Thêm chuyến bay mới thành công")
-         setFlightData({
-          flightNumber: "",
-          airlineId: "",
-          departureAirportId: "",
-          arrivalAirportId: "",
-          departureTerminalId: "",
-          arrivalTerminalId: "",
-          aircraftId: "",
-          departureTime: "",
-          arrivalTime: "",
-          duration: "",
-          status: "Scheduled",
-          economyPrice: "",
-          businessPrice: "",
-          firstClassPrice: "",
-          availableEconomySeats: "",
-          availableBusinessSeats: "",
-          availableFirstClassSeats: "",
-      });
-       }else if(res.errorCode==="'FLIGHT_EXISTS"){
-          alert("chuyến bay đã tồn tại")
+         clearFlightData()
+         setShowAddModal(false)
+       }else if(res.errorCode==='FLIGHT_EXISTS'){
+          // alert("chuyến bay đã tồn tại")
+            setErrors((prev:any) => ({
+              ...prev,
+             flightNumber: "Mã chuyến bay đã tồn tại. Vui lòng nhập mã khác.",
+            }));
        }else{
           alert("Thêm chuyến bay thất bại")
        }
@@ -289,241 +422,382 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
             <div className="space-y-6">
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Tạo chuyến bay mới</h3>
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Flight Number */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Số chuyến bay
-                        </label>
-                        <input
-                          type="text"
-                          value={flightData.flightNumber}
-                          onChange={(e) => handleChange("flightNumber", e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                          placeholder="VN001"
-                        />
-                      </div>
+                          <form onSubmit={(e) => {
+                            e.preventDefault();
+                            handleAddFlight();
+                          }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Flight Number */}
+                            {/* <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Mã chuyến bay
+                              </label>
+                              <input
+                                type="text"
+                                readOnly
+                                value={flightData.flightNumber}
+                                onChange={(e) => handleChange('flightNumber', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.flightNumber ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="VD: VN123, QH210"
+                              />
+                              {errors.flightNumber && (
+                                <p className="text-red-500 text-sm">{errors.flightNumber}</p>
+                              )}
+                            </div> */}
 
-                      {/* Airline */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Hãng hàng không
-                        </label>
-                        <select
-                          value={flightData.airlineId}
-                          onChange={(e:any) => {handleChange("airlineId", e.target.value),loadAircraftsByAirlineId(e.target.value)}}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                        >
-                          <option value="">Chọn hãng hàng không</option>
-                          {airlines.map((a: any) => (
-                            <option key={a.airlineId} value={a.airlineId}>
-                              {a.airlineName}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                            {/* Airline */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Hãng hàng không
+                              </label>
+                              <select
+                                value={flightData.airlineId}
+                                onChange={(e:any) => {
+                                  handleChange('airlineId', e.target.value);
+                                  loadAircraftsByAirlineId(e.target.value);
+                                  generateFlightNumberByAirline(e.target.value);
+                                  
+                                }}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.airlineId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn hãng hàng không</option>
+                                {airlines.map((a:any) => (
+                                  <option key={a.airlineId} value={a.airlineId}>
+                                    {a.airlineName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.airlineId && (
+                                <p className="text-red-500 text-sm">{errors.airlineId}</p>
+                              )}
+                            </div>
+                                                        
+                            {/* Aircraft */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Máy bay
+                              </label>
+                              <select
+                                value={flightData.aircraftId}
+                                onChange={(e) => handleChange('aircraftId', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.aircraftId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn máy bay</option>
+                                {aircrafts.map((a:any) => (
+                                  <option key={a.aircraftId} value={a.aircraftId}>
+                                    {a.model}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.aircraftId && (
+                                <p className="text-red-500 text-sm">{errors.aircraftId}</p>
+                              )}
+                            </div>
 
-                      {/* Departure Airport */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Sân bay đi
-                        </label>
-                        <select
-                          value={flightData.departureAirportId}
-                          onChange={(e:any) => {
-                            handleChange("departureAirportId", e.target.value);
-                            loadTerminalByAirportId(e.target.value, "departure"); 
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                        >
-                          <option value="">Chọn sân bay đi</option>
-                          {airports.map((a: any) => (
-                            <option key={a.airportId} value={a.airportId}>
-                              {a.airportCode} - {a.airportName}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                            {/* Departure Airport */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Sân bay đi
+                              </label>
+                              <select
+                                value={flightData.departureAirportId}
+                                onChange={(e:any) => {
+                                  handleChange('departureAirportId', e.target.value);
+                                  loadTerminalByAirportId(e.target.value, 'departure');
+                                }}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.departureAirportId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn sân bay</option>
+                                {airports.map((a:any) => (
+                                  <option key={a.airportId} value={a.airportId}>
+                                    {a.airportName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.departureAirportId && (
+                                <p className="text-red-500 text-sm">{errors.departureAirportId}</p>
+                              )}
+                            </div>
 
-                      {/* Arrival Airport */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Sân bay đến
-                        </label>
-                        <select
-                            value={flightData.arrivalAirportId}
-                            onChange={(e:any) => {
-                            handleChange("arrivalAirportId", e.target.value);
-                            loadTerminalByAirportId(e.target.value, "arrival"); 
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                        >
-                          <option value="">Chọn sân bay đến</option>
-                          {airports.map((a: any) => (
-                            <option key={a.airportId} value={a.airportId}>
-                              {a.airportCode} - {a.airportName}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                            {/* Arrival Airport */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Sân bay đến
+                              </label>
+                              <select
+                                value={flightData.arrivalAirportId}
+                                onChange={(e:any) => {
+                                  handleChange('arrivalAirportId', e.target.value);
+                                  loadTerminalByAirportId(e.target.value, 'arrival');
+                                }}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.arrivalAirportId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn sân bay</option>
+                                {airports.map((a:any) => (
+                                  <option key={a.airportId} value={a.airportId}>
+                                    {a.airportName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.arrivalAirportId && (
+                                <p className="text-red-500 text-sm">{errors.arrivalAirportId}</p>
+                              )}
+                            </div>
 
-                 {/* Departure Terminal*/}
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Nhà ga đi</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="">Chọn nhà ga</option>
-                    {departureTerminals.map((terminal:any) => (
-                      <option key={terminal.terminalId} value={terminal.terminalId}>
-                       {terminal.terminalName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {/* Arrival Terminal*/}
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Nhà ga đến</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="">Chọn nhà ga</option>
-                    {arrivalTerminals.map((terminal:any) => (
-                      <option key={terminal.terminalId} value={terminal.terminalId}>
-                        {terminal.terminalName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                            {/* Departure Terminal */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Nhà ga đi
+                              </label>
+                              <select
+                                value={flightData.departureTerminalId}
+                                onChange={(e) => handleChange('departureTerminalId', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.departureTerminalId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn nhà ga</option>
+                                {departureTerminals.map((t) => (
+                                  <option key={t.terminalId} value={t.terminalId}>
+                                    {t.terminalName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.departureTerminalId && (
+                                <p className="text-red-500 text-sm">{errors.departureTerminalId}</p>
+                              )}
+                            </div>
 
-                      {/* Departure Time */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Thời gian khởi hành
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={flightData.departureTime}
-                          onChange={(e) => handleChange("departureTime", e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                        />
-                      </div>
+                            {/* Arrival Terminal */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Nhà ga đến
+                              </label>
+                              <select
+                                value={flightData.arrivalTerminalId}
+                                onChange={(e) => handleChange('arrivalTerminalId', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.arrivalTerminalId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn nhà ga</option>
+                                {arrivalTerminals.map((t) => (
+                                  <option key={t.terminalId} value={t.terminalId}>
+                                    {t.terminalName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.arrivalTerminalId && (
+                                <p className="text-red-500 text-sm">{errors.arrivalTerminalId}</p>
+                              )}
+                            </div>
 
-                      {/* Arrival Time */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Thời gian đến
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={flightData.arrivalTime}
-                          onChange={(e) => handleChange("arrivalTime", e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                        />
-                      </div>
-                      {/* Duration (auto) */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Thời lượng (phút)
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={flightData.duration}
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-600 bg-gray-100"
-                          placeholder="Tự động tính"
-                        />
-                      </div>
+                            
 
-                      {/* Aircraft */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Máy bay
-                        </label>
-                        <select
-                          value={flightData.aircraftId}
-                          onChange={(e) => handleChange("aircraftId", e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                        >
-                          <option value="">Chọn máy bay</option>
-                          {aircrafts.map((ac: any) => (
-                            <option key={ac.aircraftId} value={ac.aircraftId}>
-                              {ac.aircraftCode} - {ac.model}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                            {/* Departure Time */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Thời gian khởi hành
+                              </label>
+                              <input
+                                type="datetime-local"
+                                value={flightData.departureTime}
+                                onChange={(e) => handleChange('departureTime', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.departureTime ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              />
+                              {errors.departureTime && (
+                                <p className="text-red-500 text-sm">{errors.departureTime}</p>
+                              )}
+                            </div>
 
-                      {/* Status */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-1">
-                          Trạng thái
-                        </label>
-                        <select
-                          value={flightData.status}
-                          onChange={(e) => handleChange("status", e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                        >
-                          <option value="Scheduled">Scheduled</option>
-                          <option value="Boarding">Boarding</option>
-                          <option value="Departed">Departed</option>
-                          <option value="Arrived">Arrived</option>
-                          <option value="Delayed">Delayed</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
-                      </div>
+                            {/* Arrival Time */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Thời gian đến
+                              </label>
+                              <input
+                                type="datetime-local"
+                                value={flightData.arrivalTime}
+                                onChange={(e) => handleChange('arrivalTime', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.arrivalTime ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              />
+                              {errors.arrivalTime && (
+                                <p className="text-red-500 text-sm">{errors.arrivalTime}</p>
+                              )}
+                            </div>
 
-                      {/* Prices */}
-                      {[
-                        { label: "Giá Economy (₫)", field: "economyPrice" },
-                        { label: "Giá Business (₫)", field: "businessPrice" },
-                        { label: "Giá First Class (₫)", field: "firstClassPrice" },
-                      ].map(({ label, field }) => (
-                        <div key={field}>
-                          <label className="block text-md font-medium text-gray-700 mb-1">
-                            {label}
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={flightData[field as keyof typeof flightData] as string}
-                            onChange={(e) => handleChange(field, e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                          />
-                        </div>
-                      ))}
+                            {/* Duration */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Thời lượng (phút)
+                              </label>
+                              <input
+                                type="number"
+                                value={flightData.duration}
+                                readOnly
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-600 bg-gray-100"
+                                placeholder="Tự động tính"
+                              />
+                            </div>
+                            {/* Status */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Trạng thái
+                              </label>
+                              <select
+                                value={flightData.status}
+                                onChange={(e) => handleChange('status', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.status ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Delayed">Delayed</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Completed">Completed</option>
+                              </select>
+                              {errors.status && (
+                                <p className="text-red-500 text-sm">{errors.status}</p>
+                              )}
+                            </div>
+                            {/* Giá Economy */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Giá Economy (₫)</label>
+                              <input
+                                value={flightData.economyPrice ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.economyPrice ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Nhập giá vé hạng Economy"
+                                onChange={(e) => handleChange('economyPrice', e.target.value)}
+                              />
+                              {errors.economyPrice && (
+                                <p className="text-red-500 text-sm mt-1">{errors.economyPrice}</p>
+                              )}
+                            </div>
 
-                      {/* Available Seats */}
-                      {[
-                        { label: "Ghế Economy", field: "availableEconomySeats" },
-                        { label: "Ghế Business", field: "availableBusinessSeats" },
-                        { label: "Ghế First Class", field: "availableFirstClassSeats" },
-                      ].map(({ label, field }) => (
-                        <div key={field}>
-                          <label className="block text-md font-medium text-gray-700 mb-1">
-                            {label}
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={flightData[field as keyof typeof flightData] as string}
-                            onChange={(e) => handleChange(field, e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                          />
-                        </div>
-                      ))}
-                      <div className="mt-6 flex justify-end space-x-3">
-                        <button
-                          type="button"
-                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                        >
-                          Hủy
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Tạo chuyến bay
-                        </button>
-                      </div>
-                  </form>
+                            {/* Giá Business */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Giá Business (₫)</label>
+                              <input
+                                value={flightData.businessPrice ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.businessPrice ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                               placeholder="Nhập giá vé hạng Business"
+                                onChange={(e) => handleChange('businessPrice', e.target.value)}
+                              />
+                              {errors.businessPrice && (
+                                <p className="text-red-500 text-sm mt-1">{errors.businessPrice}</p>
+                              )}
+                            </div>
+
+                            {/* Giá First Class */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Giá First Class (₫)</label>
+                              <input
+                                value={flightData.firstClassPrice ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.firstClassPrice ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                 placeholder="Nhập giá vé hạng First Class"
+                                onChange={(e) => handleChange('firstClassPrice', e.target.value)}
+                              />
+                              {errors.firstClassPrice && (
+                                <p className="text-red-500 text-sm mt-1">{errors.firstClassPrice}</p>
+                              )}
+                            </div>
+
+                            {/* Ghế Economy */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Economy</label>
+                              <input
+                                value={flightData.availableEconomySeats ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Nhập số ghế trống Economy"
+                                onChange={(e) => handleChange('availableEconomySeats', e.target.value)}
+                              />
+                              {errors.availableEconomySeats && (
+                                <p className="text-red-500 text-sm mt-1">{errors.availableEconomySeats}</p>
+                              )}
+                            </div>
+
+                            {/* Ghế Business */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Business</label>
+                              <input
+                                value={flightData.availableBusinessSeats ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Nhập số ghế trống Business"
+                                onChange={(e) => handleChange('availableBusinessSeats', e.target.value)}
+                              />
+                              {errors.availableBusinessSeats && (
+                                <p className="text-red-500 text-sm mt-1">{errors.availableBusinessSeats}</p>
+                              )}
+                            </div>
+
+                            {/* Ghế First Class */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống First Class</label>
+                              <input
+                                value={flightData.availableFirstClassSeats ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Nhập số ghế trống First Class"
+                                onChange={(e) => handleChange('availableFirstClassSeats', e.target.value)}
+                              />
+                              {errors.availableFirstClassSeats && (
+                                <p className="text-red-500 text-sm mt-1">{errors.availableFirstClassSeats}</p>
+                              )}
+                            </div>
+                            {/* Submit */}
+                            <div className="md:col-span-2 mt-6 flex justify-end space-x-3">
+                              <button
+                                type="button"
+                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                onClick={()=>clearFlightData()}
+                              >
+                                Hủy
+                              </button>
+                              <button
+                                type="submit"
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              >
+                                Tạo chuyến bay
+                              </button>
+                            </div>
+
+                          </form>
                   {/* Buttons */}
 
                 </div>
@@ -1048,130 +1322,385 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
 
       {/* Add Flight Modal - only show for main flights tab */}
       {activeSubTab === 'flights' && showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className=" bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh]">                                      
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm chuyến bay mới</h3>
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Số chuyến bay</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="VN001"
-                />
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Hãng hàng không</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                  <option value="">Chọn hãng hàng không</option>
-                  {airlines.map((airline:any) => (
-                    <option key={airline.airlineId} value={airline.airlineId}>
-                      {airline.airlineName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Sân bay đi</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                  <option value="">Chọn sân bay đi</option>
-                  {airports.map((airport:any) => (
-                    <option key={airport.airportId} value={airport.airportId}>
-                      {airport.airportCode} - {airport.airportName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Sân bay đến</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                  <option value="">Chọn sân bay đến</option>
-                  {airports.map((airport:any) => (
-                    <option key={airport.airportId} value={airport.airportId}>
-                      {airport.airportCode} - {airport.airportName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Thời gian khởi hành</label>
-                <input
-                  type="datetime-local"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                />
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Thời gian đến</label>
-                <input
-                  type="datetime-local"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                />
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Máy bay</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                  <option value="">Chọn máy bay</option>
-                  {aircrafts.map((aircraft:any) => (
-                    <option key={aircraft.aircraftId} value={aircraft.aircraftId}>
-                     {aircraft.aircraftCode} - {aircraft.model}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                  <option value="Scheduled">Scheduled</option>
-                  <option value="Boarding">Boarding</option>
-                  <option value="Departed">Departed</option>
-                  <option value="Arrived">Arrived</option>
-                  <option value="Delayed">Delayed</option>
-                  <option value="Canceled">Canceled</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Giá Economy (₫)</label>
-                <input
-                  type="number"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="1500000"
-                />
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Giá Business (₫)</label>
-                <input
-                  type="number"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="3000000"
-                />
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Giá First Class (₫)</label>
-                <input
-                  type="number"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="5000000"
-                />
-              </div>
-            </form>
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Hủy
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Thêm chuyến bay
-              </button>
-            </div>
+                                          <form onSubmit={(e) => {
+                            e.preventDefault();
+                            handleAddFlight();
+                          }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Flight Number */}
+                            {/* <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Mã chuyến bay
+                              </label>
+                              <input
+                                type="text"
+                                readOnly
+                                value={flightData.flightNumber}
+                                onChange={(e) => handleChange('flightNumber', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.flightNumber ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="VD: VN123, QH210"
+                              />
+                              {errors.flightNumber && (
+                                <p className="text-red-500 text-sm">{errors.flightNumber}</p>
+                              )}
+                            </div> */}
+
+                            {/* Airline */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Hãng hàng không
+                              </label>
+                              <select
+                                value={flightData.airlineId}
+                                onChange={(e:any) => {
+                                  handleChange('airlineId', e.target.value);
+                                  loadAircraftsByAirlineId(e.target.value);
+                                  generateFlightNumberByAirline(e.target.value);
+                                  
+                                }}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.airlineId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn hãng hàng không</option>
+                                {airlines.map((a:any) => (
+                                  <option key={a.airlineId} value={a.airlineId}>
+                                    {a.airlineName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.airlineId && (
+                                <p className="text-red-500 text-sm">{errors.airlineId}</p>
+                              )}
+                            </div>
+                                                        
+                            {/* Aircraft */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Máy bay
+                              </label>
+                              <select
+                                value={flightData.aircraftId}
+                                onChange={(e) => handleChange('aircraftId', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.aircraftId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn máy bay</option>
+                                {aircrafts.map((a:any) => (
+                                  <option key={a.aircraftId} value={a.aircraftId}>
+                                    {a.model}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.aircraftId && (
+                                <p className="text-red-500 text-sm">{errors.aircraftId}</p>
+                              )}
+                            </div>
+
+                            {/* Departure Airport */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Sân bay đi
+                              </label>
+                              <select
+                                value={flightData.departureAirportId}
+                                onChange={(e:any) => {
+                                  handleChange('departureAirportId', e.target.value);
+                                  loadTerminalByAirportId(e.target.value, 'departure');
+                                }}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.departureAirportId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn sân bay</option>
+                                {airports.map((a:any) => (
+                                  <option key={a.airportId} value={a.airportId}>
+                                    {a.airportName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.departureAirportId && (
+                                <p className="text-red-500 text-sm">{errors.departureAirportId}</p>
+                              )}
+                            </div>
+
+                            {/* Arrival Airport */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Sân bay đến
+                              </label>
+                              <select
+                                value={flightData.arrivalAirportId}
+                                onChange={(e:any) => {
+                                  handleChange('arrivalAirportId', e.target.value);
+                                  loadTerminalByAirportId(e.target.value, 'arrival');
+                                }}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.arrivalAirportId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn sân bay</option>
+                                {airports.map((a:any) => (
+                                  <option key={a.airportId} value={a.airportId}>
+                                    {a.airportName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.arrivalAirportId && (
+                                <p className="text-red-500 text-sm">{errors.arrivalAirportId}</p>
+                              )}
+                            </div>
+
+                            {/* Departure Terminal */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Nhà ga đi
+                              </label>
+                              <select
+                                value={flightData.departureTerminalId}
+                                onChange={(e) => handleChange('departureTerminalId', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.departureTerminalId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn nhà ga</option>
+                                {departureTerminals.map((t) => (
+                                  <option key={t.terminalId} value={t.terminalId}>
+                                    {t.terminalName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.departureTerminalId && (
+                                <p className="text-red-500 text-sm">{errors.departureTerminalId}</p>
+                              )}
+                            </div>
+
+                            {/* Arrival Terminal */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Nhà ga đến
+                              </label>
+                              <select
+                                value={flightData.arrivalTerminalId}
+                                onChange={(e) => handleChange('arrivalTerminalId', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.arrivalTerminalId ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Chọn nhà ga</option>
+                                {arrivalTerminals.map((t) => (
+                                  <option key={t.terminalId} value={t.terminalId}>
+                                    {t.terminalName}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors.arrivalTerminalId && (
+                                <p className="text-red-500 text-sm">{errors.arrivalTerminalId}</p>
+                              )}
+                            </div>
+
+                            
+
+                            {/* Departure Time */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Thời gian khởi hành
+                              </label>
+                              <input
+                                type="datetime-local"
+                                value={flightData.departureTime}
+                                onChange={(e) => handleChange('departureTime', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.departureTime ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              />
+                              {errors.departureTime && (
+                                <p className="text-red-500 text-sm">{errors.departureTime}</p>
+                              )}
+                            </div>
+
+                            {/* Arrival Time */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Thời gian đến
+                              </label>
+                              <input
+                                type="datetime-local"
+                                value={flightData.arrivalTime}
+                                onChange={(e) => handleChange('arrivalTime', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.arrivalTime ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              />
+                              {errors.arrivalTime && (
+                                <p className="text-red-500 text-sm">{errors.arrivalTime}</p>
+                              )}
+                            </div>
+
+                            {/* Duration */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Thời lượng (phút)
+                              </label>
+                              <input
+                                type="number"
+                                value={flightData.duration}
+                                readOnly
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-600 bg-gray-100"
+                                placeholder="Tự động tính"
+                              />
+                            </div>
+                            {/* Status */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">
+                                Trạng thái
+                              </label>
+                              <select
+                                value={flightData.status}
+                                onChange={(e) => handleChange('status', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg text-black ${
+                                  errors.status ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Delayed">Delayed</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Completed">Completed</option>
+                              </select>
+                              {errors.status && (
+                                <p className="text-red-500 text-sm">{errors.status}</p>
+                              )}
+                            </div>
+                            {/* Giá Economy */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Giá Economy (₫)</label>
+                              <input
+                                value={flightData.economyPrice ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.economyPrice ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Nhập giá vé hạng Economy"
+                                onChange={(e) => handleChange('economyPrice', e.target.value)}
+                              />
+                              {errors.economyPrice && (
+                                <p className="text-red-500 text-sm mt-1">{errors.economyPrice}</p>
+                              )}
+                            </div>
+
+                            {/* Giá Business */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Giá Business (₫)</label>
+                              <input
+                                value={flightData.businessPrice ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.businessPrice ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                               placeholder="Nhập giá vé hạng Business"
+                                onChange={(e) => handleChange('businessPrice', e.target.value)}
+                              />
+                              {errors.businessPrice && (
+                                <p className="text-red-500 text-sm mt-1">{errors.businessPrice}</p>
+                              )}
+                            </div>
+
+                            {/* Giá First Class */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Giá First Class (₫)</label>
+                              <input
+                                value={flightData.firstClassPrice ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.firstClassPrice ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                 placeholder="Nhập giá vé hạng First Class"
+                                onChange={(e) => handleChange('firstClassPrice', e.target.value)}
+                              />
+                              {errors.firstClassPrice && (
+                                <p className="text-red-500 text-sm mt-1">{errors.firstClassPrice}</p>
+                              )}
+                            </div>
+
+                            {/* Ghế Economy */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Economy</label>
+                              <input
+                                value={flightData.availableEconomySeats ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Nhập số ghế trống Economy"
+                                onChange={(e) => handleChange('availableEconomySeats', e.target.value)}
+                              />
+                              {errors.availableEconomySeats && (
+                                <p className="text-red-500 text-sm mt-1">{errors.availableEconomySeats}</p>
+                              )}
+                            </div>
+
+                            {/* Ghế Business */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Business</label>
+                              <input
+                                value={flightData.availableBusinessSeats ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Nhập số ghế trống Business"
+                                onChange={(e) => handleChange('availableBusinessSeats', e.target.value)}
+                              />
+                              {errors.availableBusinessSeats && (
+                                <p className="text-red-500 text-sm mt-1">{errors.availableBusinessSeats}</p>
+                              )}
+                            </div>
+
+                            {/* Ghế First Class */}
+                            <div>
+                              <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống First Class</label>
+                              <input
+                                value={flightData.availableFirstClassSeats ?? ""}
+                                type="number"
+                                min="0"
+                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                  errors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Nhập số ghế trống First Class"
+                                onChange={(e) => handleChange('availableFirstClassSeats', e.target.value)}
+                              />
+                              {errors.availableFirstClassSeats && (
+                                <p className="text-red-500 text-sm mt-1">{errors.availableFirstClassSeats}</p>
+                              )}
+                            </div>
+                            {/* Submit */}
+                            <div className="md:col-span-2 mt-6 flex justify-end space-x-3">
+                              <button
+                                type="button"
+                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                onClick={()=>clearFlightData()}
+                              >
+                                Hủy
+                              </button>
+                              <button
+                                type="submit"
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              >
+                                Tạo chuyến bay
+                              </button>
+                            </div>
+
+                    </form>
           </div>
         </div>
       )}

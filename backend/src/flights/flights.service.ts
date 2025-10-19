@@ -70,7 +70,7 @@ export class FlightsService {
                 response.success = false;
                 response.message = 'flight number duplicate';
                 response.errorCode = 'FLIGHT_EXISTS';
-                return response;
+                // return response;
             }
             const airline = await this.airlineRepository.findOne({where:{airlineId:createFlightDto.airlineId}});
             if(!airline) {
@@ -196,4 +196,48 @@ export class FlightsService {
             return response;
         }
     }
+
+    async generateFlightNumber(airlineId: number): Promise<any> {
+    const response ={...common_response}
+
+    try {
+        // 1️Tìm hãng hàng không
+        const airline = await this.airlineRepository.findOne({ where: { airlineId } });
+        if (!airline) {
+        response.message = 'Airline not found';
+        return response;
+        }
+
+        const airlineCode = airline.airlineCode || 'XX';
+
+        // 2️⃣ Tìm chuyến bay gần nhất của hãng đó
+        const lastFlight = await this.flightRepository
+        .createQueryBuilder('flight')
+        .where('flight.airlineId = :airlineId', { airlineId })
+        .orderBy('flight.flightId', 'DESC')
+        .getOne();
+
+        // 3️⃣ Sinh số thứ tự mới
+        let nextNumber = 1;
+        if (lastFlight && lastFlight.flightNumber) {
+        const match = lastFlight.flightNumber.match(/\d+$/);
+        if (match) {
+            nextNumber = parseInt(match[0]) + 1;
+        }
+        }
+
+        // 4️⃣ Format kiểu VN001, VN002, ...
+        const newFlightNumber = `${airlineCode}${nextNumber.toString().padStart(3, '0')}`;
+
+        response.success = true;
+        response.message = 'Generated flight number successfully';
+        response.data = { flightNumber: newFlightNumber };
+
+        return response;
+    } catch (error) {
+        response.message = error.message;
+        return response;
+    }
+    }
+    
 }
