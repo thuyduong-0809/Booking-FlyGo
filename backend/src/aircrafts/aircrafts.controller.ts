@@ -22,6 +22,11 @@ export class AircraftsController {
         findOne(@Param('id') id:string) {
             return this.aircraftsService.findOne(Number(id));
         }
+
+        @Get('airline/:id')
+        findByAirlineId(@Param('id') id:string) {
+            return this.aircraftsService.findByAirlineId(Number(id));
+        }
         
         @UsePipes(ValidationPipe)
         @Put(':id')
