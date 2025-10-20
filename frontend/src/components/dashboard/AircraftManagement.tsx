@@ -172,6 +172,25 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
    };
 
 
+   const clearForm = ()=>{
+            setAircraftCode("");
+            setModel("");
+            setAirlineId(null);
+            setEconomyCapacity(null);
+            setBusinessCapacity(null);
+            setFirstClassCapacity(null);
+            setSeatLayoutJSON({
+              layout: { Economy: "", Business: "", First: "" },
+              hasWiFi: false,
+              hasPremiumEntertainment: false,
+            });
+            setLastMaintenance("");
+            setNextMaintenance("");
+            setIsActive(true);
+            setShowAddModal(false);
+            setErrors({});
+            setUpdateErrors({})
+   }
 
 
     const addAircraft = (): void => {
@@ -197,28 +216,12 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
           if (res.success) {
             alert("Thêm máy bay thành công");
             loadAircrafts();
-
-            // reset form
-            setAircraftCode("");
-            setModel("");
-            setAirlineId(null);
-            setEconomyCapacity(null);
-            setBusinessCapacity(null);
-            setFirstClassCapacity(null);
-            setSeatLayoutJSON({
-              layout: { Economy: "", Business: "", First: "" },
-              hasWiFi: false,
-              hasPremiumEntertainment: false,
-            });
-            setLastMaintenance("");
-            setNextMaintenance("");
-            setIsActive(true);
-            setShowAddModal(false);
-            setErrors({});
+            clearForm()
+            
           }else if(res.errorCode === 'AIRCRAFT_EXISTS'){
               setErrors((prev:any) => ({
               ...prev,
-              aircraftCode: "Mã máy bay đã tồn tại. Vui lòng nhập mã khác.",
+              aircraftCode: "Mã máy bay đã tồn tại",
             }));
           }
           else {
@@ -227,13 +230,6 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
         })
         .catch((error: any) => {
           console.error(error);
-          // Phòng khi server trả lỗi dạng exception
-          if (error?.response?.data?.errorCode === "AIRCRAFT_EXISTS") {
-            setErrors((prev: any) => ({
-              ...prev,
-              aircraftCode: "Mã máy bay đã tồn tại. Vui lòng nhập mã khác.",
-            }));
-          }
         });
     };
 
@@ -285,14 +281,14 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
   const validateUpdateInputs = () => {
   const newErrors: any = {};
 
-    if (!aircraftUpdateData.aircraftCode || aircraftUpdateData.aircraftCode.trim() === "") {
-      newErrors.aircraftCode = "Vui lòng nhập mã máy bay.";
-    } else if (
-      aircraftUpdateData.aircraftCode.length < 2 ||
-      aircraftUpdateData.aircraftCode.length > 10
-    ) {
-      newErrors.aircraftCode = "Mã máy bay phải từ 2–10 ký tự.";
-    }
+    // if (!aircraftUpdateData.aircraftCode || aircraftUpdateData.aircraftCode.trim() === "") {
+    //   newErrors.aircraftCode = "Vui lòng nhập mã máy bay.";
+    // } else if (
+    //   aircraftUpdateData.aircraftCode.length < 2 ||
+    //   aircraftUpdateData.aircraftCode.length > 10
+    // ) {
+    //   newErrors.aircraftCode = "Mã máy bay phải từ 2–10 ký tự.";
+    // }
 
     if (!aircraftUpdateData.model || aircraftUpdateData.model.trim() === "") {
       newErrors.model = "Vui lòng nhập model máy bay.";
@@ -566,26 +562,6 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                     addAircraft();
                   }}
                 >
-                  {/* --- MÃ MÁY BAY --- */}
-                  {/* <div>
-                    <label className="block text-md font-medium text-gray-700 mb-1">Mã máy bay</label>
-                    <input
-                      type="text"
-                      value={aircraftCode}
-                      onChange={(e) => {
-                         setAircraftCode(e.target.value);
-                         setErrors((prev: any) => ({ ...prev, aircraftCode: "" }))
-                      }}
-                      placeholder="Nhập mã máy bay"
-                      className={`w-full px-3 py-2 border rounded-lg text-black ${
-                        errors.aircraftCode ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                    {errors.aircraftCode && (
-                      <p className="text-red-500 text-sm mt-1">{errors.aircraftCode}</p>
-                    )}
-                  </div> */}
-
                   {/* --- MODEL --- */}
                   <div>
                     <label className="block text-md font-medium text-gray-700 mb-1">Model</label>
@@ -752,6 +728,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       <div className="flex items-center space-x-4 mt-3">
                         <label className="flex items-center space-x-2">
                           <input
+                            checked={seatLayoutJSON.hasWiFi}
                             type="checkbox"
                             onChange={(e) =>
                               setSeatLayoutJSON((prev) => ({
@@ -765,6 +742,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
 
                         <label className="flex items-center space-x-2">
                           <input
+                            checked={seatLayoutJSON.hasPremiumEntertainment}
                             type="checkbox"
                             onChange={(e) =>
                               setSeatLayoutJSON((prev) => ({
@@ -834,7 +812,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   <div className="md:col-span-2 flex justify-end space-x-3 mt-6">
                     <button
                       type="button"
-                      onClick={() => setShowAddModal(false)}
+                      onClick={() => clearForm()}
                       className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                     >
                       Hủy
@@ -971,9 +949,9 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                               }
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
                             />
-                            {errors.firstClassCapacity && (
+                            {updateErrors.firstClassCapacity && (
                               <p className="text-red-500 text-sm mt-1">
-                                {errors.firstClassCapacity}
+                                {updateErrors.firstClassCapacity}
                               </p>
                             )}
                           </div>
@@ -997,9 +975,9 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                                     onChange={(e) => handleSeatLayoutChange(cls, e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
                                   />
-                                  {errors[`layout${cls}`] && (
+                                  {updateErrors[`layout${cls}`] && (
                                     <p className="text-red-500 text-sm mt-1">
-                                      {errors[`layout${cls}`]}
+                                      {updateErrors[`layout${cls}`]}
                                     </p>
                                   )}
                                 </div>
