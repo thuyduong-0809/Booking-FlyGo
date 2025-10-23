@@ -592,7 +592,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.model ? "border-red-500" : "border-gray-300"
                       }`}
-                      placeholder="Boeing 787-9 Dreamliner"
+                      placeholder="Nhập tên mẫu máy bay"
                     />
                     {errors.model && <p className="text-red-500 text-sm mt-1">{errors.model}</p>}
                   </div>
@@ -648,7 +648,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.economyCapacity ? "border-red-500" : "border-gray-300"
                       }`}
-                      placeholder="260"
+                      placeholder="Nhập sức chứa hạng Economy"
                     />
                     {errors.economyCapacity && (
                       <p className="text-red-500 text-sm mt-1">{errors.economyCapacity}</p>
@@ -671,7 +671,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.businessCapacity ? "border-red-500" : "border-gray-300"
                       }`}
-                      placeholder="24"
+                      placeholder="Nhập sức chứa hạng Business"
                     />
                     {errors.businessCapacity && (
                       <p className="text-red-500 text-sm mt-1">{errors.businessCapacity}</p>
@@ -694,7 +694,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.firstClassCapacity ? "border-red-500" : "border-gray-300"
                       }`}
-                      placeholder="8"
+                      placeholder="Nhập sức chứa hạng First Class"
                     />
                     {errors.firstClassCapacity && (
                       <p className="text-red-500 text-sm mt-1">{errors.firstClassCapacity}</p>
@@ -1411,7 +1411,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.model ? "border-red-500" : "border-gray-300"
                       }`}
-                      placeholder="Boeing 787-9 Dreamliner"
+                      placeholder="Nhập tên mẫu máy bay"
                     />
                     {errors.model && <p className="text-red-500 text-sm mt-1">{errors.model}</p>}
                   </div>
@@ -1462,7 +1462,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.economyCapacity ? "border-red-500" : "border-gray-300"
                       }`}
-                      placeholder="260"
+                      placeholder="Nhập sức chứa hạng Economy"
                     />
                     {errors.economyCapacity && (
                       <p className="text-red-500 text-sm mt-1">{errors.economyCapacity}</p>
@@ -1485,7 +1485,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.businessCapacity ? "border-red-500" : "border-gray-300"
                       }`}
-                      placeholder="24"
+                      placeholder="Nhập sức chứa hạng Business"
                     />
                     {errors.businessCapacity && (
                       <p className="text-red-500 text-sm mt-1">{errors.businessCapacity}</p>
@@ -1508,7 +1508,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       className={`w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 ${
                         errors.firstClassCapacity ? "border-red-500" : "border-gray-300"
                       }`}
-                      placeholder="8"
+                      placeholder="Nhập sức chứa hạng First Class"
                     />
                     {errors.firstClassCapacity && (
                       <p className="text-red-500 text-sm mt-1">{errors.firstClassCapacity}</p>
