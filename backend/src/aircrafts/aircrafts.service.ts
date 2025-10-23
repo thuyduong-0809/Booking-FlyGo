@@ -4,13 +4,16 @@ import { CreateAircraftDto } from 'src/aircrafts/dto/create-aicrafts.dto';
 import { UpdateAircraftDto } from 'src/aircrafts/dto/update-aicrafts.dto';
 import { Aircraft } from 'src/aircrafts/entities/aircrafts.entity';
 import { Airline } from 'src/airlines/entities/airlines.entity';
+import { Seat } from 'src/seats/entities/seats.entity';
 import { common_response } from 'src/untils/common';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class AircraftsService {
     constructor(@InjectRepository(Aircraft) private aircraftRepository:Repository<Aircraft>,
-                @InjectRepository(Airline) private airlineRepository: Repository<Airline>,) {}
+                @InjectRepository(Airline) private airlineRepository: Repository<Airline>,
+                @InjectRepository(Seat) private seatRepository: Repository<Seat>,
+            ) {}
 
 
         async findAll(): Promise<any> {
@@ -31,37 +34,102 @@ export class AircraftsService {
                 return response;
             }
     
-    
-            async create(createAircraftDto: CreateAircraftDto): Promise<any> {
+        async create(createAircraftDto: CreateAircraftDto): Promise<any> {
+        const response = { ...common_response };
+        try {
+            const existingAircraft = await this.aircraftRepository.findOne({
+            where: { aircraftCode: createAircraftDto.aircraftCode },
+            });
+            if (existingAircraft) {
+            response.success = false;
+            response.message = 'Aircraft already exists';
+            response.errorCode = 'AIRCRAFT_EXISTS';
+            return response;
+            }
+
+            const airline = await this.airlineRepository.findOneBy({
+            airlineId: createAircraftDto.airlineId,
+            });
+            if (!airline) {
+            response.success = false;
+            response.message = 'Airline not found';
+            return response;
+            }
+
+            const newAircraft = this.aircraftRepository.create({
+            ...createAircraftDto,
+            airline,
+            });
+            const savedAircraft = await this.aircraftRepository.save(newAircraft);
+
+            // Generate seats
+            const economySeats = Array.from(
+            { length: createAircraftDto.economyCapacity },
+            (_, i) => ({
+                aircraft: savedAircraft,
+                seatNumber: `E${String(i + 1).padStart(2, '0')}A`,
+                travelClass: 'Economy',
+                isAvailable: true,
+            }),
+            );
+
+            const businessSeats = Array.from(
+            { length: createAircraftDto.businessCapacity },
+            (_, i) => ({
+                aircraft: savedAircraft,
+                seatNumber: `B${String(i + 1).padStart(2, '0')}A`,
+                travelClass: 'Business',
+                isAvailable: true,
+            }),
+            );
+
+            const firstSeats = Array.from(
+            { length: createAircraftDto.firstClassCapacity },
+            (_, i) => ({
+                aircraft: savedAircraft,
+                seatNumber: `F${String(i + 1).padStart(2, '0')}A`,
+                travelClass: 'First',
+                isAvailable: true,
+            }),
+            );
+
+            await this.seatRepository.save([
+            ...economySeats,
+            ...businessSeats,
+            ...firstSeats,
+            ]);
+
+            response.success = true;
+            response.message = 'Aircraft created successfully';
+            response.data = savedAircraft;
+        } catch (error) {
+            response.success = false;
+            response.message = error.message || 'Error while creating aircraft';
+        }
+        return response;
+        }
+                async update(
+                    id: number,
+                    updateAircraftDto: UpdateAircraftDto,
+                ): Promise<any> {
                     let response = { ...common_response };
                     try {
-                        const existingAircraft = await this.aircraftRepository.findOne({ where: { aircraftCode:createAircraftDto.aircraftCode} });
-                        if(existingAircraft){
+                        const updateResult = await this.aircraftRepository.update(id, updateAircraftDto);
+            
+                        if (updateResult.affected && updateResult.affected > 0) {
+                            response.success = true;
+                            response.message = 'Aircraft updated successfully';
+                        } else {
                             response.success = false;
-                            response.message = 'Aircraft existing';
-                            response.errorCode = 'AIRCRAFT_EXISTS';
+                            response.message = 'Aircraft not found or no changes made';
                         }
-                        const airline = await this.airlineRepository.findOneBy({ airlineId: createAircraftDto.airlineId });
-                        if (!airline) {
-                            response.success = false;
-                            response.message = 'Airline not found';
-                            return response;
-                        }
-                        const newAircraft = this.aircraftRepository.create({
-                            ...createAircraftDto,
-                            airline: airline, 
-                        });
-                        await this.aircraftRepository.save(newAircraft);
-                        response.success = true;
-                        response.message = 'Aircraft created successfully';
-                        response.data = newAircraft;
                     } catch (error) {
                         response.success = false;
-                        response.message = error.message || 'Error while creating aircraft';
+                        response.message = error.message || 'Error while updating aircraft';
                     }
                     return response;
-                }
-            
+                }       
+
                 async findOne(id: number): Promise<any> {
                     let response = { ...common_response };
                     try {
@@ -111,27 +179,7 @@ export class AircraftsService {
                     }
 
             
-                async update(
-                    id: number,
-                    updateAircraftDto: UpdateAircraftDto,
-                ): Promise<any> {
-                    let response = { ...common_response };
-                    try {
-                        const updateResult = await this.aircraftRepository.update(id, updateAircraftDto);
-            
-                        if (updateResult.affected && updateResult.affected > 0) {
-                            response.success = true;
-                            response.message = 'Aircraft updated successfully';
-                        } else {
-                            response.success = false;
-                            response.message = 'Aircraft not found or no changes made';
-                        }
-                    } catch (error) {
-                        response.success = false;
-                        response.message = error.message || 'Error while updating aircraft';
-                    }
-                    return response;
-                }
+
             
                 async delete(id: number): Promise<any> {
                     let response = { ...common_response };

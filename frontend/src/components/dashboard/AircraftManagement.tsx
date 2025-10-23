@@ -78,9 +78,16 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
     const [airlines,setAirlines] = useState([])
 
   useEffect(() => {
-    loadAircrafts()
-    loadAirlines()
-    setLoading(false);
+   const fetchData = async () => {
+    setLoading(true); // bật loading trước
+    await Promise.all([
+      loadAircrafts(),
+      loadAirlines(),
+    ]);
+    setLoading(false); // tắt loading sau khi load xong
+  };
+
+  fetchData();
    }, []);
 
   const loadAircrafts = async () =>{
@@ -209,6 +216,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
         nextMaintenance: nextMaintenance ? nextMaintenance : null,
         isActive,
       };
+      setLoading(true);
 
       requestApi("aircrafts", "POST", aircraftData)
         .then((res: any) => {
@@ -217,6 +225,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
             alert("Thêm máy bay thành công");
             loadAircrafts();
             clearForm()
+            setLoading(false)
             
           }else if(res.errorCode === 'AIRCRAFT_EXISTS'){
               setErrors((prev:any) => ({
@@ -230,6 +239,9 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
         })
         .catch((error: any) => {
           console.error(error);
+        }) .finally(() => {
+      // chỉ tắt loading sau khi mọi thứ hoàn tất
+          setLoading(false);
         });
     };
 
@@ -545,7 +557,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
 
   
     if (loading) {
-    return <div>Loading...</div>;
+    return <div>Vui lòng đợi...</div>;
   }
   // Render content based on active sub-tab
   const renderSubContent = () => {
@@ -894,71 +906,9 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                               <p className="text-red-500 text-sm mt-1">{updateErrors.model}</p>
                             )}
                           </div>
-
-                          {/* Sức chứa Economy */}
-                          <div>
-                            <label className="block text-md font-medium text-gray-700 mb-1">
-                              Sức chứa Economy
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={aircraftUpdateData.economyCapacity ?? ""}
-                              onChange={(e) => {
-                                handleChange("economyCapacity", Number(e.target.value))
-                                setUpdateErrors((prev: any) => ({ ...prev, economyCapacity: "" }))
-                              }}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                            />
-                            {updateErrors.economyCapacity && (
-                              <p className="text-red-500 text-sm mt-1">{updateErrors.economyCapacity}</p>
-                            )}
-                          </div>
-
-                          {/* Sức chứa Business */}
-                          <div>
-                            <label className="block text-md font-medium text-gray-700 mb-1">
-                              Sức chứa Business
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={aircraftUpdateData.businessCapacity}
-                              onChange={(e) =>{
-                                handleChange("businessCapacity", Number(e.target.value))
-                                setUpdateErrors((prev: any) => ({ ...prev, businessCapacity: "" }))
-                              }}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                            />
-                            {updateErrors.businessCapacity && (
-                              <p className="text-red-500 text-sm mt-1">{updateErrors.businessCapacity}</p>
-                            )}
-                          </div>
-
-                          {/* Sức chứa First Class */}
-                          <div>
-                            <label className="block text-md font-medium text-gray-700 mb-1">
-                              Sức chứa First Class
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={aircraftUpdateData.firstClassCapacity}
-                              onChange={(e) =>
-                                handleChange("firstClassCapacity", Number(e.target.value))
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                            />
-                            {updateErrors.firstClassCapacity && (
-                              <p className="text-red-500 text-sm mt-1">
-                                {updateErrors.firstClassCapacity}
-                              </p>
-                            )}
-                          </div>
-
                           {/* Bố trí ghế */}
                           <div className="md:col-span-2 border-t pt-4">
-                            <h4 className="text-md font-medium text-gray-700 mb-1">Bố trí ghế</h4>
+                            {/* <h4 className="text-md font-medium text-gray-700 mb-1">Bố trí ghế</h4>
                             <div className="grid grid-cols-3 gap-3">
                               {(["Economy", "Business", "First"] as const).map((cls) => (
                                 <div key={cls}>
@@ -982,7 +932,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                                   )}
                                 </div>
                               ))}
-                            </div>
+                            </div> */}
 
                             {/* Tùy chọn tiện ích */}
                             <div className="flex items-center gap-4 mt-3">
@@ -1754,56 +1704,9 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                     <p className="text-red-500 text-sm mt-1">{updateErrors.model}</p>
                     )}
                 </div>
-
-                {/* --- Sức chứa --- */}
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">
-                    Sức chứa Economy
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={aircraftUpdateData.economyCapacity}
-                    onChange={(e) =>
-                      handleChange("economyCapacity", Number(e.target.value))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">
-                    Sức chứa Business
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={aircraftUpdateData.businessCapacity}
-                    onChange={(e) =>
-                      handleChange("businessCapacity", Number(e.target.value))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">
-                    Sức chứa First Class
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={aircraftUpdateData.firstClassCapacity}
-                    onChange={(e) =>
-                      handleChange("firstClassCapacity", Number(e.target.value))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
-                  />
-                </div>
-
                 {/* --- Bố trí ghế --- */}
                 <div className="md:col-span-2 border-t pt-4">
-                  <h4 className="text-md font-medium text-gray-700 mb-1">Bố trí ghế</h4>
+                  {/* <h4 className="text-md font-medium text-gray-700 mb-1">Bố trí ghế</h4>
                   <div className="grid grid-cols-3 gap-3">
                     {(["Economy", "Business", "First"] as const).map((cls) => (
                       <input
@@ -1817,7 +1720,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
                       />
                     ))}
-                  </div>
+                  </div> */}
 
                   {/* --- Tiện ích --- */}
                   <div className="flex items-center gap-4 mt-3">
