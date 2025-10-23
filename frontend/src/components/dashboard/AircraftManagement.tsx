@@ -76,6 +76,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
     });
 
     const [airlines,setAirlines] = useState([])
+    const [seats,setSeats] = useState([])
 
   useEffect(() => {
    const fetchData = async () => {
@@ -111,6 +112,17 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
            });
     }
 
+  const loadSeatsByAircraftId = async (aircraftId:number)=>{
+       await requestApi(`seats/aircraft/${String(aircraftId)}`, "GET").then((res:any)=>{
+          if(res.success){
+              setSeats(res.data)
+          }else{
+            setSeats([])
+          }
+       }).catch((error:any)=>{
+        console.error(error)
+       });
+    }
   const validateInputs = () => {
       const newErrors: any = {};
 
@@ -380,68 +392,68 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
  }
 
 
-  const [seats, setSeats] = useState<ExtendedSeat[]>([
-    {
-      SeatID: 1,
-      AircraftID: 1,
-      SeatNumber: '1A',
-      TravelClass: 'Business',
-      Row: 1,
-      Column: 'A',
-      Status: 'Available',
-      IsAvailable: true,
-      Features: null,
-      aircraftName: 'Boeing 737-800'
-    },
-    {
-      SeatID: 2,
-      AircraftID: 1,
-      SeatNumber: '1B',
-      TravelClass: 'Business',
-      Row: 1,
-      Column: 'B',
-      Status: 'Available',
-      IsAvailable: true,
-      Features: null,
-      aircraftName: 'Boeing 737-800'
-    },
-    {
-      SeatID: 3,
-      AircraftID: 1,
-      SeatNumber: '2A',
-      TravelClass: 'Economy',
-      Row: 2,
-      Column: 'A',
-      Status: 'Occupied',
-      IsAvailable: false,
-      Features: null,
-      aircraftName: 'Boeing 737-800'
-    },
-    {
-      SeatID: 4,
-      AircraftID: 1,
-      SeatNumber: '2B',
-      TravelClass: 'Economy',
-      Row: 2,
-      Column: 'B',
-      Status: 'Available',
-      IsAvailable: true,
-      Features: null,
-      aircraftName: 'Boeing 737-800'
-    },
-    {
-      SeatID: 5,
-      AircraftID: 1,
-      SeatNumber: '3A',
-      TravelClass: 'Economy',
-      Row: 3,
-      Column: 'A',
-      Status: 'Available',
-      IsAvailable: true,
-      Features: null,
-      aircraftName: 'Boeing 737-800'
-    }
-  ]);
+  // const [seats, setSeats] = useState<ExtendedSeat[]>([
+  //   {
+  //     SeatID: 1,
+  //     AircraftID: 1,
+  //     SeatNumber: '1A',
+  //     TravelClass: 'Business',
+  //     Row: 1,
+  //     Column: 'A',
+  //     Status: 'Available',
+  //     IsAvailable: true,
+  //     Features: null,
+  //     aircraftName: 'Boeing 737-800'
+  //   },
+  //   {
+  //     SeatID: 2,
+  //     AircraftID: 1,
+  //     SeatNumber: '1B',
+  //     TravelClass: 'Business',
+  //     Row: 1,
+  //     Column: 'B',
+  //     Status: 'Available',
+  //     IsAvailable: true,
+  //     Features: null,
+  //     aircraftName: 'Boeing 737-800'
+  //   },
+  //   {
+  //     SeatID: 3,
+  //     AircraftID: 1,
+  //     SeatNumber: '2A',
+  //     TravelClass: 'Economy',
+  //     Row: 2,
+  //     Column: 'A',
+  //     Status: 'Occupied',
+  //     IsAvailable: false,
+  //     Features: null,
+  //     aircraftName: 'Boeing 737-800'
+  //   },
+  //   {
+  //     SeatID: 4,
+  //     AircraftID: 1,
+  //     SeatNumber: '2B',
+  //     TravelClass: 'Economy',
+  //     Row: 2,
+  //     Column: 'B',
+  //     Status: 'Available',
+  //     IsAvailable: true,
+  //     Features: null,
+  //     aircraftName: 'Boeing 737-800'
+  //   },
+  //   {
+  //     SeatID: 5,
+  //     AircraftID: 1,
+  //     SeatNumber: '3A',
+  //     TravelClass: 'Economy',
+  //     Row: 3,
+  //     Column: 'A',
+  //     Status: 'Available',
+  //     IsAvailable: true,
+  //     Features: null,
+  //     aircraftName: 'Boeing 737-800'
+  //   }
+  // ]);
 
   const [maintenances, setMaintenances] = useState<ExtendedMaintenance[]>([
     {
@@ -1049,7 +1061,11 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quản lý chỗ ngồi</h3>
               <div className="mb-4">
                 <label className="block text-md font-medium text-gray-700 mb-1">Chọn máy bay</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                onChange={(e:any)=>{
+                  loadSeatsByAircraftId(e.target.value)
+                }}
+                >
                   <option value="">Chọn máy bay</option>
                   {AircraftsList.map((aircraft:any) => (
                     <option key={aircraft.aircraftId} value={aircraft.aircraftId}>
@@ -1062,17 +1078,17 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-3">Sơ đồ chỗ ngồi</h4>
                 <div className="grid grid-cols-6 gap-2 max-w-md">
-                  {seats.map((seat) => (
+                  {seats.map((seat:any) => (
                     <div
-                      key={seat.SeatID}
-                      className={`p-2 text-sm text-center rounded border cursor-pointer ${seat.Status === 'Available'
+                      key={seat.seatId}
+                      className={`p-2 text-sm text-center rounded border cursor-pointer ${seat.isAvailable === 'Available'
                         ? 'bg-green-100 border-green-300 text-green-800'
-                        : seat.Status === 'Occupied'
+                        : seat.isAvailables === 'Occupied'
                           ? 'bg-blue-100 border-blue-300 text-blue-800'
                           : 'bg-red-100 border-red-300 text-red-800'
                         }`}
                     >
-                      {seat.SeatNumber}
+                      {seat.seatNumber}
                     </div>
                   ))}
                 </div>
