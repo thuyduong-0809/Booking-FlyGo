@@ -4,9 +4,10 @@ import { AircraftsController } from 'src/aircrafts/aircrafts.controller';
 import { AircraftsService } from 'src/aircrafts/aircrafts.service';
 import { Aircraft } from 'src/aircrafts/entities/aircrafts.entity';
 import { Airline } from 'src/airlines/entities/airlines.entity';
+import { Seat } from 'src/seats/entities/seats.entity';
 
 @Module({
-        imports:[TypeOrmModule.forFeature([Aircraft,Airline])],
+        imports:[TypeOrmModule.forFeature([Aircraft,Airline,Seat])],
         providers:[AircraftsService],
         controllers:[AircraftsController],
 })

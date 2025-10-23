@@ -28,17 +28,17 @@ export class CreateAircraftDto {
   @IsOptional()
   @IsInt({ message: 'Economy capacity must be an integer' })
   @Min(0, { message: 'Economy capacity cannot be negative' })
-  economyCapacity?: number;
+  economyCapacity: number=0;
 
   @IsOptional()
   @IsInt({ message: 'Business capacity must be an integer' })
   @Min(0, { message: 'Business capacity cannot be negative' })
-  businessCapacity?: number;
+  businessCapacity: number=0;
 
   @IsOptional()
   @IsInt({ message: 'First class capacity must be an integer' })
   @Min(0, { message: 'First class capacity cannot be negative' })
-  firstClassCapacity?: number;
+  firstClassCapacity: number=0;
 
  @IsOptional()
  @IsObject({ message: 'Seat layout must be a valid JSON format' })
