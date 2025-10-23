@@ -54,6 +54,33 @@ export class SeatsService {
     }
 
 
+                async findByAircraft(id: number): Promise<any> {
+                    let response = { ...common_response };
+                    try {
+                        const seats = await this.seatRepository.find({
+                        where: { aircraft: { aircraftId: id } },
+                        relations: ['aircraft'],
+                        });
+
+                        if(seats.length > 0) {
+                        response.success = true;
+                        response.data = seats;
+                        response.message = 'Successfully retrieved seats for this aircraft';
+                        } else {
+                        response.success = false;
+                        response.message = 'No seats found for this aircraft';
+                        response.errorCode = 'SEATS_EXISTS';
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        response.success = false;
+                        response.message = 'Error while retrieving aicraft by aircraft ID';
+                    }
+                    return response;
+                    }
+   
+
+
     
 
 }
