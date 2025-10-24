@@ -11,22 +11,22 @@ import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 @Injectable()
 export class UsersService {
     constructor(
-          @InjectRepository(User) private userRepository: Repository<User>,
-           @InjectRepository(UserRole) private userRoleRepository: Repository<UserRole>,
-    ){}
+        @InjectRepository(User) private userRepository: Repository<User>,
+        @InjectRepository(UserRole) private userRoleRepository: Repository<UserRole>,
+    ) { }
 
 
-     async findAll(): Promise<any> {
-           let response = {...common_response};
+    async findAll(): Promise<any> {
+        let response = { ...common_response };
         try {
             const users = await this.userRepository.find({
-            select: [
-                'userId', 'email', 'firstName', 'lastName', 'phone', 
-                'dateOfBirth', 'passportNumber', 'passportExpiry', 
-                'loyaltyPoints', 'loyaltyTier', 'isActive', 
-                'createdAt', 'lastLogin'
-            ],
-            relations: ['role'], // load role của user
+                select: [
+                    'userId', 'email', 'firstName', 'lastName', 'phone',
+                    'dateOfBirth', 'passportNumber', 'passportExpiry',
+                    'loyaltyPoints', 'loyaltyTier', 'isActive',
+                    'createdAt', 'lastLogin'
+                ],
+                relations: ['role'], // load role của user
             });
 
             response.success = true;
@@ -37,53 +37,53 @@ export class UsersService {
             response.message = 'Error fetching users';
         }
         return response;
-        }
+    }
 
-   
-    async create(createUserDto:CreateUserDto):Promise<User>{
-       let response = {...common_response};
-       try {
-          const hashPassword = await this.hashPassword(createUserDto.passwordHash);
-          const user = await this.userRepository.save({
-            ...createUserDto,
-            passwordHash: hashPassword,
-            roleId: createUserDto.roleId?? 1
+
+    async create(createUserDto: CreateUserDto): Promise<User> {
+        let response = { ...common_response };
+        try {
+            const hashPassword = await this.hashPassword(createUserDto.passwordHash);
+            const user = await this.userRepository.save({
+                ...createUserDto,
+                passwordHash: hashPassword,
+                roleId: createUserDto.roleId ?? 1
             });
-            if(user){
+            if (user) {
                 response.success = true
                 response.user = user
-            }else{
+            } else {
                 response.success = false
             }
-            
-       return response;
-       } catch (error) {
-          console.error('Error:', error); 
-        if (error instanceof QueryFailedError) {
-         if (error.driverError.code === 'ER_DUP_ENTRY') { 
-                response.success = false;
-                response.message = `User with email  ${createUserDto.email} already exists.`
-                response.statusCode =400
-                return response;
-                // throw new BadRequestException(`Category with name  ${createCategoryDto.name} already exists.`);
-                
+
+            return response;
+        } catch (error) {
+            console.error('Error:', error);
+            if (error instanceof QueryFailedError) {
+                if (error.driverError.code === 'ER_DUP_ENTRY') {
+                    response.success = false;
+                    response.message = `User with email  ${createUserDto.email} already exists.`
+                    response.statusCode = 400
+                    return response;
+                    // throw new BadRequestException(`Category with name  ${createCategoryDto.name} already exists.`);
+
                 }
             }
             response.success = false;
             response.message = "An unexpected error occurred."
-            response.statusCode=500
-            
+            response.statusCode = 500
+
             // throw new InternalServerErrorException("An unexpected error occurred.");
-            
-            }
-         return response;
-       
+
+        }
+        return response;
+
     }
 
-         async findOne(id:number): Promise<any> {
-           let response = {...common_response};
+    async findOne(id: number): Promise<any> {
+        let response = { ...common_response };
         try {
-            const user = await this.userRepository.findOneBy({userId:id})
+            const user = await this.userRepository.findOneBy({ userId: id })
             response.success = true;
             response.data = user;
         } catch (error) {
@@ -92,63 +92,66 @@ export class UsersService {
             response.message = 'Error fetching user by id';
         }
         return response;
-        }
-
-
-           
-    async update(id:number,updateUserDto:UpdateUserDto):Promise<UpdateResult>{
-       let response = {...common_response};
-       try {
-           
-            if (updateUserDto.passwordHash) {
-            
-                const hashPassword = await this.hashPassword(updateUserDto.passwordHash);
-                updateUserDto.passwordHash = hashPassword;
-            }
-            let updateUser =  await this.userRepository.update(id,updateUserDto);
-                if(updateUser){
-                    response.success = true;
-                    return response;
-                }else{
-                    response.success = false;
-                }
-
-            return response;
-       } catch (error) {
-            response.success = false;
-            response.message = "An unexpected error occurred."
-            response.error=error
-            }
-         return response;
-       
     }
 
 
-    async delete(id:number):Promise<DeleteResult>{
-      let response = {...common_response};
-      try {
-         let result = await this.userRepository.delete({userId:id})
-         if(result.affected ==1){
-           response.success = true;
-         }else{
-             response.success = false;
-         }
-        
-         return response;
 
-      } catch (error) {
+    async update(id: number, updateUserDto: UpdateUserDto): Promise<any> {
+        let response = { ...common_response };
+        try {
+
+            if (updateUserDto.passwordHash) {
+
+                const hashPassword = await this.hashPassword(updateUserDto.passwordHash);
+                updateUserDto.passwordHash = hashPassword;
+            }
+            let updateUser = await this.userRepository.update(id, updateUserDto);
+            if (updateUser.affected && updateUser.affected > 0) {
+                response.success = true;
+                response.message = "Cập nhật thông tin thành công";
+                return response;
+            } else {
+                response.success = false;
+                response.message = "Không tìm thấy người dùng để cập nhật";
+            }
+
+            return response;
+        } catch (error) {
+            console.error('Error updating user:', error);
             response.success = false;
             response.message = "An unexpected error occurred."
-            response.error=error
-      }
-       return response;
+            response.error = error
+        }
+        return response;
+
+    }
+
+
+    async delete(id: number): Promise<DeleteResult> {
+        let response = { ...common_response };
+        try {
+            let result = await this.userRepository.delete({ userId: id })
+            if (result.affected == 1) {
+                response.success = true;
+            } else {
+                response.success = false;
+            }
+
+            return response;
+
+        } catch (error) {
+            response.success = false;
+            response.message = "An unexpected error occurred."
+            response.error = error
+        }
+        return response;
     }
 
 
 
     private async hashPassword(password: string): Promise<string> {
-    const saltRounds = 10;
-    return bcrypt.hash(password, saltRounds);
+        const saltRounds = 10;
+        return bcrypt.hash(password, saltRounds);
     }
 
 
