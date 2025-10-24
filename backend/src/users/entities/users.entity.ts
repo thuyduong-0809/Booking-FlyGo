@@ -1,12 +1,8 @@
-import { Controller } from '@nestjs/common';
 import { Booking } from 'src/bookings/entities/bookings.entity';
 import { FareHistory } from 'src/fare-history/entities/fare-history.entity';
 import { Notification } from 'src/notifications/entities/notifications.entity';
 import { Review } from 'src/reviews/entities/reviews.entity';
 import { UserRole } from 'src/user-roles/entities/user-roles.entity';
-
-@Controller('users')
-export class UsersController {}
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -48,7 +44,7 @@ export class User {
   @Column({ type: 'date', nullable: true })
   passportExpiry: Date;
 
-  @Column({type: 'int', default: 1})
+  @Column({ type: 'int', default: 1 })
   roleId: number;
 
   @Column({ type: 'int', default: 0 })
@@ -76,7 +72,7 @@ export class User {
   role: UserRole;
 
 
-  @OneToMany(()=> Booking, (booking) => booking.user)
+  @OneToMany(() => Booking, (booking) => booking.user)
   bookings: Booking[];
 
   @OneToMany(() => FareHistory, (fh) => fh.changedBy)

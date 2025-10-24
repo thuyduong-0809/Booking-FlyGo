@@ -7,9 +7,11 @@ import { requestApi } from "lib/api";
 import { useRouter } from "next/navigation";
 
 
-export interface PageSignUpProps {}
+export interface PageSignUpProps { }
 
-const PageSignUp: FC<PageSignUpProps> = ({}) => {
+const PageSignUp: FC<PageSignUpProps> = ({ }) => {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,11 +19,18 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
   const [successRegister, setSuccessRegister] = React.useState('');
   const [error, setError] = useState("");
   const router = useRouter();
-  
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validation
+    if (!firstName || !lastName) {
+      setError("Vui lòng nhập đầy đủ họ và tên");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Mật khẩu xác nhận không khớp");
       return;
@@ -30,26 +39,30 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
     try {
       setLoading(true);
       setError("");
-      const res = await  requestApi("auth/register", "POST", {
+      const res = await requestApi("auth/register", "POST", {
+        firstName: firstName,
+        lastName: lastName,
         email: email,
         passwordHash: password,
       });
-      
-      if(res.success){
+
+      if (res.success) {
         localStorage.setItem('pendingEmail', email);
+        setFirstName("");
+        setLastName("");
         setEmail("");
         setPassword("");
-        setConfirmPassword("");        
+        setConfirmPassword("");
         router.replace('/send-otp');
         console.log("Signup result:", res);
-      }else if (res.errorCode === 'USER_EXISTS') {
-          setSuccessRegister('');
-          setError("Email đã dược đăng ký"); 
-        } else {
-          setError(res.message); 
-          setSuccessRegister('');
-        }
-      
+      } else if (res.errorCode === 'USER_EXISTS') {
+        setSuccessRegister('');
+        setError("Email đã dược đăng ký");
+      } else {
+        setError(res.message);
+        setSuccessRegister('');
+      }
+
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -65,6 +78,30 @@ const PageSignUp: FC<PageSignUpProps> = ({}) => {
         </h2>
         <div className="max-w-md mx-auto space-y-6">
           <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block">
+                <span>Họ</span>
+                <Input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Nhập họ"
+                  className="mt-1"
+                  required
+                />
+              </label>
+              <label className="block">
+                <span>Tên</span>
+                <Input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Nhập tên"
+                  className="mt-1"
+                  required
+                />
+              </label>
+            </div>
             <label className="block">
               <span>Email</span>
               <Input

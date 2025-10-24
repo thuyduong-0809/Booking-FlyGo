@@ -5,9 +5,18 @@ const api = axios.create({
   baseURL: "http://localhost:3001",
 });
 
+// Helper function để lấy cookie
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
+
 // interceptor: gắn token vào header nếu có
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
+  const token = getCookie("access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

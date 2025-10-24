@@ -2,7 +2,7 @@ import React, { FC } from "react";
 import GallerySlider from "@/components/GallerySlider";
 import { DEMO_EXPERIENCES_LISTINGS } from "@/data/listings";
 import { ExperiencesDataType } from "@/data/types";
-import StartRating from "@/components/StartRating";
+import FiveStartIconForRate from "@/components/FiveStartIconForRate";
 import BtnLikeIcon from "@/components/BtnLikeIcon";
 import SaleOffBadge from "@/components/SaleOffBadge";
 import Badge from "@/shared/Badge";
@@ -65,9 +65,8 @@ const ExperiencesCard: FC<ExperiencesCardProps> = ({
           <div className="flex items-center space-x-2">
             {isAds && <Badge name="ADS" color="green" />}
             <h2
-              className={` font-medium capitalize ${
-                size === "default" ? "text-base" : "text-base"
-              }`}
+              className={` font-medium capitalize ${size === "default" ? "text-base" : "text-base"
+                }`}
             >
               <span className="line-clamp-1">{title}</span>
             </h2>
@@ -84,7 +83,8 @@ const ExperiencesCard: FC<ExperiencesCardProps> = ({
               </span>
             )}
           </span>
-          <StartRating reviewCount={reviewCount} point={reviewStart} />
+          <FiveStartIconForRate defaultPoint={reviewStart} />
+          <span className="ml-2 text-sm text-gray-500">({reviewCount})</span>
         </div>
       </div>
     );

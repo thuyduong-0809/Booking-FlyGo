@@ -1,32 +1,66 @@
 import { Popover, Transition } from "@headlessui/react";
-import { Fragment } from "react";
-import Avatar from "@/shared/Avatar";
+import { Fragment, useEffect, useState } from "react";
 import SwitchDarkMode2 from "@/shared/SwitchDarkMode2";
 import Link from "next/link";
 import { useAppDispatch } from "stores/hookStore";
 import { logout } from "stores/features/masterSlice";
+import { requestApi } from "lib/api";
+import { getCookie } from "@/utils/cookies";
+
 interface Props {
   className?: string;
 }
 
 export default function AvatarDropdown({ className = "" }: Props) {
-   const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
+  const [userData, setUserData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = getCookie("access_token");
+        if (!token) return;
+
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userId = payload.userId;
+
+        if (!userId) return;
+
+        const response = await requestApi(`users/${userId}`, "GET");
+        if (response.success && response.data) {
+          setUserData(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  // Hàm lấy initials từ tên
+  const getInitials = () => {
+    if (userData?.firstName && userData?.lastName) {
+      return `${userData.firstName[0]}${userData.lastName[0]}`.toUpperCase();
+    }
+    return 'U';
+  };
 
   const handleLogout = () => {
     dispatch(logout());
     document.cookie = "access_token=; path=/; max-age=0";
     // Nếu muốn redirect về trang login:
-    window.location.href = "/login"; 
-   };
+    window.location.href = "/login";
+  };
   return (
     <>
       <Popover className={`AvatarDropdown relative flex ${className}`}>
         {({ open, close }) => (
           <>
             <Popover.Button
-              className={`self-center w-10 h-10 sm:w-12 sm:h-12 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none flex items-center justify-center`}
+              className={`self-center w-10 h-10 sm:w-12 sm:h-12 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white`}
             >
-              <Avatar sizeClass="w-8 h-8 sm:w-9 sm:h-9" />
+              <span className="text-sm sm:text-base font-semibold">{getInitials()}</span>
             </Popover.Button>
             <Transition
               as={Fragment}
@@ -41,11 +75,17 @@ export default function AvatarDropdown({ className = "" }: Props) {
                 <div className="overflow-hidden rounded-3xl shadow-lg ring-1 ring-black ring-opacity-5">
                   <div className="relative grid grid-cols-1 gap-6 bg-white dark:bg-neutral-800 py-7 px-6">
                     <div className="flex items-center space-x-3">
-                      <Avatar sizeClass="w-12 h-12" />
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
+                        {getInitials()}
+                      </div>
 
                       <div className="flex-grow">
-                        <h4 className="font-semibold">Công Đại</h4>
-                        <p className="text-xs mt-0.5">Gò Vấp, Việt Nam</p>
+                        <h4 className="font-semibold">
+                          {userData?.firstName && userData?.lastName
+                            ? `${userData.firstName} ${userData.lastName}`
+                            : 'Người dùng'}
+                        </h4>
+                        <p className="text-xs mt-0.5">{userData?.email || 'Chưa cập nhật'}</p>
                       </div>
                     </div>
 
@@ -53,7 +93,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
 
                     {/* ------------------ 1 --------------------- */}
                     <Link
-                      href={"/account"}
+                      href={"/user"}
                       className="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
                       onClick={() => close()}
                     >
@@ -140,7 +180,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
 
                     {/* ------------------ 2 --------------------- */}
                     <Link
-                      href={"/account-savelists"}
+                      href={"/user-savelists"}
                       className="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
                       onClick={() => close()}
                     >
@@ -310,9 +350,9 @@ export default function AvatarDropdown({ className = "" }: Props) {
                       </div>
                       <div className="ml-4">
                         <p onClick={() => {
-                      handleLogout();
-                      close(); // đóng popover
-                    }} className="text-sm font-medium ">{"Đăng xuất"}</p>
+                          handleLogout();
+                          close(); // đóng popover
+                        }} className="text-sm font-medium ">{"Đăng xuất"}</p>
                       </div>
                     </Link>
                   </div>
