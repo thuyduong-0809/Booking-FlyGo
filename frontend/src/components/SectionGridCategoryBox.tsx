@@ -14,7 +14,7 @@ export interface SectionGridCategoryBoxProps {
 const DEMO_CATS: TaxonomyType[] = [
   {
     id: "1",
-    href: "/listing-stay-map",
+    href: "#",
     name: "New Yourk",
     taxonomy: "category",
     count: 1882,
@@ -23,7 +23,7 @@ const DEMO_CATS: TaxonomyType[] = [
   },
   {
     id: "2",
-    href: "/listing-stay-map",
+    href: "#",
     name: "Singapore",
     taxonomy: "category",
     count: 8288,
@@ -32,7 +32,7 @@ const DEMO_CATS: TaxonomyType[] = [
   },
   {
     id: "3",
-    href: "/listing-stay-map",
+    href: "#",
     name: "Paris",
     taxonomy: "category",
     count: 1288,
@@ -41,7 +41,7 @@ const DEMO_CATS: TaxonomyType[] = [
   },
   {
     id: "4",
-    href: "/listing-stay-map",
+    href: "#",
     name: "London",
     taxonomy: "category",
     count: 112,
@@ -50,7 +50,7 @@ const DEMO_CATS: TaxonomyType[] = [
   },
   {
     id: "5",
-    href: "/listing-stay-map",
+    href: "#",
     name: "Tokyo",
     taxonomy: "category",
     count: 323,
@@ -59,7 +59,7 @@ const DEMO_CATS: TaxonomyType[] = [
   },
   {
     id: "6",
-    href: "/listing-stay-map",
+    href: "#",
     name: "Maldives",
     taxonomy: "category",
     count: 2223,
@@ -68,7 +68,7 @@ const DEMO_CATS: TaxonomyType[] = [
   },
   {
     id: "7",
-    href: "/listing-stay-map",
+    href: "#",
     name: "New Yourk",
     taxonomy: "category",
     count: 1775,
@@ -77,7 +77,7 @@ const DEMO_CATS: TaxonomyType[] = [
   },
   {
     id: "8",
-    href: "/listing-stay-map",
+    href: "#",
     name: "Singapore",
     taxonomy: "category",
     count: 1288,

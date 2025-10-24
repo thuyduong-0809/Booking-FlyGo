@@ -112,7 +112,9 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
            });
     }
 
+  const [selectAircraftId,setSelectAircraftId] = useState(0)
   const loadSeatsByAircraftId = async (aircraftId:number)=>{
+     
        await requestApi(`seats/aircraft/${String(aircraftId)}`, "GET").then((res:any)=>{
           if(res.success){
               setSeats(res.data)
@@ -392,68 +394,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
  }
 
 
-  // const [seats, setSeats] = useState<ExtendedSeat[]>([
-  //   {
-  //     SeatID: 1,
-  //     AircraftID: 1,
-  //     SeatNumber: '1A',
-  //     TravelClass: 'Business',
-  //     Row: 1,
-  //     Column: 'A',
-  //     Status: 'Available',
-  //     IsAvailable: true,
-  //     Features: null,
-  //     aircraftName: 'Boeing 737-800'
-  //   },
-  //   {
-  //     SeatID: 2,
-  //     AircraftID: 1,
-  //     SeatNumber: '1B',
-  //     TravelClass: 'Business',
-  //     Row: 1,
-  //     Column: 'B',
-  //     Status: 'Available',
-  //     IsAvailable: true,
-  //     Features: null,
-  //     aircraftName: 'Boeing 737-800'
-  //   },
-  //   {
-  //     SeatID: 3,
-  //     AircraftID: 1,
-  //     SeatNumber: '2A',
-  //     TravelClass: 'Economy',
-  //     Row: 2,
-  //     Column: 'A',
-  //     Status: 'Occupied',
-  //     IsAvailable: false,
-  //     Features: null,
-  //     aircraftName: 'Boeing 737-800'
-  //   },
-  //   {
-  //     SeatID: 4,
-  //     AircraftID: 1,
-  //     SeatNumber: '2B',
-  //     TravelClass: 'Economy',
-  //     Row: 2,
-  //     Column: 'B',
-  //     Status: 'Available',
-  //     IsAvailable: true,
-  //     Features: null,
-  //     aircraftName: 'Boeing 737-800'
-  //   },
-  //   {
-  //     SeatID: 5,
-  //     AircraftID: 1,
-  //     SeatNumber: '3A',
-  //     TravelClass: 'Economy',
-  //     Row: 3,
-  //     Column: 'A',
-  //     Status: 'Available',
-  //     IsAvailable: true,
-  //     Features: null,
-  //     aircraftName: 'Boeing 737-800'
-  //   }
-  // ]);
+  
 
   const [maintenances, setMaintenances] = useState<ExtendedMaintenance[]>([
     {
@@ -566,8 +507,43 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
 
       return newCode;
     };
-
+  const [selectedSeatId,setSelectedSeatId] = useState(0)
+  const [seatDataUpdate, setSeatDataUpdate] = useState({
+    seatNumber: "",
+    travelClass: "Economy",
+    isAvailable: true,
+  });
+  const handleSelectSeatId = (id:string)=>{
+      requestApi(`seats/${id}`,"GET").then((res:any)=>{
+        if(res.success)
+          setSeatDataUpdate(res.data)
+          setSelectedSeatId(Number(id))
+      }).catch((err:any)=>{
+        console.error(err)
+      })
+  }
   
+  const handleUpdateSeat = () =>{
+    if(!selectAircraftId){
+       alert('Vui lòng chọn máy bay')
+    }
+    if(!selectedSeatId){
+        alert('Vui lòng chọn ghế')
+    }
+    setLoading(true)
+     requestApi(`seats/${String(selectedSeatId)}`,"PUT",seatDataUpdate).then((res:any)=>{
+        if(res.success){
+           alert('Cập nhật ghế thành công')
+           setSelectAircraftId(0)
+           setSelectedSeatId(0)
+        }
+     }).catch((err:any)=>{
+        console.error(err)
+     }).finally(()=>{
+         setLoading(false)
+     })
+  }
+
     if (loading) {
     return <div>Vui lòng đợi...</div>;
   }
@@ -1064,6 +1040,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 onChange={(e:any)=>{
                   loadSeatsByAircraftId(e.target.value)
+                  setSelectAircraftId(e.target.value)
                 }}
                 >
                   <option value="">Chọn máy bay</option>
@@ -1081,12 +1058,16 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                   {seats.map((seat:any) => (
                     <div
                       key={seat.seatId}
-                      className={`p-2 text-sm text-center rounded border cursor-pointer ${seat.isAvailable === 'Available'
-                        ? 'bg-green-100 border-green-300 text-green-800'
-                        : seat.isAvailables === 'Occupied'
-                          ? 'bg-blue-100 border-blue-300 text-blue-800'
-                          : 'bg-red-100 border-red-300 text-red-800'
-                        }`}
+                      onClick={() => handleSelectSeatId(seat.seatId)}
+                      className={`p-2 text-sm text-center rounded border cursor-pointer ${
+                        seat.isAvailable == true
+                          ? 'bg-green-100 border-green-300 text-green-800'
+                          : seat.isAvailable == false
+                            ? 'bg-blue-100 border-blue-300 text-blue-800'
+                            : 'bg-red-100 border-red-300 text-red-800'
+                      } ${
+                        selectedSeatId === seat.seatId ? 'ring-2 ring-blue-400' : ''
+                      }`}
                     >
                       {seat.seatNumber}
                     </div>
@@ -1109,36 +1090,71 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
               </div>
 
               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="1A"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Hạng ghế</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="Economy">Economy</option>
-                    <option value="Business">Business</option>
-                    <option value="First">First</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="Available">Trống</option>
-                    <option value="Occupied">Đã đặt</option>
-                    <option value="Maintenance">Bảo trì</option>
-                  </select>
-                </div>
+               {/* Số ghế (readonly) */}
+            <div>
+              <label className="block text-md font-medium text-gray-700 mb-1">
+                Số ghế
+              </label>
+              <input
+                type="text"
+                value={seatDataUpdate.seatNumber}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                placeholder="1A"
+              />
+            </div>
+
+            {/* Hạng ghế (readonly) */}
+            <div>
+              <label className="block text-md font-medium text-gray-700 mb-1">
+                Hạng ghế
+              </label>
+              <select
+                value={seatDataUpdate.travelClass}
+                disabled
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+              >
+                <option value="Economy">Economy</option>
+                <option value="Business">Business</option>
+                <option value="First">First</option>
+              </select>
+            </div>
+
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
+                <select
+                  value={
+                    seatDataUpdate?.isAvailable === true
+                      ? 'Available'
+                      : seatDataUpdate?.isAvailable === false
+                        ? 'Occupied'
+                        : 'Maintenance'
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    let isAvailable: boolean | null = null;
+                    if (value === 'Available') isAvailable = true;
+                    else if (value === 'Occupied') isAvailable = false;
+                    else isAvailable = null;
+
+                    setSeatDataUpdate((prev:any) => ({ ...prev, isAvailable }));
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                >
+                  <option value="Available">Trống</option>
+                  <option value="Occupied">Đã đặt</option>
+                  {/* <option value="Maintenance">Bảo trì</option> */}
+                </select>
               </div>
+            </div>
+
               <div className="mt-6 flex justify-end space-x-3">
-                <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                onClick={()=>setSelectedSeatId(0)}>
                   Hủy
                 </button>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={()=>handleUpdateSeat()}>
                   Cập nhật ghế
                 </button>
               </div>

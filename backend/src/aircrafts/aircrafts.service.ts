@@ -64,34 +64,62 @@ export class AircraftsService {
 
             // Generate seats
             const economySeats = Array.from(
-            { length: createAircraftDto.economyCapacity },
+            { length: createAircraftDto.economyCapacity || 0 },
             (_, i) => ({
                 aircraft: savedAircraft,
                 seatNumber: `E${String(i + 1).padStart(2, '0')}A`,
                 travelClass: 'Economy',
                 isAvailable: true,
+                features: {
+                seatPitch: '30-32 inches',
+                hasUSB: true,
+                hasPowerOutlet: false,
+                hasRecline: true,
+                isExtraLegroom: false,
+                entertainment: false,
+                },
             }),
             );
 
             const businessSeats = Array.from(
-            { length: createAircraftDto.businessCapacity },
+            { length: createAircraftDto.businessCapacity || 0 },
             (_, i) => ({
                 aircraft: savedAircraft,
                 seatNumber: `B${String(i + 1).padStart(2, '0')}A`,
                 travelClass: 'Business',
                 isAvailable: true,
+                features: {
+                seatPitch: '38-42 inches',
+                hasUSB: true,
+                hasPowerOutlet: true,
+                hasRecline: true,
+                isLieFlat: false,
+                entertainment: true,
+                mealService: 'Premium',
+                },
             }),
             );
 
             const firstSeats = Array.from(
-            { length: createAircraftDto.firstClassCapacity },
+            { length: createAircraftDto.firstClassCapacity || 0 },
             (_, i) => ({
                 aircraft: savedAircraft,
                 seatNumber: `F${String(i + 1).padStart(2, '0')}A`,
                 travelClass: 'First',
                 isAvailable: true,
+                features: {
+                seatPitch: '78-83 inches',
+                hasUSB: true,
+                hasPowerOutlet: true,
+                isLieFlat: true,
+                hasPrivacyDoor: true,
+                entertainment: true,
+                mealService: 'Luxury',
+                amenityKit: true,
+                },
             }),
             );
+
 
             await this.seatRepository.save([
             ...economySeats,
