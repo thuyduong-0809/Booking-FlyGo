@@ -106,7 +106,7 @@ const LangDropdown: FC<LangDropdownProps> = ({
 
   return (
     <>
-      <Popover className={`LangDropdown relative ${className}`}>
+      {/* <Popover className={`LangDropdown relative ${className}`}>
         {({ open, close }) => (
           <>
             <Popover.Button
@@ -177,7 +177,7 @@ const LangDropdown: FC<LangDropdownProps> = ({
             </Transition>
           </>
         )}
-      </Popover>
+      </Popover> */}
     </>
   );
 };

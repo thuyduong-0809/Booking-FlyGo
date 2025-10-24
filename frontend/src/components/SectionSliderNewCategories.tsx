@@ -100,8 +100,8 @@ const DEMO_CATS: TaxonomyType[] = [
 ];
 
 const SectionSliderNewCategories: FC<SectionSliderNewCategoriesProps> = ({
-  heading = "Suggestions for discovery",
-  subHeading = "Popular places to recommends for you",
+  heading = "Gợi ý cho bạn",
+  subHeading = "Những điểm đến được đề xuất cho bạn",
   className = "",
   itemClassName = "",
   categories = DEMO_CATS,

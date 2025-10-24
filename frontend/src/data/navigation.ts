@@ -65,101 +65,99 @@ const demoChildMenus: NavItemType[] = [
   {
     id: ncNanoId(),
     href: "/",
-    name: "Online booking",
+    name: "Xem thông tin chuyến bay",
   },
   {
     id: ncNanoId(),
     href: "/home-2",
-    name: "Real estate",
-    isNew: true,
-  },
-  {
-    id: ncNanoId(),
-    href: "/home-3",
-    name: "Home 3",
+    name: "Đặt chuyến bay",
     isNew: true,
   },
 ];
 
-const otherPageChildMenus: NavItemType[] = [
-  { id: ncNanoId(), href: "#", name: "Blog page" },
-  { id: ncNanoId(), href: "/blog/single" as Route, name: "Blog single" },
-  { id: ncNanoId(), href: "/about", name: "About" },
-  { id: ncNanoId(), href: "/contact", name: "Contact us" },
-  { id: ncNanoId(), href: "/login", name: "Login" },
-  { id: ncNanoId(), href: "/signup", name: "Signup" },
-];
-
-const templatesChildrenMenus: NavItemType[] = [
+const otherServicesMegaMenu: MegamenuItem[] = [
   {
     id: ncNanoId(),
-    href: "/add-listing/1" as Route,
-    name: "Add listing",
-    type: "dropdown",
-    children: [
+    image:
+      "https://images.pexels.com/photos/1591373/pexels-photo-1591373.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+    title: "Thanh toán & Tài chính",
+    items: [
       {
         id: ncNanoId(),
-        href: "/add-listing/1" as Route,
-        name: "Add listing 1",
+        href: "#",
+        name: "Bay trước, thanh toán sau",
+        isNew: true,
+        description: "Sẵn sàng bay vui, vé để Vietjet lo. Cùng tận hưởng sản phẩm mua vé máy bay trả góp với thời hạn cho vay đến 6 tháng và không cần chứng minh thu nhập",
       },
       {
         id: ncNanoId(),
-        href: "/add-listing/2" as Route,
-        name: "Add listing 2",
-      },
-      {
-        id: ncNanoId(),
-        href: "/add-listing/3" as Route,
-        name: "Add listing 3",
-      },
-      {
-        id: ncNanoId(),
-        href: "/add-listing/4" as Route,
-        name: "Add listing 4",
-      },
-      {
-        id: ncNanoId(),
-        href: "/add-listing/5" as Route,
-        name: "Add listing 5",
-      },
-      {
-        id: ncNanoId(),
-        href: "/add-listing/6" as Route,
-        name: "Add listing 6",
-      },
-      {
-        id: ncNanoId(),
-        href: "/add-listing/7" as Route,
-        name: "Add listing 7",
-      },
-      {
-        id: ncNanoId(),
-        href: "/add-listing/8" as Route,
-        name: "Add listing 8",
-      },
-      {
-        id: ncNanoId(),
-        href: "/add-listing/9" as Route,
-        name: "Add listing 9",
-      },
-      {
-        id: ncNanoId(),
-        href: "/add-listing/10" as Route,
-        name: "Add listing 10",
+        href: "#",
+        name: "Mua ngoại tệ",
+        isNew: true,
+        description: "Tỷ giá hấp dẫn, nhận tiền trong ngày!",
       },
     ],
   },
-  //
-  { id: ncNanoId(), href: "#", name: "Checkout" },
-  { id: ncNanoId(), href: "#", name: "Pay done" },
-  //
-  { id: ncNanoId(), href: "#", name: "Author page" },
-  { id: ncNanoId(), href: "/account", name: "Account page" },
-  //
   {
     id: ncNanoId(),
-    href: "/subscription",
-    name: "Subscription",
+    image:
+      "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+    title: "Thẻ & Mua sắm",
+    items: [
+      {
+        id: ncNanoId(),
+        href: "#",
+        name: "Đặt trước Hàng miễn thuế",
+        description: "Tận hưởng mua sắm hàng hiệu chỉ với nút đặt hàng và nhận ngay trên chuyến bay của Quý khách.",
+      },
+    ],
+  },
+];
+
+const flightServicesMegaMenu: MegamenuItem[] = [
+  {
+    id: ncNanoId(),
+    image:
+      "https://images.pexels.com/photos/1591373/pexels-photo-1591373.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+    title: "Dịch vụ chuyến bay",
+    items: [
+      {
+        id: ncNanoId(),
+        href: "#",
+        name: "Mua hành lý, suất ăn, chọn chỗ ngồi...",
+        isNew: true,
+        description: "Đặt trước những dịch vụ tiện ích để tận hưởng chuyến bay một cách trọn vẹn",
+      },
+      {
+        id: ncNanoId(),
+        href: "#",
+        name: "Dịch vụ đặc biệt",
+        description: "Vận chuyển thú cưng, trẻ em đi một mình, hỗ trợ thủ tục tại sân bay và hơn thế nữa!",
+      },
+      
+    ],
+  },
+  {
+    id: ncNanoId(),
+    image:
+      "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+    title: "Tiện ích & Ưu đãi",
+    items: [
+      {
+        id: ncNanoId(),
+        href: "#",
+        name: "Bảo hiểm",
+        description: "Thật yên tâm và thoải mái với các chương trình bảo hiểm uy tín đến từ các đối tác bảo hiểm tin cậy của Vietjet",
+      },
+      {
+        id: ncNanoId(),
+        href: "#",
+        name: "Săn vé giá rẻ",
+        isNew: true,
+        description: "Nhanh tay săn vé bay Vietjet giá tốt nhất! Tìm kiếm các chặng bay hot nhất!",
+      },
+      
+    ],
   },
 ];
 
@@ -167,63 +165,29 @@ export const NAVIGATION_DEMO: NavItemType[] = [
   {
     id: ncNanoId(),
     href: "/",
-    name: "Home",
-    type: "dropdown",
-    children: demoChildMenus,
+    name: "Chuyến bay của tôi",
     isNew: true,
   },
   {
     id: ncNanoId(),
     href: "#",
-    name: "Listing Page",
-    type: "dropdown",
-    children: [
-  
-      {
-        id: ncNanoId(),
-        href: "/listing-real-estate" as Route,
-        name: "Real Estate Listings",
-        type: "dropdown",
-        children: [
-          {
-            id: ncNanoId(),
-            href: "#",
-            name: "Real Estate Listings",
-          },
-          {
-            id: ncNanoId(),
-            href: "#",
-            name: "Real Estate Maps",
-          },
-        ],
-      },
-      //
-      {
-        id: ncNanoId(),
-        href: "/listing-flights" as Route,
-        name: "Flights listings",
-      },
-      {
-        id: ncNanoId(),
-        href: "/listing-fly-detail" as Route,
-        name: "Flight Detail Booking",
-      },
-    ],
+    name: "Online Check-in",
+    isNew: true,
   },
   {
     id: ncNanoId(),
     href: "#",
-    name: "Templates",
-    type: "dropdown",
-    children: templatesChildrenMenus,
+    name: "Dịch vụ chuyến bay",
+    type: "megaMenu",
+    megaMenu: flightServicesMegaMenu,
   },
 
   {
     id: ncNanoId(),
     href: "#",
-    name: "Other pages",
-    type: "dropdown",
-    children: otherPageChildMenus,
+    name: "Dịch vụ khác",
+    type: "megaMenu",
+    megaMenu: otherServicesMegaMenu,
   },
 ];
 

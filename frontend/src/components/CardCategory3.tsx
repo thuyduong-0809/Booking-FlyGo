@@ -37,7 +37,7 @@ const CardCategory3: FC<CardCategory3Props> = ({
         <span
           className={`block mt-1.5 text-sm text-neutral-6000 dark:text-neutral-400`}
         >
-          {convertNumbThousand(count || 0)} properties
+          {convertNumbThousand(count || 0)} điểm đến
         </span>
       </div>
     </Link>

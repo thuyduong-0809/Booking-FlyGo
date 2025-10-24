@@ -20,38 +20,38 @@ const DEMO_CATS: TaxonomyType[] = [
   {
     id: "1",
     href: "#",
-    name: "New Yourk",
+    name: "Hà Nội",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/64271/queen-of-liberty-statue-of-liberty-new-york-liberty-statue-64271.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260",
+      "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/thumbnailhn-1621669931033.jpeg",
   },
   {
     id: "2",
     href: "#",
-    name: "Singapore",
+    name: "TP.Hồ Chí Minh",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/7740160/pexels-photo-7740160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      "https://images.pexels.com/photos/941195/pexels-photo-941195.jpeg?_gl=1*16s9abj*_ga*MTUyNjQ1Ni4xNzYxMjk3Njg2*_ga_8JE65Q40S6*czE3NjEyOTc2ODYkbzEkZzEkdDE3NjEyOTc2OTEkajU1JGwwJGgw",
   },
   {
     id: "3",
     href: "#",
-    name: "Paris",
+    name: "Đà Nẵng",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/739407/pexels-photo-739407.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      "https://images.pexels.com/photos/34373621/pexels-photo-34373621.jpeg?_gl=1*t4ikk5*_ga*MTUyNjQ1Ni4xNzYxMjk3Njg2*_ga_8JE65Q40S6*czE3NjEyOTc2ODYkbzEkZzEkdDE3NjEyOTc3NjgkajM5JGwwJGgw",
   },
   {
     id: "4",
     href: "#",
-    name: "London",
+    name: "Quy Nhơn",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260",
+      "https://images.pexels.com/photos/30228245/pexels-photo-30228245.jpeg?_gl=1*jgiqxw*_ga*MTUyNjQ1Ni4xNzYxMjk3Njg2*_ga_8JE65Q40S6*czE3NjEyOTc2ODYkbzEkZzEkdDE3NjEyOTc4MTYkajUyJGwwJGgw"
   },
   {
     id: "5",
@@ -86,65 +86,65 @@ const DEMO_CATS_2: TaxonomyType[] = [
   {
     id: "1",
     href: "#",
-    name: "Enjoy the great cold",
+    name: "Mộc Châu",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/5764100/pexels-photo-5764100.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260",
+      "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/3-1631943692874.jpg",
   },
   {
     id: "2",
     href: "#",
-    name: "Sleep in a floating way",
+    name: "Hà Nội",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/2869499/pexels-photo-2869499.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/12-1632469376242.jpg",
   },
   {
     id: "3",
     href: "#",
-    name: "In the billionaire's house",
+    name: "Gia Lai",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/7031413/pexels-photo-7031413.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/thumbnailgialai-1621660892075.jpg",
   },
   {
     id: "4",
     href: "#",
-    name: "Cool in the deep forest",
+    name: "Sapa",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/247532/pexels-photo-247532.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/1-1631977118185.jpg",
   },
   {
     id: "5",
     href: "#",
-    name: "In the billionaire's house",
+    name: "Quảng Bình",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/7031413/pexels-photo-7031413.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/thumbnailqb-1621669116556.jpg",
   },
   {
     id: "6",
     href: "#",
-    name: "In the billionaire's house",
+    name: "Tây Bắc",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/9828170/pexels-photo-9828170.jpeg?auto=compress&cs=tinysrgb&w=1600&lazy=load",
+      "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/4-1631961227979.jpg",
   },
   {
     id: "7",
     href: "#",
-    name: "Cool in the deep forest",
+    name: "Phú Quốc",
     taxonomy: "category",
     count: 188288,
     thumbnail:
-      "https://images.pexels.com/photos/247532/pexels-photo-247532.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/thumbnailpq-1621670820001.jpg"
   },
 ];
 
@@ -197,8 +197,8 @@ function PageHome() {
             categories={DEMO_CATS_2}
             categoryCardType="card4"
             itemPerRow={4}
-            heading="Suggestions for discovery"
-            subHeading="Popular places to stay that Chisfis recommends for you"
+            heading="Gợi ý cho bạn"
+            subHeading="Những điểm đến được đề xuất cho bạn"
             sliderStyle="style2"
           />
         </div>
@@ -216,12 +216,12 @@ function PageHome() {
           <SectionBecomeAnAuthor />
         </div> */}
 
-        <SectionSliderNewCategories
+        {/* <SectionSliderNewCategories
           heading="Explore by types of stays"
           subHeading="Explore houses based on 10 types of stays"
           categoryCardType="card5"
           itemPerRow={5}
-        />
+        /> */}
 
         <SectionVideos />
 

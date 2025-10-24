@@ -19,16 +19,16 @@ export interface SectionVideosProps {
 
 const VIDEOS_DEMO: VideoType[] = [
   {
-    id: "Ao7e4iisKMs",
+    id: "LjDjXXM62Xg",
     title: "Magical Scotland - 4K Scenic Relaxation Film with Calming Music",
     thumbnail:
-      "https://images.pexels.com/photos/131423/pexels-photo-131423.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      "https://images.pexels.com/photos/1337974/pexels-photo-1337974.jpeg?_gl=1*me6bec*_ga*MTUyNjQ1Ni4xNzYxMjk3Njg2*_ga_8JE65Q40S6*czE3NjEyOTc2ODYkbzEkZzEkdDE3NjEyOTgyNjAkajU4JGwwJGgw",
   },
   {
-    id: "a5V6gdu5ih8",
+    id: "KdEEVocbv9g",
     title: "Magical Scotland - 4K Scenic Relaxation Film with Calming Music",
     thumbnail:
-      "https://images.pexels.com/photos/186077/pexels-photo-186077.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/thumbnailhn-1621669931033.jpeg",
   },
   {
     id: "MuB7HHeuNbc",
@@ -128,10 +128,9 @@ const SectionVideos: FC<SectionVideosProps> = ({
   return (
     <div className={`nc-SectionVideos ${className}`}>
       <Heading
-        desc="Check out our hottest videos. View more and share more new
-          perspectives on just about any topic. Everyone’s welcome."
+          desc="Xem thêm và chia sẻ thêm những góc nhìn mới mẻ về bất kỳ chủ đề nào. Mọi người đều được chào đón."
       >
-        🎬 The Videos
+        🎬 Video nổi bật
       </Heading>
 
       <div className="flex flex-col relative sm:pr-4 sm:py-4 md:pr-6 md:py-6 xl:pr-14 xl:py-14 lg:flex-row">

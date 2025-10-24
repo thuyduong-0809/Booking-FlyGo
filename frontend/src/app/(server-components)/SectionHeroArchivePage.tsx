@@ -39,7 +39,7 @@ const SectionHeroArchivePage: FC<SectionHeroArchivePageProps> = ({
             ) : (
               <>
                 <i className="text-2xl las la-home"></i>
-                <span className="ml-2.5">112 properties</span>
+                <span className="ml-2.5">112 điểm đến</span>
               </>
             )}
           </div>

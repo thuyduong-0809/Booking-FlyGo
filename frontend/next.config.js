@@ -31,6 +31,12 @@ const nextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };

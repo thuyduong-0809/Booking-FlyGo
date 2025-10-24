@@ -24,6 +24,7 @@ export interface NavItemType {
   children?: NavItemType[];
   megaMenu?: MegamenuItem[];
   type?: "dropdown" | "megaMenu" | "none";
+  description?: string;
 }
 
 export interface NavigationItemProps {
@@ -88,20 +89,13 @@ const NavigationItem: FC<NavigationItemWithRouterProps> = ({ menuItem }) => {
                 className={`will-change-transform sub-menu absolute top-full transform z-10 w-screen max-w-sm px-4 sm:px-0 lg:max-w-max ${classPanel}`}
               >
                 <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black dark:ring-white ring-opacity-5 dark:ring-opacity-10 text-sm">
-                  <div
-                    className={`relative bg-white dark:bg-neutral-900 px-3 py-6 grid gap-1 grid-cols-${menu.megaMenu?.length}`}
-                  >
+                  <div className="relative bg-white dark:bg-neutral-900 py-6 grid gap-0" style={{ gridTemplateColumns: `repeat(${menu.megaMenu?.length}, minmax(280px, 1fr))` }}>
                     {menu.megaMenu?.map((item) => (
-                      <div key={item.id}>
-                        <div className="px-2">
-                          <div className="w-36 h-24 rounded-lg overflow-hidden relative flex">
-                            <Image alt="" src={item.image} fill sizes="200px" />
-                          </div>
-                        </div>
-                        <p className="font-medium text-neutral-900 dark:text-neutral-200 py-1 px-2 my-2">
+                      <div key={item.id} className="px-6 border-r border-neutral-200 dark:border-neutral-700 last:border-r-0">
+                        <p className="font-semibold text-neutral-900 dark:text-neutral-200 text-base mb-4">
                           {item.title}
                         </p>
-                        <ul className="grid space-y-1">
+                        <ul className="grid space-y-0">
                           {item.items.map(renderMegaMenuNavlink)}
                         </ul>
                       </div>
@@ -118,13 +112,27 @@ const NavigationItem: FC<NavigationItemWithRouterProps> = ({ menuItem }) => {
 
   const renderMegaMenuNavlink = (item: NavItemType) => {
     return (
-      <li key={item.id}>
+      <li key={item.id} className="border-b border-neutral-200 dark:border-neutral-700 last:border-b-0 py-3 last:pb-0">
         <Link
           rel="noopener noreferrer"
-          className="inline-flex items-center py-1 px-2 rounded hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 font-normal text-neutral-6000 dark:text-neutral-300"
+          className="block rounded px-2 -mx-2 py-1 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
           href={item.href || ""}
         >
-          {item.name}
+          <div className="flex items-start gap-2 mb-1.5">
+            <span className="font-semibold text-neutral-900 dark:text-neutral-200 text-sm leading-tight">
+              {item.name}
+            </span>
+            {item.isNew && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-100 text-red-600 whitespace-nowrap flex-shrink-0">
+                🔥 HOT
+              </span>
+            )}
+          </div>
+          {item.description && (
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              {item.description}
+            </p>
+          )}
         </Link>
       </li>
     );

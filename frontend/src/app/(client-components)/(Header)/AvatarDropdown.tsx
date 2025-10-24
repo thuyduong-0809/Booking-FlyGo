@@ -44,8 +44,8 @@ export default function AvatarDropdown({ className = "" }: Props) {
                       <Avatar sizeClass="w-12 h-12" />
 
                       <div className="flex-grow">
-                        <h4 className="font-semibold">Eden Smith</h4>
-                        <p className="text-xs mt-0.5">Los Angeles, CA</p>
+                        <h4 className="font-semibold">Công Đại</h4>
+                        <p className="text-xs mt-0.5">Gò Vấp, Việt Nam</p>
                       </div>
                     </div>
 
@@ -82,7 +82,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
                         </svg>
                       </div>
                       <div className="ml-4">
-                        <p className="text-sm font-medium ">{"My Account"}</p>
+                        <p className="text-sm font-medium ">{"Tài khoản của tôi"}</p>
                       </div>
                     </Link>
 
@@ -134,7 +134,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
                         </svg>
                       </div>
                       <div className="ml-4">
-                        <p className="text-sm font-medium ">{"My bookings"}</p>
+                        <p className="text-sm font-medium ">{"Chuyến bay của tôi"}</p>
                       </div>
                     </Link>
 
@@ -144,7 +144,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
                       className="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
                       onClick={() => close()}
                     >
-                      <div className="flex items-center justify-center flex-shrink-0 text-neutral-500 dark:text-neutral-300">
+                      {/* <div className="flex items-center justify-center flex-shrink-0 text-neutral-500 dark:text-neutral-300">
                         <svg
                           width="24"
                           height="24"
@@ -161,8 +161,8 @@ export default function AvatarDropdown({ className = "" }: Props) {
                         </svg>
                       </div>
                       <div className="ml-4">
-                        <p className="text-sm font-medium ">{"Wishlist"}</p>
-                      </div>
+                        <p className="text-sm font-medium ">{"Yêu thích"}</p>
+                      </div> */}
                     </Link>
 
                     <div className="w-full border-b border-neutral-200 dark:border-neutral-700" />
@@ -202,7 +202,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
                           </svg>
                         </div>
                         <div className="ml-4">
-                          <p className="text-sm font-medium ">{"Dark theme"}</p>
+                          <p className="text-sm font-medium ">{"Chế độ tối"}</p>
                         </div>
                       </div>
                       <SwitchDarkMode2 />
@@ -267,7 +267,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
                         </svg>
                       </div>
                       <div className="ml-4">
-                        <p className="text-sm font-medium ">{"Help"}</p>
+                        <p className="text-sm font-medium ">{"Hỗ trợ"}</p>
                       </div>
                     </Link>
 
@@ -312,7 +312,7 @@ export default function AvatarDropdown({ className = "" }: Props) {
                         <p onClick={() => {
                       handleLogout();
                       close(); // đóng popover
-                    }} className="text-sm font-medium ">{"Log out"}</p>
+                    }} className="text-sm font-medium ">{"Đăng xuất"}</p>
                       </div>
                     </Link>
                   </div>

@@ -328,15 +328,15 @@ export default function HomeScreen({ navigation }) {
         </View>
       )}
 
-      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Suggestions for discovery</Text>
-      <Text style={[styles.sectionDesc, { color: theme.colors.textMuted }]}>Popular places to recommends for you</Text>
+      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}> Gợi ý cho bạn</Text>
+      <Text style={[styles.sectionDesc, { color: theme.colors.textMuted }]}>Những điểm đến được đề xuất cho bạn</Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardRow}>
         {SUGGESTS.map((it) => (
           <View key={it.title} style={styles.card}>
             <Image source={it.image} style={styles.cardImg} />
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{it.title}</Text>
-            <Text style={styles.cardSub}>188,285 properties</Text>
+            <Text style={styles.cardSub}>188,285 điểm đến</Text>
           </View>
         ))}
       </ScrollView>
@@ -357,7 +357,7 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      <View style={styles.block}>
+      {/* <View style={styles.block}>
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Explore by types of stays</Text>
         <Text style={[styles.sectionDesc, { color: theme.colors.textMuted }]}>Explore houses based on types of stays</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardRow}>
@@ -369,9 +369,9 @@ export default function HomeScreen({ navigation }) {
             </View>
           ))}
         </ScrollView>
-      </View>
+      </View> */}
 
-      <View style={styles.block}>
+      {/* <View style={styles.block}>
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>The Videos</Text>
         <Text style={[styles.sectionDesc, { color: theme.colors.textMuted }]}>Check out our hottest videos</Text>
         <Image source={require('../assets/image/flygo_2.png')} style={styles.videoHero} />
@@ -380,33 +380,12 @@ export default function HomeScreen({ navigation }) {
             <Image key={it.title} source={it.image} style={styles.videoThumb} />
           ))}
         </ScrollView>
-      </View>
+      </View> */}
     </ScrollView>
   );
 }
 
-const DEMO_CATS = [
-  { title: 'New York', thumbnail: 'https://images.pexels.com/photos/64271/queen-of-liberty-statue-of-liberty-new-york-liberty-statue-64271.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260' },
-  { title: 'Singapore', thumbnail: 'https://images.pexels.com/photos/7740160/pexels-photo-7740160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260' },
-  { title: 'Paris', thumbnail: 'https://images.pexels.com/photos/739407/pexels-photo-739407.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260' },
-  { title: 'London', thumbnail: 'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260' },
-  { title: 'Tokyo', thumbnail: 'https://images.pexels.com/photos/4151484/pexels-photo-4151484.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260' },
-  { title: 'Maldives', thumbnail: 'https://images.pexels.com/photos/3250613/pexels-photo-3250613.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260' },
-  { title: 'Italy', thumbnail: 'https://images.pexels.com/photos/7740160/pexels-photo-7740160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260' },
-];
 
-const SUGGESTS = DEMO_CATS.slice(0,5).map(c => ({ title: c.title, image: { uri: c.thumbnail } }));
-
-const NEARBY = DEMO_CATS.slice(0,6).map(c => ({ title: c.title, time: '19 minutes drive', image: { uri: c.thumbnail } }));
-
-const DEMO_CATS_2 = [
-  { title: 'Enjoy the great cold', thumbnail: 'https://images.pexels.com/photos/5764100/pexels-photo-5764100.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260', sub: '188,288 properties' },
-  { title: 'Sleep in a floating way', thumbnail: 'https://images.pexels.com/photos/2869499/pexels-photo-2869499.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260', sub: '188,288 properties' },
-  { title: "In the billionaire's house", thumbnail: 'https://images.pexels.com/photos/7031413/pexels-photo-7031413.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260', sub: '188,288 properties' },
-  { title: 'Cool in the deep forest', thumbnail: 'https://images.pexels.com/photos/247532/pexels-photo-247532.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260', sub: '188,288 properties' },
-];
-
-const TYPES = DEMO_CATS_2.map(t => ({ title: t.title, sub: t.sub, image: { uri: t.thumbnail } }));
 
 const styles = StyleSheet.create({
   root: {
