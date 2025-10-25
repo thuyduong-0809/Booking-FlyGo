@@ -33,10 +33,10 @@ const mockFlights: FlightItem[] = [
     aircraft: "Airbus A320",
     note: "Bay thẳng",
     fares: [
-      { 
-        name: "Business", 
-        price: 8834400, 
-        tax: 1166800, 
+      {
+        name: "FIST CLASS",
+        price: 8834400,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 18kg",
@@ -53,10 +53,10 @@ const mockFlights: FlightItem[] = [
         ],
         excludes: []
       },
-      { 
-        name: "SkyBoss", 
-        price: 4090000, 
-        tax: 1166800, 
+      {
+        name: "BUSSINESS",
+        price: 4090000,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
@@ -73,26 +73,10 @@ const mockFlights: FlightItem[] = [
         ],
         excludes: []
       },
-      { 
-        name: "Deluxe", 
-        price: 4020000, 
-        tax: 1166800, 
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 10kg cho đường bay Úc, Kazakhstan; 07kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 40kg cho đường bay Úc, Kazakhstan; 20kg cho các đường bay còn lại.",
-          "Suất ăn & nước uống cho đường bay Úc, Kazakhstan.",
-          "Chọn trước chỗ ngồi yêu thích (khi còn chỗ, không áp dụng các hàng ghế dành cho SkyBoss và Business)",
-          "Miễn phí thay đổi chuyến bay, ngày bay, hành trình (Thu chênh lệch giá Vé - nếu có)"
-        ],
-        excludes: [
-          "Bộ tiện ích 3 trong 1"
-        ]
-      },
-      { 
-        name: "Eco", 
-        price: 3470000, 
-        tax: 1166800, 
+      {
+        name: "Eco",
+        price: 3470000,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 07Kg."
@@ -118,10 +102,10 @@ const mockFlights: FlightItem[] = [
     fares: [
       { name: "Business", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
       { name: "SkyBoss", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
-      { 
-        name: "Deluxe", 
-        price: 4020000, 
-        tax: 1166800, 
+      {
+        name: "Deluxe",
+        price: 4020000,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 10kg cho đường bay Úc, Kazakhstan; 07kg cho các đường bay còn lại.",
@@ -134,10 +118,10 @@ const mockFlights: FlightItem[] = [
           "Bộ tiện ích 3 trong 1"
         ]
       },
-      { 
-        name: "Eco", 
-        price: 3470000, 
-        tax: 1166800, 
+      {
+        name: "Eco",
+        price: 3470000,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 07Kg."
@@ -162,10 +146,10 @@ const mockFlights: FlightItem[] = [
     note: "Bay thẳng",
     fares: [
       { name: "Business", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
-      { 
-        name: "SkyBoss", 
-        price: 4090000, 
-        tax: 1166800, 
+      {
+        name: "SkyBoss",
+        price: 4090000,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
@@ -182,10 +166,10 @@ const mockFlights: FlightItem[] = [
         ],
         excludes: []
       },
-      { 
-        name: "Deluxe", 
-        price: 1560000, 
-        tax: 1166800, 
+      {
+        name: "Deluxe",
+        price: 1560000,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
@@ -202,10 +186,10 @@ const mockFlights: FlightItem[] = [
         ],
         excludes: []
       },
-      { 
-        name: "Eco", 
-        price: 1010000, 
-        tax: 1166800, 
+      {
+        name: "Eco",
+        price: 1010000,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 07Kg."
@@ -233,10 +217,10 @@ const returnFlights: FlightItem[] = [
     aircraft: "Airbus A321",
     note: "Bay thẳng",
     fares: [
-      { 
-        name: "Business", 
-        price: 3110400, 
-        tax: 1166800, 
+      {
+        name: "Business",
+        price: 3110400,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
@@ -253,10 +237,10 @@ const returnFlights: FlightItem[] = [
         ],
         excludes: []
       },
-      { 
-        name: "SkyBoss", 
-        price: 3110400, 
-        tax: 1166800, 
+      {
+        name: "SkyBoss",
+        price: 3110400,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
@@ -273,10 +257,10 @@ const returnFlights: FlightItem[] = [
         ],
         excludes: []
       },
-      { 
-        name: "Deluxe", 
-        price: 1560000, 
-        tax: 1166800, 
+      {
+        name: "Deluxe",
+        price: 1560000,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
@@ -293,10 +277,10 @@ const returnFlights: FlightItem[] = [
         ],
         excludes: []
       },
-      { 
-        name: "Eco", 
-        price: 890000, 
-        tax: 1166800, 
+      {
+        name: "Eco",
+        price: 890000,
+        tax: 1166800,
         service: 0,
         includes: [
           "Hành lý xách tay: 07Kg."
@@ -320,14 +304,14 @@ function formatVnd(n: number) {
 
 export default function SelectFlightPage() {
   const { state, setSelectedDeparture, setSelectedReturn, grandTotal } = useBooking();
-  const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<{flightId: string, fareIndex: number} | null>(null);
-  const [selectedReturnFlight, setSelectedReturnFlight] = useState<{flightId: string, fareIndex: number} | null>(null);
+  const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
+  const [selectedReturnFlight, setSelectedReturnFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
   const [selectedDate, setSelectedDate] = useState(14); // Thứ ba 14 tháng 10
-  const [expandedFlight, setExpandedFlight] = useState<{flightId: string, fareIndex: number} | null>(null); // Track which fare is expanded
+  const [expandedFlight, setExpandedFlight] = useState<{ flightId: string, fareIndex: number } | null>(null); // Track which fare is expanded
 
   const departureFlight = mockFlights.find(f => f.id === selectedDepartureFlight?.flightId);
   const returnFlight = returnFlights.find(f => f.id === selectedReturnFlight?.flightId);
-  
+
   const departureFare = departureFlight?.fares[selectedDepartureFlight?.fareIndex || 0];
   const returnFare = returnFlight?.fares[selectedReturnFlight?.fareIndex || 0];
 
@@ -398,7 +382,7 @@ export default function SelectFlightPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              
+
               <div className="flex space-x-4">
                 <div className={`px-6 py-4 rounded-xl ${selectedDate === 13 ? 'bg-blue-50 border-2 border-blue-200' : 'bg-gray-50 border border-gray-200'} transition-all hover:shadow-md`}>
                   <div className="text-base text-gray-700">Thứ hai 13 tháng 10</div>
@@ -415,7 +399,7 @@ export default function SelectFlightPage() {
                   <div className="text-base text-gray-700">Thứ năm 16 tháng 10</div>
                 </div>
               </div>
-              
+
               <button className="p-3 hover:bg-blue-50 rounded-full transition-colors">
                 <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -428,13 +412,10 @@ export default function SelectFlightPage() {
           <div className="grid grid-cols-5 gap-4 mb-6">
             <div></div>
             <div className="text-center bg-gradient-to-r from-amber-700 to-amber-800 rounded-xl py-4 font-bold text-white shadow-lg">
-              <div className="text-lg">BUSINESS</div>
+              <div className="text-lg">FIST CLASS</div>
             </div>
             <div className="text-center bg-gradient-to-r from-red-500 to-red-600 rounded-xl py-4 font-bold text-white shadow-lg">
-              <div className="text-lg">skyBOSS</div>
-            </div>
-            <div className="text-center bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl py-4 font-bold text-white shadow-lg">
-              <div className="text-lg">Deluxe</div>
+              <div className="text-lg">BUSSINESS</div>
             </div>
             <div className="text-center bg-gradient-to-r from-green-500 to-green-600 rounded-xl py-4 font-bold text-white shadow-lg">
               <div className="text-lg">Eco</div>
@@ -453,7 +434,7 @@ export default function SelectFlightPage() {
                     <div className="text-lg text-gray-700 font-medium">{f.departTime} - {f.arriveTime}</div>
                     <div className="text-base text-gray-600 mb-1">{f.aircraft}</div>
                     <div className="text-base text-blue-600 font-semibold flex items-center">
-                      <span className="text-2xl text-blue-600">✈ </span> 
+                      <span className="text-2xl text-blue-600">✈ </span>
                       {f.note}
                     </div>
                   </div>
@@ -463,23 +444,23 @@ export default function SelectFlightPage() {
                     const isSelected = selectedDepartureFlight?.flightId === f.id && selectedDepartureFlight?.fareIndex === fareIndex;
                     const isExpanded = expandedFlight?.flightId === f.id && expandedFlight?.fareIndex === fareIndex;
                     const isDisabled = fare.soldOut;
-                    
+
                     return (
                       <button
                         key={fareIndex}
                         disabled={isDisabled}
                         onClick={() => {
                           if (isDisabled) return;
-                          
+
                           // Toggle expansion
                           if (isExpanded) {
                             setExpandedFlight(null);
                           } else {
-                            setExpandedFlight({flightId: f.id, fareIndex});
+                            setExpandedFlight({ flightId: f.id, fareIndex });
                           }
-                          
+
                           // Also select this fare
-                          setSelectedDepartureFlight({flightId: f.id, fareIndex});
+                          setSelectedDepartureFlight({ flightId: f.id, fareIndex });
                           setSelectedDeparture({
                             flightId: f.id,
                             fareIndex,
@@ -497,8 +478,8 @@ export default function SelectFlightPage() {
                           (isDisabled
                             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                             : isSelected
-                            ? "bg-white text-black border-red-500 border-2 shadow-xl transform scale-105"
-                            : "bg-white text-black hover:bg-gray-50 hover:shadow-xl hover:scale-102 border border-gray-200")
+                              ? "bg-white text-black border-red-500 border-2 shadow-xl transform scale-105"
+                              : "bg-white text-black hover:bg-gray-50 hover:shadow-xl hover:scale-102 border border-gray-200")
                         }
                       >
                         {isDisabled ? (
@@ -517,7 +498,7 @@ export default function SelectFlightPage() {
                             </svg>
                           </div>
                         )}
-                        
+
                         {/* Selection indicator */}
                         {isSelected && !isDisabled && (
                           <div className="absolute -right-2 -top-2 bg-green-500 text-white rounded-full p-1">
@@ -536,14 +517,14 @@ export default function SelectFlightPage() {
                   const selectedFlight = mockFlights.find(flight => flight.id === expandedFlight.flightId);
                   const selectedFare = selectedFlight?.fares[expandedFlight.fareIndex];
                   const fareName = selectedFare?.name;
-                  
+
                   // Màu nền tương ứng với từng fare class
                   let bgColor = "bg-gray-50";
                   if (fareName === "Business") bgColor = "bg-amber-50";
                   else if (fareName === "SkyBoss") bgColor = "bg-red-50";
                   else if (fareName === "Deluxe") bgColor = "bg-orange-50";
                   else if (fareName === "Eco") bgColor = "bg-green-50";
-                  
+
                   return (
                     <div className={`${bgColor} rounded-lg p-6 col-span-5`}>
                       {/* Flight route and duration */}
@@ -601,7 +582,7 @@ export default function SelectFlightPage() {
                           </svg>
                           <a href="#" className="text-blue-600 underline text-base font-medium">Xem quy định giá vé</a>
                         </div>
-                        
+
                         <div className="flex items-center">
                           <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -623,7 +604,7 @@ export default function SelectFlightPage() {
             <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent mb-8 text-center">
               THÔNG TIN ĐẶT CHỖ
             </h3>
-            
+
             {/* Passenger Info */}
             <div className="mb-6">
               <label className="block text-base font-bold text-black mb-2">
@@ -647,14 +628,14 @@ export default function SelectFlightPage() {
                   </svg>
                 </div>
               </div>
-              
+
               <div className="text-base text-gray-700 mb-2">
                 Hà Nội (HAN) ✈ Cần Thơ (VCA)
               </div>
               <div className="text-base text-gray-700 mb-3">
                 T3, 14/10/2025 | {departureFlight?.departTime} - {departureFlight?.arriveTime} | {departureFlight?.code} | {departureFare?.name}
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Giá vé</span>
@@ -697,14 +678,14 @@ export default function SelectFlightPage() {
                   </svg>
                 </div>
               </div>
-              
+
               <div className="text-base text-gray-700 mb-2">
                 {state.destination} ✈ {state.origin}
               </div>
               <div className="text-base text-gray-700 mb-3">
                 {state.returnDate} | {returnFlight?.departTime} - {returnFlight?.arriveTime} | {returnFlight?.code} | {returnFare?.name}
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Giá vé</span>

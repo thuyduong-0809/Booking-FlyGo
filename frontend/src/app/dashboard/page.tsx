@@ -41,10 +41,8 @@ import CustomerManagement from '../../components/dashboard/CustomerManagement';
 import LoyaltyProgram from '../../components/dashboard/LoyaltyProgram';
 import Reports from '../../components/dashboard/Reports';
 import Button from '@/shared/Button';
-import { useAppDispatch, useAppSelector } from 'stores/hookStore';
+import { useAppDispatch } from 'stores/hookStore';
 import { logout } from 'stores/features/masterSlice';
-import { requestApi } from 'lib/api';
-import { getCookie } from '@/utils/cookies';
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -57,54 +55,12 @@ export default function DashboardPage() {
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [loyaltyOpen, setLoyaltyOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
   const dispatch = useAppDispatch();
-  const masterStore = useAppSelector((state) => state.master);
 
   // Đảm bảo component render nhất quán
   React.useEffect(() => {
     setIsClient(true);
   }, []);
-
-  // Lấy thông tin user từ API
-  React.useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = getCookie("access_token");
-        if (!token) return;
-
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const userId = payload.userId;
-
-        if (!userId) return;
-
-        const response = await requestApi(`users/${userId}`, "GET");
-        if (response.success && response.data) {
-          setUserData(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  // Hàm lấy initials từ tên
-  const getUserInitials = () => {
-    if (userData?.firstName && userData?.lastName) {
-      return `${userData.firstName[0]}${userData.lastName[0]}`.toUpperCase();
-    }
-    return 'AD';
-  };
-
-  // Hàm lấy tên đầy đủ
-  const getFullName = () => {
-    if (userData?.firstName && userData?.lastName) {
-      return `${userData.firstName} ${userData.lastName}`;
-    }
-    return 'Admin User';
-  };
   const handleLogout = () => {
     dispatch(logout());
     document.cookie = "access_token=; path=/; max-age=0";
@@ -835,17 +791,17 @@ export default function DashboardPage() {
           {sidebarOpen ? (
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-md">{getUserInitials()}</span>
+                <span className="text-white font-medium text-md">AD</span>
               </div>
               <div className="flex-1">
-                <p className="text-md font-medium text-gray-900">{getFullName()}</p>
-                <p className="text-sm text-gray-500">{userData?.email || 'admin@gmail.com'}</p>
+                <p className="text-md font-medium text-gray-900">Admin User</p>
+                <p className="text-sm text-gray-500">admin@flygo.com</p>
               </div>
             </div>
           ) : (
             <div className="flex justify-center">
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-md">{getUserInitials()}</span>
+                <span className="text-white font-medium text-md">AD</span>
               </div>
             </div>
           )}
