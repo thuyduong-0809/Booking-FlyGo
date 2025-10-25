@@ -895,18 +895,30 @@ export default function SelectFlightRecoveryPage() {
       <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 py-6 shadow-lg">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-black">
-                Chuyến bay khứ hồi | {searchData.passengers.adults} Người lớn
-              </h1>
-              <div className="text-black mt-2 font-medium">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                  <span>Điểm khởi hành {searchData.departureAirport?.city || 'Chưa chọn'}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  <span>Điểm đến {searchData.arrivalAirport?.city || 'Chưa chọn'}</span>
+            <div className="flex items-center space-x-4">
+              {/* Back button */}
+              <Link
+                href="/"
+                className="flex items-center justify-center w-12 h-12 bg-black/20 hover:bg-black/30 rounded-full transition-all duration-200 hover:scale-110"
+              >
+                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-black">
+                  Chuyến bay khứ hồi | {searchData.passengers.adults} Người lớn
+                </h1>
+                <div className="text-black mt-2 font-medium">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <span>Điểm khởi hành {searchData.departureAirport?.city || 'Chưa chọn'}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <span>Điểm đến {searchData.arrivalAirport?.city || 'Chưa chọn'}</span>
+                  </div>
                 </div>
               </div>
             </div>
