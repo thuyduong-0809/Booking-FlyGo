@@ -49,9 +49,9 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
         returnDate: null,
         tripType: 'roundTrip',
         passengers: {
-            adults: 2,
-            children: 1,
-            infants: 1,
+            adults: 1,
+            children: 0,
+            infants: 0,
         },
     });
 

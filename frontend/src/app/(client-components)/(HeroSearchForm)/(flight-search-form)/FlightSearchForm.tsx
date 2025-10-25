@@ -47,6 +47,16 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
     fetchAirports();
   }, []);
 
+  // Đồng bộ passenger data với context khi component mount
+  useEffect(() => {
+    // Cập nhật context với giá trị hiện tại của form
+    updatePassengers({
+      adults: guestAdultsInputValue,
+      children: guestChildrenInputValue,
+      infants: guestInfantsInputValue,
+    });
+  }, []); // Chỉ chạy một lần khi component mount
+
   const handleChangeData = (value: number, type: keyof GuestsObject) => {
     let newValue = {
       guestAdults: guestAdultsInputValue,
