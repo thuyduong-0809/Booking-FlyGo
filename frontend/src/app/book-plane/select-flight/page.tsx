@@ -34,7 +34,7 @@ const mockFlights: FlightItem[] = [
     note: "Bay thẳng",
     fares: [
       {
-        name: "FIST CLASS",
+        name: "FIRST CLASS",
         price: 8834400,
         tax: 1166800,
         service: 0,
@@ -54,7 +54,7 @@ const mockFlights: FlightItem[] = [
         excludes: []
       },
       {
-        name: "BUSSINESS",
+        name: "BUSINESS",
         price: 4090000,
         tax: 1166800,
         service: 0,
@@ -74,7 +74,7 @@ const mockFlights: FlightItem[] = [
         excludes: []
       },
       {
-        name: "Eco",
+        name: "ECO",
         price: 3470000,
         tax: 1166800,
         service: 0,
@@ -100,26 +100,10 @@ const mockFlights: FlightItem[] = [
     aircraft: "Airbus A320",
     note: "Bay thẳng",
     fares: [
-      { name: "Business", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
-      { name: "SkyBoss", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
+      { name: "FIRST CLASS", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
+      { name: "BUSINESS", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
       {
-        name: "Deluxe",
-        price: 4020000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 10kg cho đường bay Úc, Kazakhstan; 07kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 40kg cho đường bay Úc, Kazakhstan; 20kg cho các đường bay còn lại.",
-          "Suất ăn & nước uống cho đường bay Úc, Kazakhstan.",
-          "Chọn trước chỗ ngồi yêu thích (khi còn chỗ, không áp dụng các hàng ghế dành cho SkyBoss và Business)",
-          "Miễn phí thay đổi chuyến bay, ngày bay, hành trình (Thu chênh lệch giá Vé - nếu có)"
-        ],
-        excludes: [
-          "Bộ tiện ích 3 trong 1"
-        ]
-      },
-      {
-        name: "Eco",
+        name: "ECO",
         price: 3470000,
         tax: 1166800,
         service: 0,
@@ -145,9 +129,9 @@ const mockFlights: FlightItem[] = [
     aircraft: "Airbus A321",
     note: "Bay thẳng",
     fares: [
-      { name: "Business", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
+      { name: "FIRST CLASS", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
       {
-        name: "SkyBoss",
+        name: "BUSINESS",
         price: 4090000,
         tax: 1166800,
         service: 0,
@@ -167,119 +151,8 @@ const mockFlights: FlightItem[] = [
         excludes: []
       },
       {
-        name: "Deluxe",
-        price: 1560000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 50kg cho đường bay Úc, Kazakhstan; 30kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
-          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay.",
-          "Ưu tiên làm thủ tục trước chuyến bay",
-          "Ưu tiên phục vụ hành lý",
-          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
-          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
-          "Ưu tiên chọn chỗ ngồi trên tàu bay (không áp dụng các hàng ghế dành cho khách Business)",
-          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
-          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
-          "Hoàn bảo lưu định danh tiền vé trong vòng 02 (hai) năm kể từ ngày khởi hành dự kiến"
-        ],
-        excludes: []
-      },
-      {
-        name: "Eco",
+        name: "ECO",
         price: 1010000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 07Kg."
-        ],
-        excludes: [
-          "Hành lý ký gửi (tùy chọn)",
-          "Suất ăn",
-          "Bộ tiện ích 3 trong 1",
-          "Chọn trước chỗ ngồi",
-          "Thay đổi chuyến bay, ngày bay, hành trình",
-          "Chênh lệch tiền vé khi thay đổi (nếu có)"
-        ]
-      },
-    ],
-  },
-];
-
-// Return flights
-const returnFlights: FlightItem[] = [
-  {
-    id: "r1",
-    code: "VJ464",
-    departTime: "13:20",
-    arriveTime: "15:30",
-    aircraft: "Airbus A321",
-    note: "Bay thẳng",
-    fares: [
-      {
-        name: "Business",
-        price: 3110400,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 50kg cho đường bay Úc, Kazakhstan; 30kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
-          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay.",
-          "Ưu tiên làm thủ tục trước chuyến bay",
-          "Ưu tiên phục vụ hành lý",
-          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
-          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
-          "Ưu tiên chọn chỗ ngồi trên tàu bay (không áp dụng các hàng ghế dành cho khách Business)",
-          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
-          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
-          "Hoàn bảo lưu định danh tiền vé trong vòng 02 (hai) năm kể từ ngày khởi hành dự kiến"
-        ],
-        excludes: []
-      },
-      {
-        name: "SkyBoss",
-        price: 3110400,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 50kg cho đường bay Úc, Kazakhstan; 30kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
-          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay.",
-          "Ưu tiên làm thủ tục trước chuyến bay",
-          "Ưu tiên phục vụ hành lý",
-          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
-          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
-          "Ưu tiên chọn chỗ ngồi trên tàu bay (không áp dụng các hàng ghế dành cho khách Business)",
-          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
-          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
-          "Hoàn bảo lưu định danh tiền vé trong vòng 02 (hai) năm kể từ ngày khởi hành dự kiến"
-        ],
-        excludes: []
-      },
-      {
-        name: "Deluxe",
-        price: 1560000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 50kg cho đường bay Úc, Kazakhstan; 30kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
-          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay.",
-          "Ưu tiên làm thủ tục trước chuyến bay",
-          "Ưu tiên phục vụ hành lý",
-          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
-          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
-          "Ưu tiên chọn chỗ ngồi trên tàu bay (không áp dụng các hàng ghế dành cho khách Business)",
-          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
-          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
-          "Hoàn bảo lưu định danh tiền vé trong vòng 02 (hai) năm kể từ ngày khởi hành dự kiến"
-        ],
-        excludes: []
-      },
-      {
-        name: "Eco",
-        price: 890000,
         tax: 1166800,
         service: 0,
         includes: [
@@ -302,30 +175,106 @@ function formatVnd(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + " VND";
 }
 
+const DateNavigation = ({ selectedDate, setSelectedDate }: { selectedDate: number, setSelectedDate: (date: number) => void }) => {
+  const [visibleDates, setVisibleDates] = useState([13, 14, 15, 16]);
+  const currentIndex = visibleDates.indexOf(selectedDate);
+
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      setSelectedDate(visibleDates[currentIndex - 1]);
+    } else {
+      // Load previous 4 dates
+      const prevStartDate = visibleDates[0] - 4;
+      if (prevStartDate >= 1) { // Đảm bảo không âm
+        const newDates = [prevStartDate, prevStartDate + 1, prevStartDate + 2, prevStartDate + 3];
+        setVisibleDates(newDates);
+        setSelectedDate(newDates[3]); // Chọn ngày cuối của nhóm mới
+      }
+    }
+  };
+
+  const goToNext = () => {
+    if (currentIndex < visibleDates.length - 1) {
+      setSelectedDate(visibleDates[currentIndex + 1]);
+    } else {
+      // Load next 4 dates starting from the next date
+      const nextStartDate = visibleDates[visibleDates.length - 1] + 1;
+      const newDates = [nextStartDate, nextStartDate + 1, nextStartDate + 2, nextStartDate + 3];
+      setVisibleDates(newDates);
+      setSelectedDate(newDates[0]);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl p-6 mb-6 shadow-xl border border-gray-100">
+      <div className="flex items-center justify-center space-x-6">
+        <button
+          onClick={goToPrevious}
+          disabled={currentIndex === 0 && visibleDates[0] <= 1}
+          className={`p-3 rounded-full transition-all duration-300 ${(currentIndex === 0 && visibleDates[0] <= 1)
+            ? 'text-gray-300 cursor-not-allowed'
+            : 'text-blue-600 hover:bg-blue-50 hover:scale-110 shadow-md'
+            }`}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div className="flex space-x-3">
+          {visibleDates.map(date => (
+            <div
+              key={date}
+              className={`px-5 py-4 rounded-xl transition-all duration-300 cursor-pointer hover:scale-105 min-w-[120px] ${date === selectedDate
+                ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-black shadow-xl transform scale-105 border-2 border-yellow-300'
+                : 'bg-gray-50 border-2 border-gray-200 hover:border-blue-300 hover:shadow-lg hover:bg-blue-50'
+                }`}
+              onClick={() => setSelectedDate(date)}
+            >
+              <div className="text-center">
+                <div className={`text-sm font-bold ${date === selectedDate ? 'text-black' : 'text-gray-700'}`}>
+                  {(() => {
+                    const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+                    const dayOfWeek = dayNames[date % 7];
+                    return `${dayOfWeek} ${date} tháng`;
+                  })()}
+                </div>
+                <div className={`text-sm font-bold ${date === selectedDate ? 'text-black' : 'text-gray-700'}`}>
+                  10
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={goToNext}
+          className="p-3 rounded-full transition-all duration-300 text-blue-600 hover:bg-blue-50 hover:scale-110 shadow-md"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default function SelectFlightPage() {
-  const { state, setSelectedDeparture, setSelectedReturn, grandTotal } = useBooking();
+  const { state, setSelectedDeparture, grandTotal } = useBooking();
   const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
-  const [selectedReturnFlight, setSelectedReturnFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
   const [selectedDate, setSelectedDate] = useState(14); // Thứ ba 14 tháng 10
   const [expandedFlight, setExpandedFlight] = useState<{ flightId: string, fareIndex: number } | null>(null); // Track which fare is expanded
 
   const departureFlight = mockFlights.find(f => f.id === selectedDepartureFlight?.flightId);
-  const returnFlight = returnFlights.find(f => f.id === selectedReturnFlight?.flightId);
-
   const departureFare = departureFlight?.fares[selectedDepartureFlight?.fareIndex || 0];
-  const returnFare = returnFlight?.fares[selectedReturnFlight?.fareIndex || 0];
 
   const totalDeparture = useMemo(() => {
     if (!departureFare) return 0;
     return departureFare.price + departureFare.tax + departureFare.service;
   }, [departureFare]);
 
-  const totalReturn = useMemo(() => {
-    if (!returnFare) return 0;
-    return returnFare.price + returnFare.tax + returnFare.service;
-  }, [returnFare]);
-
-  const computedGrandTotal = totalDeparture + totalReturn;
+  const computedGrandTotal = totalDeparture;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -335,7 +284,7 @@ export default function SelectFlightPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-black">
-                Chuyến bay khứ hồi | {state.passengers} Người lớn
+                Chuyến bay một chiều | {state.passengers} Người lớn
               </h1>
               <div className="text-black mt-2 font-medium">
                 <div className="flex items-center space-x-2">
@@ -356,69 +305,49 @@ export default function SelectFlightPage() {
         {/* Left: Flights table */}
         <div className="lg:col-span-2">
           {/* Route display */}
-          <div className="flex items-center justify-center mb-6 bg-white rounded-xl p-6 shadow-xl border border-gray-100">
-            <div className="flex items-center space-x-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-800">HAN</div>
-                <div className="text-sm text-gray-600">Hà Nội</div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-12 h-0.5 bg-gray-300"></div>
-                <span className="text-2xl text-gray-600">✈</span>
-                <div className="w-12 h-0.5 bg-gray-300"></div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-800">VCA</div>
-                <div className="text-sm text-gray-600">Cần Thơ</div>
+          <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 rounded-xl p-4 mb-4 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+                  <h2 className="text-xl font-bold text-white">CHUYẾN ĐI</h2>
+                </div>
+                <div className="hidden md:block w-px h-8 bg-white/30"></div>
+                <div className="flex items-center space-x-3">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-white">HAN</div>
+                    <div className="text-xs text-blue-100">Hà Nội</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-0.5 bg-white/40"></div>
+                    <span className="text-xl text-white">✈</span>
+                    <div className="w-8 h-0.5 bg-white/40"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-white">VCA</div>
+                    <div className="text-xs text-blue-100">Cần Thơ</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Date Navigation */}
-          <div className="bg-white rounded-xl p-6 mb-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between">
-              <button className="p-3 hover:bg-blue-50 rounded-full transition-colors">
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              <div className="flex space-x-4">
-                <div className={`px-6 py-4 rounded-xl ${selectedDate === 13 ? 'bg-blue-50 border-2 border-blue-200' : 'bg-gray-50 border border-gray-200'} transition-all hover:shadow-md`}>
-                  <div className="text-base text-gray-700">Thứ hai 13 tháng 10</div>
-                </div>
-                <div className={`px-6 py-4 rounded-xl border-2 border-yellow-400 bg-gradient-to-r from-yellow-300 to-yellow-400 shadow-lg`}>
-                  <div className="text-base font-bold text-black">Thứ ba 14 tháng 10</div>
-                  <div className="text-sm text-black font-medium">Từ 1.010 000 VND</div>
-                </div>
-                <div className={`px-6 py-4 rounded-xl ${selectedDate === 15 ? 'bg-blue-50 border-2 border-blue-200' : 'bg-gray-50 border border-gray-200'} transition-all hover:shadow-md`}>
-                  <div className="text-base text-gray-700">Thứ tư 15 tháng 10</div>
-                  <div className="text-sm text-gray-600">Từ 890 000 VND</div>
-                </div>
-                <div className={`px-6 py-4 rounded-xl ${selectedDate === 16 ? 'bg-blue-50 border-2 border-blue-200' : 'bg-gray-50 border border-gray-200'} transition-all hover:shadow-md`}>
-                  <div className="text-base text-gray-700">Thứ năm 16 tháng 10</div>
-                </div>
-              </div>
-
-              <button className="p-3 hover:bg-blue-50 rounded-full transition-colors">
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
+          <DateNavigation selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
 
           {/* Fare headers */}
-          <div className="grid grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-4 gap-4 mb-4">
             <div></div>
-            <div className="text-center bg-gradient-to-r from-amber-700 to-amber-800 rounded-xl py-4 font-bold text-white shadow-lg">
-              <div className="text-lg">FIST CLASS</div>
+            <div className="text-center bg-gradient-to-br from-amber-600 via-amber-700 to-amber-800 rounded-lg py-3 font-bold text-white shadow-lg">
+              <div className="text-sm">FIRST CLASS</div>
+              <div className="text-xs text-amber-100">Cao cấp</div>
             </div>
-            <div className="text-center bg-gradient-to-r from-red-500 to-red-600 rounded-xl py-4 font-bold text-white shadow-lg">
-              <div className="text-lg">BUSSINESS</div>
+            <div className="text-center bg-gradient-to-br from-red-500 via-red-600 to-red-700 rounded-lg py-3 font-bold text-white shadow-lg">
+              <div className="text-sm">BUSINESS</div>
+              <div className="text-xs text-red-100">Thương gia</div>
             </div>
-            <div className="text-center bg-gradient-to-r from-green-500 to-green-600 rounded-xl py-4 font-bold text-white shadow-lg">
-              <div className="text-lg">Eco</div>
+            <div className="text-center bg-gradient-to-br from-green-500 via-green-600 to-green-700 rounded-lg py-3 font-bold text-white shadow-lg">
+              <div className="text-sm">ECO</div>
+              <div className="text-xs text-green-100">Tiết kiệm</div>
             </div>
           </div>
 
@@ -427,15 +356,17 @@ export default function SelectFlightPage() {
             {mockFlights.map((f) => (
               <div key={f.id} className="space-y-4">
                 {/* Flight row */}
-                <div className="grid grid-cols-5 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                   {/* Flight details */}
-                  <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 shadow-lg border border-yellow-200">
-                    <div className="text-2xl font-bold text-gray-800 mb-2">{f.code}</div>
-                    <div className="text-lg text-gray-700 font-medium">{f.departTime} - {f.arriveTime}</div>
-                    <div className="text-base text-gray-600 mb-1">{f.aircraft}</div>
-                    <div className="text-base text-blue-600 font-semibold flex items-center">
-                      <span className="text-2xl text-blue-600">✈ </span>
-                      {f.note}
+                  <div className="bg-gradient-to-br from-yellow-200 via-indigo-50 to-purple-50 rounded-xl p-4 shadow-lg border border-blue-200 hover:shadow-xl transition-all duration-300">
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-blue-800 mb-1">{f.code}</div>
+                      <div className="text-base text-gray-700 font-semibold mb-1">{f.departTime} - {f.arriveTime}</div>
+                      <div className="text-sm text-gray-600 mb-2">{f.aircraft}</div>
+                      <div className="inline-flex items-center px-3 py-1 bg-blue-100 rounded-full">
+                        <span className="text-lg text-blue-600 mr-1">✈</span>
+                        <span className="text-blue-700 text-sm font-semibold">{f.note}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -473,14 +404,12 @@ export default function SelectFlightPage() {
                             arriveTime: f.arriveTime,
                           });
                         }}
-                        className={
-                          "rounded-xl p-6 text-center shadow-lg border transition-all duration-200 relative " +
-                          (isDisabled
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            : isSelected
-                              ? "bg-white text-black border-red-500 border-2 shadow-xl transform scale-105"
-                              : "bg-white text-black hover:bg-gray-50 hover:shadow-xl hover:scale-102 border border-gray-200")
-                        }
+                        className={`rounded-xl p-6 text-center shadow-lg border transition-all duration-200 relative ${isDisabled
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+                          : isSelected
+                            ? "bg-white text-black border-red-500 border-2 shadow-xl transform scale-105"
+                            : "bg-white text-black hover:bg-gray-50 hover:shadow-xl hover:scale-102 border border-gray-200"
+                          }`}
                       >
                         {isDisabled ? (
                           <div className="flex flex-col items-center">
@@ -520,13 +449,12 @@ export default function SelectFlightPage() {
 
                   // Màu nền tương ứng với từng fare class
                   let bgColor = "bg-gray-50";
-                  if (fareName === "Business") bgColor = "bg-amber-50";
-                  else if (fareName === "SkyBoss") bgColor = "bg-red-50";
-                  else if (fareName === "Deluxe") bgColor = "bg-orange-50";
-                  else if (fareName === "Eco") bgColor = "bg-green-50";
+                  if (fareName === "FIRST CLASS") bgColor = "bg-amber-50";
+                  else if (fareName === "BUSINESS") bgColor = "bg-red-50";
+                  else if (fareName === "ECO") bgColor = "bg-green-50";
 
                   return (
-                    <div className={`${bgColor} rounded-lg p-6 col-span-5`}>
+                    <div className={`${bgColor} rounded-lg p-6 col-span-4`}>
                       {/* Flight route and duration */}
                       <div className="flex items-center justify-between mb-6">
                         <div className="text-base text-gray-700 font-medium">
@@ -640,57 +568,7 @@ export default function SelectFlightPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Giá vé</span>
                   <div className="flex items-center">
-                    <span className="font-semibold  text-gray-700">{formatVnd(departureFare?.price || 0)}</span>
-                    <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-base text-gray-700">Thuế, phí</span>
-                  <div className="flex items-center">
-                    <span className="font-semibold  text-gray-700">{formatVnd(departureFare?.tax || 0)}</span>
-                    <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-base text-gray-700">Dịch vụ</span>
-                  <div className="flex items-center">
-                    <span className="font-semibold  text-gray-700">{formatVnd(departureFare?.service || 0)}</span>
-                    <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Return Flight */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-bold text-lg text-black">Chuyến về</h4>
-                <div className="flex items-center">
-                  <span className="font-bold text-lg text-black mr-2">{formatVnd(totalReturn)}</span>
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </div>
-              </div>
-
-              <div className="text-base text-gray-700 mb-2">
-                {state.destination} ✈ {state.origin}
-              </div>
-              <div className="text-base text-gray-700 mb-3">
-                {state.returnDate} | {returnFlight?.departTime} - {returnFlight?.arriveTime} | {returnFlight?.code} | {returnFare?.name}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-base text-gray-700">Giá vé</span>
-                  <div className="flex items-center">
-                    <span className="font-semibold  text-gray-700">{formatVnd(returnFare?.price || 0)}</span>
+                    <span className="font-semibold text-gray-700">{formatVnd(departureFare?.price || 0)}</span>
                     <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -699,7 +577,7 @@ export default function SelectFlightPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Thuế, phí</span>
                   <div className="flex items-center">
-                    <span className="font-semibold  text-gray-700">{formatVnd(returnFare?.tax || 0)}</span>
+                    <span className="font-semibold text-gray-700">{formatVnd(departureFare?.tax || 0)}</span>
                     <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -708,8 +586,8 @@ export default function SelectFlightPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-700">Dịch vụ</span>
                   <div className="flex items-center">
-                    <span className="font-semibold  text-gray-700">{formatVnd(returnFare?.service || 0)}</span>
-                    <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="font-semibold text-gray-700">{formatVnd(departureFare?.service || 0)}</span>
+                    <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -738,5 +616,3 @@ export default function SelectFlightPage() {
     </div>
   );
 }
-
-
