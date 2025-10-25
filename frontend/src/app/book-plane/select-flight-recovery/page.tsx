@@ -30,226 +30,10 @@ interface FlightItem {
 }
 
 // Recovery flights data - both departure and return flights
-const recoveryFlights: FlightItem[] = [
-  {
-    id: "r1",
-    code: "VJ461",
-    departTime: "05:30",
-    arriveTime: "07:40",
-    aircraft: "Airbus A320",
-    note: "Bay thẳng",
-    fares: [
-      {
-        name: "FIST CLASS",
-        price: 8834400,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 18kg",
-          "Hành lý ký gửi: 60kg cho đường bay Úc, Kazakhstan; 40kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
-          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay",
-          "Ưu tiên làm thủ tục trước chuyến bay",
-          "Ưu tiên phục vụ hành lý",
-          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
-          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
-          "Ưu tiên chọn chỗ ngồi trên tàu bay",
-          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
-          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
-          "Hoàn bảo lưu định danh Tiền Vé: 02 năm kể từ ngày khởi hành dự kiến"
-        ],
-        excludes: []
-      },
-      {
-        name: "BUSSINESS",
-        price: 4090000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 50kg cho đường bay Úc, Kazakhstan; 30kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
-          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay.",
-          "Ưu tiên làm thủ tục trước chuyến bay",
-          "Ưu tiên phục vụ hành lý",
-          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
-          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
-          "Ưu tiên chọn chỗ ngồi trên tàu bay (không áp dụng các hàng ghế dành cho khách Business)",
-          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
-          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
-          "Hoàn bảo lưu định danh tiền vé trong vòng 02 (hai) năm kể từ ngày khởi hành dự kiến"
-        ],
-        excludes: []
-      },
-      {
-        name: "Eco",
-        price: 3470000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 07Kg."
-        ],
-        excludes: [
-          "Hành lý ký gửi (tùy chọn)",
-          "Suất ăn",
-          "Bộ tiện ích 3 trong 1",
-          "Chọn trước chỗ ngồi",
-          "Thay đổi chuyến bay, ngày bay, hành trình",
-          "Chênh lệch tiền vé khi thay đổi (nếu có)"
-        ]
-      },
-    ],
-  },
-  {
-    id: "r2",
-    code: "VJ465",
-    departTime: "10:45",
-    arriveTime: "12:55",
-    aircraft: "Airbus A320",
-    note: "Bay thẳng",
-    fares: [
-      { name: "Business", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
-      { name: "SkyBoss", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
-
-      {
-        name: "Eco",
-        price: 3470000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 07Kg."
-        ],
-        excludes: [
-          "Hành lý ký gửi (tùy chọn)",
-          "Suất ăn",
-          "Bộ tiện ích 3 trong 1",
-          "Chọn trước chỗ ngồi",
-          "Thay đổi chuyến bay, ngày bay, hành trình",
-          "Chênh lệch tiền vé khi thay đổi (nếu có)"
-        ]
-      },
-    ],
-  },
-  {
-    id: "r3",
-    code: "VJ463",
-    departTime: "17:00",
-    arriveTime: "19:10",
-    aircraft: "Airbus A321",
-    note: "Bay thẳng",
-    fares: [
-      { name: "Business", price: 0, tax: 0, service: 0, soldOut: true, includes: [], excludes: [] },
-      {
-        name: "SkyBoss",
-        price: 4090000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 50kg cho đường bay Úc, Kazakhstan; 30kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
-          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay.",
-          "Ưu tiên làm thủ tục trước chuyến bay",
-          "Ưu tiên phục vụ hành lý",
-          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
-          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
-          "Ưu tiên chọn chỗ ngồi trên tàu bay (không áp dụng các hàng ghế dành cho khách Business)",
-          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
-          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
-          "Hoàn bảo lưu định danh tiền vé trong vòng 02 (hai) năm kể từ ngày khởi hành dự kiến"
-        ],
-        excludes: []
-      },
-
-      {
-        name: "Eco",
-        price: 1010000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 07Kg."
-        ],
-        excludes: [
-          "Hành lý ký gửi (tùy chọn)",
-          "Suất ăn",
-          "Bộ tiện ích 3 trong 1",
-          "Chọn trước chỗ ngồi",
-          "Thay đổi chuyến bay, ngày bay, hành trình",
-          "Chênh lệch tiền vé khi thay đổi (nếu có)"
-        ]
-      },
-    ],
-  },
-];
+const recoveryFlights: FlightItem[] = [];
 
 // Return flights for recovery
-const recoveryReturnFlights: FlightItem[] = [
-  {
-    id: "rr1",
-    code: "VJ464",
-    departTime: "13:20",
-    arriveTime: "15:30",
-    aircraft: "Airbus A321",
-    note: "Bay thẳng",
-    fares: [
-      {
-        name: "Business",
-        price: 3110400,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 50kg cho đường bay Úc, Kazakhstan; 30kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
-          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay.",
-          "Ưu tiên làm thủ tục trước chuyến bay",
-          "Ưu tiên phục vụ hành lý",
-          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
-          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
-          "Ưu tiên chọn chỗ ngồi trên tàu bay (không áp dụng các hàng ghế dành cho khách Business)",
-          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
-          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
-          "Hoàn bảo lưu định danh tiền vé trong vòng 02 (hai) năm kể từ ngày khởi hành dự kiến"
-        ],
-        excludes: []
-      },
-      {
-        name: "SkyBoss",
-        price: 3110400,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
-          "Hành lý ký gửi: 50kg cho đường bay Úc, Kazakhstan; 30kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
-          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay.",
-          "Ưu tiên làm thủ tục trước chuyến bay",
-          "Ưu tiên phục vụ hành lý",
-          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
-          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
-          "Ưu tiên chọn chỗ ngồi trên tàu bay (không áp dụng các hàng ghế dành cho khách Business)",
-          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
-          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
-          "Hoàn bảo lưu định danh tiền vé trong vòng 02 (hai) năm kể từ ngày khởi hành dự kiến"
-        ],
-        excludes: []
-      },
-
-      {
-        name: "Eco",
-        price: 890000,
-        tax: 1166800,
-        service: 0,
-        includes: [
-          "Hành lý xách tay: 07Kg."
-        ],
-        excludes: [
-          "Hành lý ký gửi (tùy chọn)",
-          "Suất ăn",
-          "Bộ tiện ích 3 trong 1",
-          "Chọn trước chỗ ngồi",
-          "Thay đổi chuyến bay, ngày bay, hành trình",
-          "Chênh lệch tiền vé khi thay đổi (nếu có)"
-        ]
-      },
-    ],
-  },
-];
+const recoveryReturnFlights: FlightItem[] = [];
 
 // Utility functions
 const formatVnd = (n: number) => {
@@ -529,32 +313,36 @@ const ExpandedDetails = ({
       {/* Includes section */}
       <div className="mb-4">
         <h4 className="text-lg font-bold text-black mb-3">Bao gồm:</h4>
-        <ul className="space-y-3 text-base text-gray-800">
-          {fare.includes.map((item, index) => (
-            <li key={index} className="flex items-start">
-              <svg className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="max-h-96 overflow-y-auto">
+          <ul className="space-y-2 text-sm text-gray-800">
+            {fare.includes.map((item, index) => (
+              <li key={index} className="flex items-start">
+                <svg className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="leading-relaxed">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {/* Excludes section */}
       {fare.excludes && fare.excludes.length > 0 && (
         <div className="mb-4">
           <h4 className="text-lg font-bold text-black mb-3">Chưa bao gồm:</h4>
-          <ul className="space-y-3 text-base text-gray-800">
-            {fare.excludes.map((item, index) => (
-              <li key={index} className="flex items-start">
-                <svg className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="max-h-96 overflow-y-auto">
+            <ul className="space-y-2 text-sm text-gray-800">
+              {fare.excludes.map((item, index) => (
+                <li key={index} className="flex items-start">
+                  <svg className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span className="leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
 
@@ -586,7 +374,9 @@ const FlightSummaryCard = ({
   type,
   state,
   selectedDate,
-  quantity
+  adultsCount,
+  childrenCount,
+  infantsCount
 }: {
   title: string;
   total: number;
@@ -595,7 +385,9 @@ const FlightSummaryCard = ({
   type: 'departure' | 'return';
   state: any;
   selectedDate: number;
-  quantity: number;
+  adultsCount: number;
+  childrenCount: number;
+  infantsCount: number;
 }) => {
   // Function to get full date string for display
   const getFullDateString = (date: number) => {
@@ -655,24 +447,45 @@ const FlightSummaryCard = ({
             )}
           </div>
 
-          {/* Price breakdown - chia thành nhiều dòng */}
-          <div className="space-y-2 border-t pt-2">
-            <div className="flex justify-between items-center">
-              <span className="text-base text-gray-700">Giá vé</span>
-              <span className="font-semibold text-gray-700">{formatVnd(fare?.price || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-base text-gray-700">Thuế, phí</span>
-              <span className="font-semibold text-gray-700">{formatVnd(fare?.tax || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-base text-gray-700">Dịch vụ</span>
-              <span className="font-semibold text-gray-700">{formatVnd(fare?.service || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-base text-gray-700">Số lượng vé</span>
-              <span className="font-semibold text-gray-700">{quantity}</span>
-            </div>
+          {/* Price breakdown - chi tiết theo loại hành khách */}
+          <div className="space-y-3 border-t pt-3">
+            {/* Giá vé cho người lớn */}
+            {adultsCount > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-base text-gray-700">Người lớn x {adultsCount}</span>
+                  <span className="font-semibold text-gray-700">{formatVnd((fare?.price || 0) * adultsCount)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Giá vé cho trẻ em (tính như người lớn) */}
+            {childrenCount > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-base text-gray-700">Trẻ em x {childrenCount}</span>
+                  <span className="font-semibold text-gray-700">{formatVnd((fare?.price || 0) * childrenCount)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Giá vé cho em bé (100k mỗi em bé) */}
+            {infantsCount > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-base text-gray-700">Em bé x {infantsCount}</span>
+                  <span className="font-semibold text-gray-700">{formatVnd(100000 * infantsCount)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Thuế VAT */}
+            {(adultsCount > 0 || childrenCount > 0 || infantsCount > 0) && (
+              <div className="flex justify-between items-center pt-2 border-t">
+                <span className="text-base text-gray-700">Thuế VAT</span>
+                <span className="font-semibold text-gray-700">{formatVnd((fare?.tax || 0) * (adultsCount + childrenCount))}</span>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -702,9 +515,10 @@ export default function SelectFlightRecoveryPage() {
   const [userData, setUserData] = useState<any>(null);
   const [passengerName, setPassengerName] = useState<string>('');
 
-  // Số lượng vé = số lượng người từ searchData
-  const departureQuantity = searchData.passengers?.adults || 1;
-  const returnQuantity = searchData.passengers?.adults || 1;
+  // Số lượng vé từ searchData - lấy số lượng cho từng loại hành khách
+  const adultsCount = searchData.passengers?.adults || 0;
+  const childrenCount = searchData.passengers?.children || 0;
+  const infantsCount = searchData.passengers?.infants || 0;
 
   // Sử dụng ngày từ searchData hoặc mặc định
   const [selectedDepartureDate, setSelectedDepartureDate] = useState(
@@ -784,10 +598,16 @@ export default function SelectFlightRecoveryPage() {
         service: 0,
         includes: [
           "Hành lý xách tay: 18kg",
-          "Hành lý ký gửi: 60kg",
-          "Phòng chờ sang trọng",
-          "Ưu tiên làm thủ tục",
-          "Thưởng thức ẩm thực suốt chuyến bay",
+          "Hành lý ký gửi: 60kg cho đường bay Úc, Kazakhstan; 40kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
+          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay",
+          "Ưu tiên làm thủ tục trước chuyến bay",
+          "Ưu tiên phục vụ hành lý",
+          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
+          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
+          "Ưu tiên chọn chỗ ngồi trên tàu bay",
+          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
+          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
+          "Hoàn bảo lưu định danh Tiền Vé: 02 năm kể từ ngày khởi hành dự kiến"
         ],
         excludes: []
       });
@@ -800,10 +620,17 @@ export default function SelectFlightRecoveryPage() {
         tax: Math.round(flight.businessPrice * 0.10),
         service: 0,
         includes: [
-          "Hành lý xách tay: 14kg",
-          "Hành lý ký gửi: 50kg",
-          "Phòng chờ",
-          "Ưu tiên làm thủ tục",
+          "Hành lý xách tay: 14kg cho đường bay Úc, Kazakhstan; 10kg cho các đường bay còn lại.",
+          "Hành lý ký gửi: 50kg cho đường bay Úc, Kazakhstan; 30kg cho các đường bay còn lại và 01 bộ dụng cụ chơi golf (nếu có)",
+          "Phòng chờ sang trọng (không áp dụng trên các chuyến bay nội địa Thái Lan và các sân bay có phòng chờ không đạt tiêu chuẩn hoặc đóng cửa trong giờ hoạt động của chuyến bay). Thời gian sử dụng dịch vụ là 03 tiếng trước giờ khởi hành chuyến bay.",
+          "Ưu tiên làm thủ tục trước chuyến bay",
+          "Ưu tiên phục vụ hành lý",
+          "Ưu tiên qua cửa an ninh (tùy theo điều kiện từng sân bay)",
+          "Phục vụ đưa đón riêng ra tàu bay (áp dụng trường hợp tàu bay đậu bãi; không áp dụng đối với sân bay không cung cấp dịch vụ xe đưa đón riêng)",
+          "Ưu tiên chọn chỗ ngồi trên tàu bay (không áp dụng các hàng ghế dành cho khách Business)",
+          "Thưởng thức ẩm thực tươi ngon suốt chuyến bay",
+          "Bộ tiện ích (chuyến bay từ 04 tiếng trở lên)",
+          "Hoàn bảo lưu định danh tiền vé trong vòng 02 (hai) năm kể từ ngày khởi hành dự kiến"
         ],
         excludes: []
       });
@@ -816,12 +643,15 @@ export default function SelectFlightRecoveryPage() {
         tax: Math.round(flight.economyPrice * 0.10),
         service: 0,
         includes: [
-          "Hành lý xách tay: 07Kg"
+          "Hành lý xách tay: 07Kg."
         ],
         excludes: [
           "Hành lý ký gửi (tùy chọn)",
           "Suất ăn",
+          "Bộ tiện ích 3 trong 1",
           "Chọn trước chỗ ngồi",
+          "Thay đổi chuyến bay, ngày bay, hành trình",
+          "Chênh lệch tiền vé khi thay đổi (nếu có)"
         ]
       });
     }
@@ -904,19 +734,28 @@ export default function SelectFlightRecoveryPage() {
   const departureFare = departureFlight?.fares[selectedDepartureFlight?.fareIndex || 0];
   const returnFare = returnFlight?.fares[selectedReturnFlight?.fareIndex || 0];
 
+  // Tính tổng giá vé: Người lớn và trẻ em tính giá như nhau, em bé 100k
   const totalDeparture = useMemo(() => {
     if (!departureFare) return 0;
     const price = Number(departureFare.price) || 0;
     const tax = Number(departureFare.tax) || 0;
-    return (price + tax) * departureQuantity;
-  }, [departureFare, departureQuantity]);
+    // Người lớn + trẻ em tính giá như nhau
+    const adultAndChildrenPrice = (price + tax) * (adultsCount + childrenCount);
+    // Em bé: 100k
+    const infantPrice = 100000 * infantsCount;
+    return adultAndChildrenPrice + infantPrice;
+  }, [departureFare, adultsCount, childrenCount, infantsCount]);
 
   const totalReturn = useMemo(() => {
     if (!returnFare) return 0;
     const price = Number(returnFare.price) || 0;
     const tax = Number(returnFare.tax) || 0;
-    return (price + tax) * returnQuantity;
-  }, [returnFare, returnQuantity]);
+    // Người lớn + trẻ em tính giá như nhau
+    const adultAndChildrenPrice = (price + tax) * (adultsCount + childrenCount);
+    // Em bé: 100k
+    const infantPrice = 100000 * infantsCount;
+    return adultAndChildrenPrice + infantPrice;
+  }, [returnFare, adultsCount, childrenCount, infantsCount]);
 
   const computedGrandTotal = totalDeparture + totalReturn;
 
@@ -1166,7 +1005,9 @@ export default function SelectFlightRecoveryPage() {
               type="departure"
               state={searchData}
               selectedDate={selectedDepartureDate}
-              quantity={departureQuantity}
+              adultsCount={adultsCount}
+              childrenCount={childrenCount}
+              infantsCount={infantsCount}
             />
 
             <FlightSummaryCard
@@ -1177,7 +1018,9 @@ export default function SelectFlightRecoveryPage() {
               type="return"
               state={searchData}
               selectedDate={selectedReturnDate}
-              quantity={returnQuantity}
+              adultsCount={adultsCount}
+              childrenCount={childrenCount}
+              infantsCount={infantsCount}
             />
 
             {/* Total */}

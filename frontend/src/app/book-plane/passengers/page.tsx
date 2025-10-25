@@ -28,8 +28,10 @@ export default function PassengersPage() {
   const { state, grandTotal } = useBooking();
   const { searchData } = useSearch();
 
-  // Lấy số lượng người từ searchData - CHỈ tạo form cho người lớn
-  const totalAdults = searchData.passengers?.adults || 1;
+  // Lấy số lượng người từ searchData
+  const totalAdults = searchData.passengers?.adults || 0;
+  const totalChildren = searchData.passengers?.children || 0;
+  const totalInfants = searchData.passengers?.infants || 0;
 
   const [passengers, setPassengers] = useState<Passenger[]>(
     Array.from({ length: totalAdults }, (_, index) => ({
@@ -71,18 +73,29 @@ export default function PassengersPage() {
   const departureFlight = state.selectedDeparture;
   const returnFlight = state.selectedReturn;
 
-  // Tính tổng tiền: (Giá vé + Thuế) × số lượng vé + Dịch vụ
+  // Tính tổng tiền: Người lớn và trẻ em tính giá như nhau, em bé 100k
   const calculatedTotal = useMemo(() => {
-    const depPricePerPerson = (Number(departureFlight?.price) || 0) + (Number(departureFlight?.tax) || 0);
-    const retPricePerPerson = (Number(returnFlight?.price) || 0) + (Number(returnFlight?.tax) || 0);
-    const depServiceTotal = (Number(departureFlight?.service) || 0) * totalAdults;
-    const retServiceTotal = (Number(returnFlight?.service) || 0) * totalAdults;
+    const depPricePerPerson = (Number(departureFlight?.price) || 0);
+    const depTaxPerPerson = (Number(departureFlight?.tax) || 0);
 
-    const totalDeparture = depPricePerPerson * totalAdults + depServiceTotal;
-    const totalReturn = retPricePerPerson * totalAdults + retServiceTotal;
+    const retPricePerPerson = (Number(returnFlight?.price) || 0);
+    const retTaxPerPerson = (Number(returnFlight?.tax) || 0);
+
+    // Người lớn + trẻ em tính giá như nhau
+    const adultAndChildrenCount = totalAdults + totalChildren;
+
+    // Tổng cho chuyến đi
+    const depAdultPrice = (depPricePerPerson + depTaxPerPerson) * adultAndChildrenCount;
+    const depInfantPrice = 100000 * totalInfants;
+    const totalDeparture = depAdultPrice + depInfantPrice;
+
+    // Tổng cho chuyến về
+    const retAdultPrice = (retPricePerPerson + retTaxPerPerson) * adultAndChildrenCount;
+    const retInfantPrice = 100000 * totalInfants;
+    const totalReturn = retAdultPrice + retInfantPrice;
 
     return totalDeparture + totalReturn;
-  }, [departureFlight, returnFlight, totalAdults]);
+  }, [departureFlight, returnFlight, totalAdults, totalChildren, totalInfants]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -92,7 +105,7 @@ export default function PassengersPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-black">
-                CHUYẾN BAY KHỨ HỒI | {totalAdults} Người lớn
+                CHUYẾN BAY KHỨ HỒI | {totalAdults} Người lớn {totalChildren > 0 && `${totalChildren} Trẻ em`} {totalInfants > 0 && `${totalInfants} Em bé`}
               </h1>
               <div className="text-black mt-2 font-medium">
                 <div className="flex items-center space-x-2">
@@ -368,7 +381,7 @@ export default function PassengersPage() {
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-lg font-bold text-black">Chuyến đi</h4>
                 <div className="flex items-center space-x-2">
-                  <span className="text-lg font-bold text-red-600">{formatVnd(((Number(departureFlight?.price) || 0) + (Number(departureFlight?.tax) || 0)) * totalAdults)} VND</span>
+                  <span className="text-lg font-bold text-black">{formatVnd(((Number(departureFlight?.price) || 0) + (Number(departureFlight?.tax) || 0)) * (totalAdults + totalChildren) + 100000 * totalInfants)} VND</span>
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
@@ -402,23 +415,38 @@ export default function PassengersPage() {
                 <div className="text-base font-bold text-gray-700">Hạng vé: {departureFlight?.fareName || ''}</div>
 
                 {/* Price Breakdown */}
-                <div className="pt-2 space-y-2 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-base text-gray-700">Giá vé</span>
-                    <span className="font-semibold text-gray-700">{formatVnd(Number(departureFlight?.price) || 0)} VND</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-base text-gray-700">Thuế, phí</span>
-                    <span className="font-semibold text-gray-700">{formatVnd(Number(departureFlight?.tax) || 0)} VND</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-base text-gray-700">Số lượng vé</span>
-                    <span className="font-semibold text-gray-700">{totalAdults} vé</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-base text-gray-700">Dịch vụ</span>
-                    <span className="font-semibold text-gray-700">{formatVnd(Number(departureFlight?.service) || 0)} VND</span>
-                  </div>
+                <div className="pt-2 space-y-3 border-t border-gray-200">
+                  {/* Giá vé cho người lớn */}
+                  {totalAdults > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-700">Người lớn x {totalAdults}</span>
+                      <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.price) || 0) * totalAdults)} VND</span>
+                    </div>
+                  )}
+
+                  {/* Giá vé cho trẻ em */}
+                  {totalChildren > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-700">Trẻ em x {totalChildren}</span>
+                      <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.price) || 0) * totalChildren)} VND</span>
+                    </div>
+                  )}
+
+                  {/* Giá vé cho em bé */}
+                  {totalInfants > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-700">Em bé x {totalInfants}</span>
+                      <span className="font-semibold text-gray-700">{formatVnd(100000 * totalInfants)} VND</span>
+                    </div>
+                  )}
+
+                  {/* Thuế VAT */}
+                  {(totalAdults > 0 || totalChildren > 0 || totalInfants > 0) && (
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                      <span className="text-base text-gray-700">Thuế VAT</span>
+                      <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -428,7 +456,7 @@ export default function PassengersPage() {
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-lg font-bold text-black">Chuyến về</h4>
                 <div className="flex items-center space-x-2">
-                  <span className="text-lg font-bold text-red-600">{formatVnd(((Number(returnFlight?.price) || 0) + (Number(returnFlight?.tax) || 0)) * totalAdults)} VND</span>
+                  <span className="text-lg font-bold text-black">{formatVnd(((Number(returnFlight?.price) || 0) + (Number(returnFlight?.tax) || 0)) * (totalAdults + totalChildren) + 100000 * totalInfants)} VND</span>
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
@@ -462,23 +490,38 @@ export default function PassengersPage() {
                 <div className="text-base font-bold text-gray-700">Hạng vé: {returnFlight?.fareName || ''}</div>
 
                 {/* Price Breakdown */}
-                <div className="pt-2 space-y-2 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-base text-gray-700">Giá vé</span>
-                    <span className="font-semibold text-gray-700">{formatVnd(Number(returnFlight?.price) || 0)} VND</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-base text-gray-700">Thuế, phí</span>
-                    <span className="font-semibold text-gray-700">{formatVnd(Number(returnFlight?.tax) || 0)} VND</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-base text-gray-700">Số lượng vé</span>
-                    <span className="font-semibold text-gray-700">{totalAdults} vé</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-base text-gray-700">Dịch vụ</span>
-                    <span className="font-semibold text-gray-700">{formatVnd(Number(returnFlight?.service) || 0)} VND</span>
-                  </div>
+                <div className="pt-2 space-y-3 border-t border-gray-200">
+                  {/* Giá vé cho người lớn */}
+                  {totalAdults > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-700">Người lớn x {totalAdults}</span>
+                      <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.price) || 0) * totalAdults)} VND</span>
+                    </div>
+                  )}
+
+                  {/* Giá vé cho trẻ em */}
+                  {totalChildren > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-700">Trẻ em x {totalChildren}</span>
+                      <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.price) || 0) * totalChildren)} VND</span>
+                    </div>
+                  )}
+
+                  {/* Giá vé cho em bé */}
+                  {totalInfants > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-700">Em bé x {totalInfants}</span>
+                      <span className="font-semibold text-gray-700">{formatVnd(100000 * totalInfants)} VND</span>
+                    </div>
+                  )}
+
+                  {/* Thuế VAT */}
+                  {(totalAdults > 0 || totalChildren > 0 || totalInfants > 0) && (
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                      <span className="text-base text-gray-700">Thuế VAT</span>
+                      <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
