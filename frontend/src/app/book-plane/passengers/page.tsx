@@ -547,7 +547,7 @@ export default function PassengersPage() {
               <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
             </div>
 
-            <Link href="/book-plane/payment" className="w-full block text-center bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+            <Link href="/book-plane/choose-seat" className="w-full block text-center bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
               Đi tiếp
             </Link>
           </div>
@@ -566,7 +566,7 @@ export default function PassengersPage() {
             <div className="text-2xl font-bold text-red-600">{formatVnd(calculatedTotal)} VND</div>
           </div>
 
-          <Link href="/book-plane/payment" className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+          <Link href="/book-plane/choose-seat" className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
             Đi tiếp
           </Link>
         </div>

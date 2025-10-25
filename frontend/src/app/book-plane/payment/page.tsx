@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../BookingContext';
+import { useSearch } from '../SearchContext';
 
 function formatVnd(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + " VND";
@@ -11,87 +12,357 @@ function formatVnd(n: number) {
 export default function PaymentPage() {
   const router = useRouter();
   const { state, grandTotal } = useBooking();
+  const { searchData } = useSearch();
 
   const dep = state.selectedDeparture;
   const ret = state.selectedReturn;
 
+  // Lấy số lượng người từ searchData
+  const totalAdults = searchData.passengers?.adults || 0;
+  const totalChildren = searchData.passengers?.children || 0;
+  const totalInfants = searchData.passengers?.infants || 0;
+
+  // Tính toán giá vé
+  const calculateFlightPrice = (flight: any) => {
+    if (!flight) return 0;
+    const pricePerPerson = Number(flight.price) || 0;
+    const taxPerPerson = Number(flight.tax) || 0;
+    const adultAndChildrenCount = totalAdults + totalChildren;
+    const infantPrice = 100000; // Em bé 100k
+
+    return (pricePerPerson + taxPerPerson) * adultAndChildrenCount + infantPrice * totalInfants;
+  };
+
+  const departurePrice = calculateFlightPrice(dep);
+  const returnPrice = calculateFlightPrice(ret);
+  const totalPrice = departurePrice + returnPrice;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
+      {/* Top banner */}
       <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 py-6 shadow-lg">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-black">
-            Xác nhận & thanh toán
-          </h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {/* Back button */}
+              <Link
+                href="/book-plane/choose-seat"
+                className="flex items-center justify-center w-12 h-12 bg-black/20 hover:bg-black/30 rounded-full transition-all duration-200 hover:scale-110"
+              >
+                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-black">
+                  XÁC NHẬN & THANH TOÁN
+                </h1>
+                <div className="text-black mt-2 font-medium">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <span>Điểm khởi hành {searchData.departureAirport?.city}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <span>Điểm đến {searchData.arrivalAirport?.city}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl p-6 shadow-xl border">
-            <h2 className="text-xl font-bold text-black mb-4">Thông tin hành trình</h2>
+          {/* Flight Information */}
+          <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+            <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+              <svg className="w-7 h-7 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+              </svg>
+              Thông tin hành trình
+            </h2>
+            <div className="space-y-6">
+              {/* Departure Flight */}
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-blue-800">Chuyến đi</h3>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                    <span className="text-sm font-medium text-blue-700">{dep?.code}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-gray-800">{searchData.departureAirport?.airportCode}</div>
+                    <div className="text-base text-gray-600">{searchData.departureAirport?.city}</div>
+                    <div className="text-xl font-semibold text-gray-800 mt-2">{dep?.departTime}</div>
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="flex-1 h-px bg-gray-300"></div>
+                    <svg className="w-6 h-6 text-gray-500 mx-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+                    </svg>
+                    <div className="flex-1 h-px bg-gray-300"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-gray-800">{searchData.arrivalAirport?.airportCode}</div>
+                    <div className="text-base text-gray-600">{searchData.arrivalAirport?.city}</div>
+                    <div className="text-xl font-semibold text-gray-800 mt-2">{dep?.arriveTime}</div>
+                  </div>
+                </div>
+                <div className="mt-4 text-center">
+                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">{dep?.fareName}</span>
+                </div>
+              </div>
+
+              {/* Return Flight */}
+              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-green-800">Chuyến về</h3>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                    <span className="text-sm font-medium text-green-700">{ret?.code}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-gray-800">{searchData.arrivalAirport?.airportCode}</div>
+                    <div className="text-base text-gray-600">{searchData.arrivalAirport?.city}</div>
+                    <div className="text-xl font-semibold text-gray-800 mt-2">{ret?.departTime}</div>
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="flex-1 h-px bg-gray-300"></div>
+                    <svg className="w-6 h-6 text-gray-500 mx-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+                    </svg>
+                    <div className="flex-1 h-px bg-gray-300"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-gray-800">{searchData.departureAirport?.airportCode}</div>
+                    <div className="text-base text-gray-600">{searchData.departureAirport?.city}</div>
+                    <div className="text-xl font-semibold text-gray-800 mt-2">{ret?.arriveTime}</div>
+                  </div>
+                </div>
+                <div className="mt-4 text-center">
+                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">{ret?.fareName}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Methods */}
+          <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+            <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+              <svg className="w-7 h-7 text-green-600 mr-3" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
+              </svg>
+              Phương thức thanh toán
+            </h2>
             <div className="space-y-4">
-              <div>
-                <div className="font-semibold text-black">Chuyến đi</div>
-                <div className="text-gray-700 text-base">{state.origin} ✈ {state.destination}</div>
-                <div className="text-gray-600 text-sm">{state.departureDate} | {dep?.departTime} - {dep?.arriveTime} | {dep?.code} | {dep?.fareName}</div>
-              </div>
-              <div>
-                <div className="font-semibold text-black">Chuyến về</div>
-                <div className="text-gray-700 text-base">{state.destination} ✈ {state.origin}</div>
-                <div className="text-gray-600 text-sm">{state.returnDate} | {ret?.departTime} - {ret?.arriveTime} | {ret?.code} | {ret?.fareName}</div>
-              </div>
+              <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
+                <input type="radio" name="pay" defaultChecked className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
+                <div className="ml-4 flex items-center space-x-3">
+                  <div className="w-12 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">ATM</span>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-800 text-lg">Thẻ nội địa/NAPAS</div>
+                    <div className="text-base text-gray-600">Thanh toán qua thẻ ATM nội địa</div>
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
+                <input type="radio" name="pay" className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
+                <div className="ml-4 flex items-center space-x-3">
+                  <div className="w-12 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">VISA</span>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-800 text-lg">Thẻ quốc tế (Visa/Master/JCB)</div>
+                    <div className="text-base text-gray-600">Thanh toán qua thẻ quốc tế</div>
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
+                <input type="radio" name="pay" className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
+                <div className="ml-4 flex items-center space-x-3">
+                  <div className="w-12 h-8 bg-gradient-to-r from-pink-500 to-pink-600 rounded flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">MOMO</span>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-800 text-lg">Ví điện tử (Momo/ZaloPay)</div>
+                    <div className="text-base text-gray-600">Thanh toán qua ví điện tử</div>
+                  </div>
+                </div>
+              </label>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-xl border">
-            <h2 className="text-xl font-bold text-black mb-4">Phương thức thanh toán</h2>
-            <div className="space-y-3 text-base text-gray-700">
-              <label className="flex items-center space-x-3">
-                <input type="radio" name="pay" defaultChecked className="w-4 h-4" />
-                <span>Thẻ nội địa/NAPAS</span>
-              </label>
-              <label className="flex items-center space-x-3">
-                <input type="radio" name="pay" className="w-4 h-4" />
-                <span>Thẻ quốc tế (Visa/Master/JCB)</span>
-              </label>
-              <label className="flex items-center space-x-3">
-                <input type="radio" name="pay" className="w-4 h-4" />
-                <span>Ví điện tử (Momo/ZaloPay)</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <button onClick={() => router.back()} className="px-6 py-3 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50">Quay lại</button>
-            <button className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl text-lg shadow-lg">Xác nhận thanh toán</button>
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+            <Link
+              href="/book-plane/choose-seat"
+              className="px-8 py-4 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+            >
+              Quay lại
+            </Link>
+            <button className="px-12 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+              Xác nhận thanh toán
+            </button>
           </div>
         </div>
 
         <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl p-8 shadow-2xl border border-gray-100 sticky top-4">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent mb-8 text-center">
+            <h3 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent mb-8 text-center">
               THÔNG TIN ĐẶT CHỖ
             </h3>
-            <div className="space-y-4 text-base text-gray-700">
-              <div className="flex justify-between">
-                <span>Hành khách</span>
-                <span className="font-semibold">{state.passengers} người</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Chuyến đi</span>
-                <span className="font-semibold">{formatVnd((dep?.price || 0) + (dep?.tax || 0) + (dep?.service || 0))}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Chuyến về</span>
-                <span className="font-semibold">{formatVnd((ret?.price || 0) + (ret?.tax || 0) + (ret?.service || 0))}</span>
+
+            {/* Passenger Information */}
+            <div className="mb-6">
+              <h4 className="text-xl font-bold text-gray-800 mb-3">Hành khách</h4>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 text-lg">Người lớn</span>
+                  <span className="font-semibold text-gray-800 text-lg">{totalAdults}</span>
+                </div>
+                {totalChildren > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700 text-lg">Trẻ em</span>
+                    <span className="font-semibold text-gray-800 text-lg">{totalChildren}</span>
+                  </div>
+                )}
+                {totalInfants > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700 text-lg">Em bé</span>
+                    <span className="font-semibold text-gray-800 text-lg">{totalInfants}</span>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8 rounded-2xl text-center mt-8">
-              <div className="text-xl font-semibold mb-3">Tổng tiền</div>
-              <div className="text-4xl font-bold">{formatVnd(grandTotal)}</div>
-              <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
+
+            {/* Flight Summary */}
+            <div className="mb-6">
+              <h4 className="text-xl font-bold text-gray-800 mb-3">Tóm tắt chuyến bay</h4>
+              <div className="space-y-4">
+                {/* Departure */}
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h5 className="font-semibold text-blue-800 text-lg">Chuyến đi</h5>
+                    <span className="text-base text-blue-600 font-medium">{dep?.code}</span>
+                  </div>
+                  <div className="text-base text-gray-700">
+                    <div>{searchData.departureAirport?.city} → {searchData.arrivalAirport?.city}</div>
+                    <div className="text-sm text-gray-600 mt-1">{dep?.departTime} - {dep?.arriveTime}</div>
+                  </div>
+                </div>
+
+                {/* Return */}
+                <div className="bg-green-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h5 className="font-semibold text-green-800 text-lg">Chuyến về</h5>
+                    <span className="text-base text-green-600 font-medium">{ret?.code}</span>
+                  </div>
+                  <div className="text-base text-gray-700">
+                    <div>{searchData.arrivalAirport?.city} → {searchData.departureAirport?.city}</div>
+                    <div className="text-sm text-gray-600 mt-1">{ret?.departTime} - {ret?.arriveTime}</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <Link href="/book-plane/select-flight" className="block text-center mt-4 text-blue-600 underline">Thay đổi chuyến bay</Link>
+
+            {/* Price Breakdown */}
+            <div className="mb-6">
+              <h4 className="text-xl font-bold text-gray-800 mb-3">Chi tiết giá</h4>
+              <div className="space-y-3 text-base">
+                {/* Chuyến đi */}
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-blue-800 font-medium text-lg">Chuyến đi</span>
+                    <span className="font-semibold text-blue-800 text-lg">{formatVnd(departurePrice)}</span>
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    {totalAdults > 0 && (
+                      <div className="flex justify-between">
+                        <span>Người lớn x {totalAdults}</span>
+                        <span>{formatVnd((Number(dep?.price) || 0) * totalAdults)}</span>
+                      </div>
+                    )}
+                    {totalChildren > 0 && (
+                      <div className="flex justify-between">
+                        <span>Trẻ em x {totalChildren}</span>
+                        <span>{formatVnd((Number(dep?.price) || 0) * totalChildren)}</span>
+                      </div>
+                    )}
+                    {totalInfants > 0 && (
+                      <div className="flex justify-between">
+                        <span>Em bé x {totalInfants}</span>
+                        <span>{formatVnd(100000 * totalInfants)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-blue-200 pt-1">
+                      <span>Thuế VAT</span>
+                      <span>{formatVnd((Number(dep?.tax) || 0) * (totalAdults + totalChildren))}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chuyến về */}
+                <div className="bg-green-50 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-green-800 font-medium text-lg">Chuyến về</span>
+                    <span className="font-semibold text-green-800 text-lg">{formatVnd(returnPrice)}</span>
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    {totalAdults > 0 && (
+                      <div className="flex justify-between">
+                        <span>Người lớn x {totalAdults}</span>
+                        <span>{formatVnd((Number(ret?.price) || 0) * totalAdults)}</span>
+                      </div>
+                    )}
+                    {totalChildren > 0 && (
+                      <div className="flex justify-between">
+                        <span>Trẻ em x {totalChildren}</span>
+                        <span>{formatVnd((Number(ret?.price) || 0) * totalChildren)}</span>
+                      </div>
+                    )}
+                    {totalInfants > 0 && (
+                      <div className="flex justify-between">
+                        <span>Em bé x {totalInfants}</span>
+                        <span>{formatVnd(100000 * totalInfants)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-green-200 pt-1">
+                      <span>Thuế VAT</span>
+                      <span>{formatVnd((Number(ret?.tax) || 0) * (totalAdults + totalChildren))}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-3">
+                  <div className="flex justify-between text-red-600 items-center font-bold text-xl">
+                    <span>Tổng cộng</span>
+                    <span className="text-red-600">{formatVnd(totalPrice)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Total */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-2xl text-center mb-6 shadow-xl">
+              <div className="text-2xl font-semibold mb-2">Tổng tiền</div>
+              <div className="text-4xl font-bold mb-2">{formatVnd(totalPrice)}</div>
+              <div className="text-red-100 text-sm">Bao gồm tất cả thuế và phí</div>
+            </div>
+
+            <Link href="/book-plane/select-flight" className="block text-center text-blue-600 hover:text-blue-800 underline text-sm transition-colors">
+              Thay đổi chuyến bay
+            </Link>
           </div>
         </div>
       </div>
