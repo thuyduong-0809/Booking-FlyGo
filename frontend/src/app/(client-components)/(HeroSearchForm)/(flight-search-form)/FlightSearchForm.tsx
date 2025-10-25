@@ -24,9 +24,9 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
   const [dropOffLocationType, setDropOffLocationType] =
     useState<TypeDropOffLocationType>("roundTrip");
 
-  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(2);
-  const [guestChildrenInputValue, setGuestChildrenInputValue] = useState(1);
-  const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(1);
+  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(1);
+  const [guestChildrenInputValue, setGuestChildrenInputValue] = useState(0);
+  const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(0);
 
   // State cho airports và location selection
   const [airports, setAirports] = useState<Airport[]>([]);
@@ -107,13 +107,13 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
             <Popover.Button
               as="button"
               className={`
-           ${open ? "" : ""}
-            px-4 py-1.5 rounded-md inline-flex items-center font-medium hover:text-opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 text-xs`}
+           ${open ? "bg-neutral-100 dark:bg-neutral-700" : ""}
+            px-5 py-3 rounded-full inline-flex items-center font-medium hover:bg-neutral-50 dark:hover:bg-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-opacity-75 text-sm transition-all duration-200 border border-neutral-200 dark:border-neutral-600`}
             >
-              <span>{`${totalGuests || ""} Khách`}</span>
+              <span className="text-neutral-700 dark:text-neutral-300">{`${totalGuests || ""} Khách`}</span>
               <ChevronDownIcon
-                className={`${open ? "" : "text-opacity-70"
-                  } ml-2 h-4 w-4 group-hover:text-opacity-80 transition ease-in-out duration-150`}
+                className={`${open ? "rotate-180" : "rotate-0"
+                  } ml-2 h-4 w-4 text-neutral-500 dark:text-neutral-400 transition-all duration-200`}
                 aria-hidden="true"
               />
             </Popover.Button>
@@ -126,33 +126,50 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
               leaveFrom="opacity-100 translate-y-0"
               leaveTo="opacity-0 translate-y-1"
             >
-              <Popover.Panel className="absolute z-20 w-full sm:min-w-[340px] max-w-sm bg-white dark:bg-neutral-800 top-full mt-3 left-1/2 -translate-x-1/2  py-5 sm:py-6 px-4 sm:px-8 rounded-3xl shadow-xl ring-1 ring-black/5 dark:ring-white/10">
-                <NcInputNumber
-                  className="w-full"
-                  defaultValue={guestAdultsInputValue}
-                  onChange={(value) => handleChangeData(value, "guestAdults")}
-                  max={10}
-                  min={1}
-                  label="Người lớn"
-                  desc="Từ 13 tuổi trở lên"
-                />
-                <NcInputNumber
-                  className="w-full mt-6"
-                  defaultValue={guestChildrenInputValue}
-                  onChange={(value) => handleChangeData(value, "guestChildren")}
-                  max={4}
-                  label="Trẻ em"
-                  desc="Từ 2 đến 12 tuổi"
-                />
+              <Popover.Panel className="absolute z-20 w-full sm:min-w-[380px] max-w-sm bg-white dark:bg-neutral-800 top-full mt-3 left-1/2 -translate-x-1/2 py-6 px-6 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 border border-neutral-100 dark:border-neutral-700">
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">Chọn số lượng khách</h3>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Tối đa 9 khách</p>
+                  </div>
 
-                <NcInputNumber
-                  className="w-full mt-6"
-                  defaultValue={guestInfantsInputValue}
-                  onChange={(value) => handleChangeData(value, "guestInfants")}
-                  max={4}
-                  label="Em bé"
-                  desc="Dưới 2 tuổi"
-                />
+                  <div className="space-y-5">
+                    <NcInputNumber
+                      className="w-full"
+                      defaultValue={guestAdultsInputValue}
+                      onChange={(value) => handleChangeData(value, "guestAdults")}
+                      max={9}
+                      min={1}
+                      label="Người lớn"
+                      desc="Từ 13 tuổi trở lên"
+                    />
+                    <NcInputNumber
+                      className="w-full"
+                      defaultValue={guestChildrenInputValue}
+                      onChange={(value) => handleChangeData(value, "guestChildren")}
+                      max={4}
+                      min={0}
+                      label="Trẻ em"
+                      desc="Từ 2 đến 12 tuổi"
+                    />
+                    <NcInputNumber
+                      className="w-full"
+                      defaultValue={guestInfantsInputValue}
+                      onChange={(value) => handleChangeData(value, "guestInfants")}
+                      max={4}
+                      min={0}
+                      label="Em bé"
+                      desc="Dưới 2 tuổi"
+                    />
+                  </div>
+
+                  <div className="pt-4 border-t border-neutral-200 dark:border-neutral-600">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Tổng cộng:</span>
+                      <span className="text-lg font-bold text-primary-600 dark:text-primary-400">{totalGuests} khách</span>
+                    </div>
+                  </div>
+                </div>
               </Popover.Panel>
             </Transition>
           </>
@@ -166,7 +183,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
     return (
       <div className=" py-5 [ nc-hero-field-padding ] flex flex-row flex-wrap border-b border-neutral-100 dark:border-neutral-700">
         <div
-          className={`py-1.5 px-4 flex items-center rounded-full font-medium text-xs cursor-pointer mr-2 my-1 sm:mr-3 ${dropOffLocationType === "roundTrip"
+          className={`py-3 px-5 flex items-center rounded-full font-medium text-xs cursor-pointer mr-2 my-1 sm:mr-3 ${dropOffLocationType === "roundTrip"
             ? "bg-black shadow-black/10 shadow-lg text-white"
             : "border border-neutral-300 dark:border-neutral-700"
             }`}
@@ -175,7 +192,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
           Khứ hồi
         </div>
         <div
-          className={`py-1.5 px-4 flex items-center rounded-full font-medium text-xs cursor-pointer mr-2 my-1 sm:mr-3 ${dropOffLocationType === "oneWay"
+          className={`py-3 px-5 flex items-center rounded-full font-medium text-xs cursor-pointer mr-2 my-1 sm:mr-3 ${dropOffLocationType === "oneWay"
             ? "bg-black text-white shadow-black/10 shadow-lg"
             : "border border-neutral-300 dark:border-neutral-700"
             }`}
@@ -186,7 +203,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
 
         <div className="self-center border-r border-slate-200 dark:border-slate-700 h-8 mr-2 my-1 sm:mr-3"></div>
 
-        <div className="my-1 border border-neutral-300 dark:border-neutral-700 rounded-full">
+        <div className="my-1">
           {renderGuest()}
         </div>
       </div>

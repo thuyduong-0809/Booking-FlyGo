@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../BookingContext';
@@ -78,24 +78,41 @@ export default function PassengersPage() {
     const depPricePerPerson = (Number(departureFlight?.price) || 0);
     const depTaxPerPerson = (Number(departureFlight?.tax) || 0);
 
-    const retPricePerPerson = (Number(returnFlight?.price) || 0);
-    const retTaxPerPerson = (Number(returnFlight?.tax) || 0);
-
     // Người lớn + trẻ em tính giá như nhau
     const adultAndChildrenCount = totalAdults + totalChildren;
 
-    // Tổng cho chuyến đi
-    const depAdultPrice = (depPricePerPerson + depTaxPerPerson) * adultAndChildrenCount;
+    // Tổng cho chuyến đi (chỉ tính chuyến đi cho one-way)
+    const depAdultPrice = depPricePerPerson * adultAndChildrenCount;
     const depInfantPrice = 100000 * totalInfants;
-    const totalDeparture = depAdultPrice + depInfantPrice;
+    const depTaxAmount = depTaxPerPerson * adultAndChildrenCount;
+    const totalDeparture = depAdultPrice + depInfantPrice + depTaxAmount;
 
-    // Tổng cho chuyến về
-    const retAdultPrice = (retPricePerPerson + retTaxPerPerson) * adultAndChildrenCount;
-    const retInfantPrice = 100000 * totalInfants;
-    const totalReturn = retAdultPrice + retInfantPrice;
+    // Debug log để kiểm tra
+    console.log('Passengers Page - Calculated Total:', {
+      depPricePerPerson,
+      depTaxPerPerson,
+      adultAndChildrenCount,
+      depAdultPrice,
+      depInfantPrice,
+      depTaxAmount,
+      totalDeparture,
+      departureFlight
+    });
 
-    return totalDeparture + totalReturn;
-  }, [departureFlight, returnFlight, totalAdults, totalChildren, totalInfants]);
+    return totalDeparture;
+  }, [departureFlight, totalAdults, totalChildren, totalInfants]);
+
+  // Debug useEffect
+  useEffect(() => {
+    console.log('Passengers Page - Debug Info:', {
+      calculatedTotal,
+      departureFlight,
+      totalAdults,
+      totalChildren,
+      totalInfants,
+      state
+    });
+  }, [calculatedTotal, departureFlight, totalAdults, totalChildren, totalInfants, state]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -393,7 +410,7 @@ export default function PassengersPage() {
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-lg font-bold text-black">Chuyến đi</h4>
                 <div className="flex items-center space-x-2">
-                  <span className="text-lg font-bold text-black">{formatVnd(((Number(departureFlight?.price) || 0) + (Number(departureFlight?.tax) || 0)) * (totalAdults + totalChildren) + 100000 * totalInfants)} VND</span>
+                  <span className="text-lg font-bold text-black">{formatVnd((Number(departureFlight?.price) || 0) * (totalAdults + totalChildren) + 100000 * totalInfants + (Number(departureFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
