@@ -585,7 +585,8 @@ const FlightSummaryCard = ({
   fare,
   type,
   state,
-  selectedDate
+  selectedDate,
+  quantity
 }: {
   title: string;
   total: number;
@@ -594,6 +595,7 @@ const FlightSummaryCard = ({
   type: 'departure' | 'return';
   state: any;
   selectedDate: number;
+  quantity: number;
 }) => {
   // Function to get full date string for display
   const getFullDateString = (date: number) => {
@@ -667,6 +669,10 @@ const FlightSummaryCard = ({
               <span className="text-base text-gray-700">Dịch vụ</span>
               <span className="font-semibold text-gray-700">{formatVnd(fare?.service || 0)}</span>
             </div>
+            <div className="flex justify-between items-center">
+              <span className="text-base text-gray-700">Số lượng vé</span>
+              <span className="font-semibold text-gray-700">{quantity}</span>
+            </div>
           </div>
         </>
       )}
@@ -695,6 +701,10 @@ export default function SelectFlightRecoveryPage() {
   // State cho user info
   const [userData, setUserData] = useState<any>(null);
   const [passengerName, setPassengerName] = useState<string>('');
+
+  // Số lượng vé = số lượng người từ searchData
+  const departureQuantity = searchData.passengers?.adults || 1;
+  const returnQuantity = searchData.passengers?.adults || 1;
 
   // Sử dụng ngày từ searchData hoặc mặc định
   const [selectedDepartureDate, setSelectedDepartureDate] = useState(
@@ -898,19 +908,30 @@ export default function SelectFlightRecoveryPage() {
     if (!departureFare) return 0;
     const price = Number(departureFare.price) || 0;
     const tax = Number(departureFare.tax) || 0;
-    const service = Number(departureFare.service) || 0;
-    return price + tax + service;
-  }, [departureFare]);
+    return (price + tax) * departureQuantity;
+  }, [departureFare, departureQuantity]);
 
   const totalReturn = useMemo(() => {
     if (!returnFare) return 0;
     const price = Number(returnFare.price) || 0;
     const tax = Number(returnFare.tax) || 0;
-    const service = Number(returnFare.service) || 0;
-    return price + tax + service;
-  }, [returnFare]);
+    return (price + tax) * returnQuantity;
+  }, [returnFare, returnQuantity]);
 
   const computedGrandTotal = totalDeparture + totalReturn;
+
+  // Kiểm tra đã chọn đủ chuyến bay chưa
+  const isFlightSelected = selectedDepartureFlight !== null && selectedReturnFlight !== null;
+  const [showAlert, setShowAlert] = useState(false);
+
+  const handleContinue = (e: React.MouseEvent) => {
+    if (!isFlightSelected) {
+      e.preventDefault();
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return false;
+    }
+  };
 
   // Simplified flight section renderer
   const renderFlightSection = (
@@ -1145,6 +1166,7 @@ export default function SelectFlightRecoveryPage() {
               type="departure"
               state={searchData}
               selectedDate={selectedDepartureDate}
+              quantity={departureQuantity}
             />
 
             <FlightSummaryCard
@@ -1155,6 +1177,7 @@ export default function SelectFlightRecoveryPage() {
               type="return"
               state={searchData}
               selectedDate={selectedReturnDate}
+              quantity={returnQuantity}
             />
 
             {/* Total */}
@@ -1166,9 +1189,21 @@ export default function SelectFlightRecoveryPage() {
               <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
             </div>
 
+            {showAlert && (
+              <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold">Vui lòng chọn hạng máy bay cho cả chuyến đi và chuyến về trước khi tiếp tục!</span>
+                </div>
+              </div>
+            )}
+
             <Link
               href="/book-plane/passengers"
-              className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center"
+              onClick={handleContinue}
+              className={`w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center ${!isFlightSelected ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Đi tiếp
             </Link>

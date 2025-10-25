@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../BookingContext';
+import { useSearch } from '../SearchContext';
 
 interface Passenger {
   id: number;
@@ -25,10 +26,13 @@ interface Passenger {
 export default function PassengersPage() {
   const router = useRouter();
   const { state, grandTotal } = useBooking();
-  const totalPassengers = state.passengers;
-  
+  const { searchData } = useSearch();
+
+  // Lấy số lượng người từ searchData - CHỈ tạo form cho người lớn
+  const totalAdults = searchData.passengers?.adults || 1;
+
   const [passengers, setPassengers] = useState<Passenger[]>(
-    Array.from({ length: totalPassengers }, (_, index) => ({
+    Array.from({ length: totalAdults }, (_, index) => ({
       id: index + 1,
       gender: 'male' as const,
       lastName: '',
@@ -49,9 +53,9 @@ export default function PassengersPage() {
   const [surveyChecked, setSurveyChecked] = useState(false);
 
   const updatePassenger = (passengerId: number, field: keyof Passenger, value: any) => {
-    setPassengers(prev => 
-      prev.map(passenger => 
-        passenger.id === passengerId 
+    setPassengers(prev =>
+      prev.map(passenger =>
+        passenger.id === passengerId
           ? { ...passenger, [field]: value }
           : passenger
       )
@@ -59,11 +63,26 @@ export default function PassengersPage() {
   };
 
   const formatVnd = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN').format(amount);
+    // Làm tròn số về số nguyên để tránh hiển thị phần thập phân
+    const roundedNumber = Math.round(amount);
+    return new Intl.NumberFormat('vi-VN').format(roundedNumber);
   };
 
   const departureFlight = state.selectedDeparture;
   const returnFlight = state.selectedReturn;
+
+  // Tính tổng tiền: (Giá vé + Thuế) × số lượng vé + Dịch vụ
+  const calculatedTotal = useMemo(() => {
+    const depPricePerPerson = (Number(departureFlight?.price) || 0) + (Number(departureFlight?.tax) || 0);
+    const retPricePerPerson = (Number(returnFlight?.price) || 0) + (Number(returnFlight?.tax) || 0);
+    const depServiceTotal = (Number(departureFlight?.service) || 0) * totalAdults;
+    const retServiceTotal = (Number(returnFlight?.service) || 0) * totalAdults;
+
+    const totalDeparture = depPricePerPerson * totalAdults + depServiceTotal;
+    const totalReturn = retPricePerPerson * totalAdults + retServiceTotal;
+
+    return totalDeparture + totalReturn;
+  }, [departureFlight, returnFlight, totalAdults]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -73,16 +92,16 @@ export default function PassengersPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-black">
-                CHUYẾN BAY KHỨ HỒI | {totalPassengers} Người lớn
+                CHUYẾN BAY KHỨ HỒI | {totalAdults} Người lớn
               </h1>
               <div className="text-black mt-2 font-medium">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                  <span>Điểm khởi hành {state.origin}</span>
+                  <span>Điểm khởi hành {searchData.departureAirport?.city}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  <span>Điểm đến {state.destination}</span>
+                  <span>Điểm đến {searchData.arrivalAirport?.city}</span>
                 </div>
               </div>
             </div>
@@ -93,20 +112,6 @@ export default function PassengersPage() {
       <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Passenger Forms */}
         <div className="lg:col-span-2">
-          {/* Survey checkbox */}
-          <div className="bg-white rounded-xl p-6 mb-6 shadow-lg border border-gray-100">
-            <label className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={surveyChecked}
-                onChange={(e) => setSurveyChecked(e.target.checked)}
-                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <span className="text-base text-gray-700">
-                Thực hiện khảo sát và chăm sóc khách hàng
-              </span>
-            </label>
-          </div>
 
           {/* Passenger Forms */}
           <div className="space-y-8">
@@ -120,7 +125,7 @@ export default function PassengersPage() {
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-800">Người lớn</h3>
+                    <h3 className="text-2xl font-bold text-gray-800">Người lớn {index + 1}</h3>
                   </div>
                   <button className="p-2 hover:bg-gray-100 rounded-full">
                     <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -360,42 +365,59 @@ export default function PassengersPage() {
 
             {/* Departure Flight */}
             <div className="mb-6">
-              <h4 className="text-lg font-bold text-black mb-3">Chuyến đi</h4>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <div className="text-lg font-bold text-red-600 mb-2">
-                  {formatVnd((departureFlight?.price || 0) + (departureFlight?.tax || 0) + (departureFlight?.service || 0))} VND
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-bold text-black">Chuyến đi</h4>
+                <div className="flex items-center space-x-2">
+                  <span className="text-lg font-bold text-red-600">{formatVnd(((Number(departureFlight?.price) || 0) + (Number(departureFlight?.tax) || 0)) * totalAdults)} VND</span>
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
                 </div>
-                <div className="text-base text-gray-700 mb-1">{state.origin} ✈ {state.destination}</div>
-                <div className="text-sm text-gray-600">{state.departureDate} | {departureFlight?.departTime} - {departureFlight?.arriveTime} | {departureFlight?.code} | {departureFlight?.fareName}
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                {/* Route */}
+                <div className="text-base text-gray-700">{searchData.departureAirport?.city || ''} ({searchData.departureAirport?.airportCode || ''}) ✈ {searchData.arrivalAirport?.city || ''} ({searchData.arrivalAirport?.airportCode || ''})</div>
+
+                {/* Date - Format: "Chủ nhật, 28/10/2025" */}
+                <div className="text-base text-gray-700">
+                  {(() => {
+                    const date = searchData.departureDate || new Date();
+                    const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+                    const dayName = dayNames[date.getDay()];
+                    const day = date.getDate();
+                    const month = date.getMonth() + 1;
+                    const year = date.getFullYear();
+                    return `${dayName}, ${day}/${month}/${year}`;
+                  })()}
                 </div>
-                
-                <div className="mt-4 space-y-2">
+
+                {/* Time */}
+                <div className="text-base text-gray-700">Giờ bay: {departureFlight?.departTime || ''} - {departureFlight?.arriveTime || ''}</div>
+
+                {/* Flight Code */}
+                <div className="text-base text-gray-700">Số hiệu: {departureFlight?.code || ''}</div>
+
+                {/* Fare Class */}
+                <div className="text-base font-bold text-gray-700">Hạng vé: {departureFlight?.fareName || ''}</div>
+
+                {/* Price Breakdown */}
+                <div className="pt-2 space-y-2 border-t border-gray-200">
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Giá vé</span>
-                    <div className="flex items-center">
-                      <span className="font-semibold  text-gray-700">{formatVnd(departureFlight?.price || 0)}</span>
-                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
+                    <span className="font-semibold text-gray-700">{formatVnd(Number(departureFlight?.price) || 0)} VND</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Thuế, phí</span>
-                    <div className="flex items-center">
-                      <span className="font-semibold  text-gray-700">{formatVnd(departureFlight?.tax || 0)}</span>
-                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
+                    <span className="font-semibold text-gray-700">{formatVnd(Number(departureFlight?.tax) || 0)} VND</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-700">Số lượng vé</span>
+                    <span className="font-semibold text-gray-700">{totalAdults} vé</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Dịch vụ</span>
-                    <div className="flex items-center">
-                      <span className="font-semibold  text-gray-700">{formatVnd(departureFlight?.service || 0)}</span>
-                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
+                    <span className="font-semibold text-gray-700">{formatVnd(Number(departureFlight?.service) || 0)} VND</span>
                   </div>
                 </div>
               </div>
@@ -403,42 +425,59 @@ export default function PassengersPage() {
 
             {/* Return Flight */}
             <div className="mb-6">
-              <h4 className="text-lg font-bold text-black mb-3">Chuyến về</h4>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <div className="text-lg font-bold text-red-600 mb-2">
-                  {formatVnd((returnFlight?.price || 0) + (returnFlight?.tax || 0) + (returnFlight?.service || 0))} VND
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-bold text-black">Chuyến về</h4>
+                <div className="flex items-center space-x-2">
+                  <span className="text-lg font-bold text-red-600">{formatVnd(((Number(returnFlight?.price) || 0) + (Number(returnFlight?.tax) || 0)) * totalAdults)} VND</span>
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
                 </div>
-                <div className="text-base text-gray-700 mb-1">{state.destination} ✈ {state.origin}</div>
-                <div className="text-sm text-gray-600">{state.returnDate} | {returnFlight?.departTime} - {returnFlight?.arriveTime} | {returnFlight?.code} | {returnFlight?.fareName}
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                {/* Route */}
+                <div className="text-base text-gray-700">{searchData.arrivalAirport?.city || ''} ({searchData.arrivalAirport?.airportCode || ''}) ✈ {searchData.departureAirport?.city || ''} ({searchData.departureAirport?.airportCode || ''})</div>
+
+                {/* Date - Format: "Thứ hai, 29/10/2025" */}
+                <div className="text-base text-gray-700">
+                  {(() => {
+                    const date = searchData.returnDate || new Date();
+                    const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+                    const dayName = dayNames[date.getDay()];
+                    const day = date.getDate();
+                    const month = date.getMonth() + 1;
+                    const year = date.getFullYear();
+                    return `${dayName}, ${day}/${month}/${year}`;
+                  })()}
                 </div>
-                
-                <div className="mt-4 space-y-2">
+
+                {/* Time */}
+                <div className="text-base text-gray-700">Giờ bay: {returnFlight?.departTime || ''} - {returnFlight?.arriveTime || ''}</div>
+
+                {/* Flight Code */}
+                <div className="text-base text-gray-700">Số hiệu: {returnFlight?.code || ''}</div>
+
+                {/* Fare Class */}
+                <div className="text-base font-bold text-gray-700">Hạng vé: {returnFlight?.fareName || ''}</div>
+
+                {/* Price Breakdown */}
+                <div className="pt-2 space-y-2 border-t border-gray-200">
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Giá vé</span>
-                    <div className="flex items-center">
-                      <span className="font-semibold  text-gray-700">{formatVnd(returnFlight?.price || 0)}</span>
-                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
+                    <span className="font-semibold text-gray-700">{formatVnd(Number(returnFlight?.price) || 0)} VND</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Thuế, phí</span>
-                    <div className="flex items-center">
-                      <span className="font-semibold  text-gray-700">{formatVnd(returnFlight?.tax || 0)}</span>
-                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
+                    <span className="font-semibold text-gray-700">{formatVnd(Number(returnFlight?.tax) || 0)} VND</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-700">Số lượng vé</span>
+                    <span className="font-semibold text-gray-700">{totalAdults} vé</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-base text-gray-700">Dịch vụ</span>
-                    <div className="flex items-center">
-                      <span className="font-semibold  text-gray-700">{formatVnd(returnFlight?.service || 0)}</span>
-                      <svg className="w-4 h-4 ml-1  text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
+                    <span className="font-semibold text-gray-700">{formatVnd(Number(returnFlight?.service) || 0)} VND</span>
                   </div>
                 </div>
               </div>
@@ -448,7 +487,7 @@ export default function PassengersPage() {
             <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8 rounded-2xl text-center mb-8 shadow-xl">
               <div className="text-xl font-semibold mb-3">Tổng tiền</div>
               <div className="text-4xl md:text-5xl font-bold">
-                {formatVnd(grandTotal)} VND
+                {formatVnd(calculatedTotal)} VND
               </div>
               <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
             </div>
@@ -466,12 +505,12 @@ export default function PassengersPage() {
           <button onClick={() => router.back()} className="px-6 py-3 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             Quay lại
           </button>
-          
+
           <div className="text-center">
             <div className="text-lg font-bold text-gray-800">Tổng tiền</div>
-            <div className="text-2xl font-bold text-red-600">{formatVnd(grandTotal)} VND</div>
+            <div className="text-2xl font-bold text-red-600">{formatVnd(calculatedTotal)} VND</div>
           </div>
-          
+
           <Link href="/book-plane/payment" className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
             Đi tiếp
           </Link>
