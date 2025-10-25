@@ -13,7 +13,7 @@ import {
   WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import { Aircraft, Maintenance, Seat, Airline } from '../../types/database';
-import { requestApi } from 'lib/api';
+import { requestApi } from '@/lib/api';
 
 
 
@@ -1052,10 +1052,10 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       key={seat.seatId}
                       onClick={() => handleSelectSeatId(seat.seatId)}
                       className={`p-2 text-sm text-center rounded border cursor-pointer ${seat.isAvailable == true
-                          ? 'bg-red-100 border-green-300 text-green-800'
-                          : seat.isAvailable == false
-                            ? 'bg-blue-100 border-blue-300 text-blue-800'
-                            : 'bg-red-100 border-red-300 text-red-800'
+                        ? 'bg-red-100 border-green-300 text-green-800'
+                        : seat.isAvailable == false
+                          ? 'bg-blue-100 border-blue-300 text-blue-800'
+                          : 'bg-red-100 border-red-300 text-red-800'
                         } ${selectedSeatId === seat.seatId ? 'ring-2 ring-blue-400' : ''
                         }`}
                     >

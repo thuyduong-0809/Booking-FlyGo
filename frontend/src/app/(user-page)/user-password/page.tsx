@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Label from "@/components/Label";
 import ButtonPrimary from "@/shared/ButtonPrimary";
 import Input from "@/shared/Input";
-import { requestApi } from "lib/api";
+import { requestApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { getCookie, deleteCookie } from "@/utils/cookies";
 

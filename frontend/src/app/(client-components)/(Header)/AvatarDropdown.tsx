@@ -4,7 +4,7 @@ import SwitchDarkMode2 from "@/shared/SwitchDarkMode2";
 import Link from "next/link";
 import { useAppDispatch } from "stores/hookStore";
 import { logout } from "stores/features/masterSlice";
-import { requestApi } from "lib/api";
+import { requestApi } from "@/lib/api";
 import { getCookie } from "@/utils/cookies";
 
 interface Props {

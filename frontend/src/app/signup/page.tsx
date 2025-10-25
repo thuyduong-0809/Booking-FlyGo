@@ -3,7 +3,7 @@ import React, { FC, useState } from "react";
 import Input from "@/shared/Input";
 import ButtonPrimary from "@/shared/ButtonPrimary";
 import Link from "next/link";
-import { requestApi } from "lib/api";
+import { requestApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useState } from "react";
+import React, { FC, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LocationInput from "../LocationInput";
 import { Popover, Transition } from "@headlessui/react";
@@ -9,6 +9,8 @@ import { Fragment } from "react";
 import NcInputNumber from "@/components/NcInputNumber";
 import FlightDateRangeInput from "./FlightDateRangeInput";
 import { GuestsObject } from "../../type";
+import { airportsService, Airport } from "../../../../services/airports.service";
+import { useSearch } from "../../../book-plane/SearchContext";
 
 export interface FlightSearchFormProps { }
 
@@ -17,12 +19,33 @@ export type TypeDropOffLocationType = "roundTrip" | "oneWay" | "";
 
 const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
   const router = useRouter();
+  const { searchData, updateDepartureAirport, updateArrivalAirport, updateTripType, updatePassengers } = useSearch();
+
   const [dropOffLocationType, setDropOffLocationType] =
     useState<TypeDropOffLocationType>("roundTrip");
 
   const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(2);
   const [guestChildrenInputValue, setGuestChildrenInputValue] = useState(1);
   const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(1);
+
+  // State cho airports và location selection
+  const [airports, setAirports] = useState<Airport[]>([]);
+
+  // Fetch airports data khi component mount
+  useEffect(() => {
+    const fetchAirports = async () => {
+      try {
+        const response = await airportsService.getAllAirports();
+        if (response.success && response.data) {
+          setAirports(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching airports:", error);
+      }
+    };
+
+    fetchAirports();
+  }, []);
 
   const handleChangeData = (value: number, type: keyof GuestsObject) => {
     let newValue = {
@@ -42,12 +65,32 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
       setGuestInfantsInputValue(value);
       newValue.guestInfants = value;
     }
+
+    // Cập nhật context với thông tin hành khách
+    updatePassengers({
+      adults: newValue.guestAdults,
+      children: newValue.guestChildren,
+      infants: newValue.guestInfants,
+    });
+  };
+
+  // Handler cho việc chọn departure airport
+  const handleDepartureSelect = (airport: Airport) => {
+    updateDepartureAirport(airport);
+  };
+
+  // Handler cho việc chọn arrival airport
+  const handleArrivalSelect = (airport: Airport) => {
+    updateArrivalAirport(airport);
   };
 
   const totalGuests =
     guestChildrenInputValue + guestAdultsInputValue + guestInfantsInputValue;
 
   const handleSearch = () => {
+    // Cập nhật loại chuyến bay vào context
+    updateTripType(dropOffLocationType as 'roundTrip' | 'oneWay');
+
     // Điều hướng dựa trên loại chuyến bay được chọn
     if (dropOffLocationType === "roundTrip") {
       router.push("/book-plane/select-flight-recovery");
@@ -159,6 +202,9 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
             placeHolder="Nơi khởi hành"
             desc="Bạn muốn bay từ đâu?"
             className="flex-1"
+            airports={airports}
+            onLocationSelect={handleDepartureSelect}
+            selectedAirport={searchData.departureAirport}
           />
           <div className="self-center border-r border-slate-200 dark:border-slate-700 h-8"></div>
           <LocationInput
@@ -166,6 +212,9 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ }) => {
             desc="Bạn muốn bay đến đâu?"
             className="flex-1"
             divHideVerticalLineClass=" -inset-x-0.5"
+            airports={airports}
+            onLocationSelect={handleArrivalSelect}
+            selectedAirport={searchData.arrivalAirport}
           />
           <div className="self-center border-r border-slate-200 dark:border-slate-700 h-8"></div>
           <FlightDateRangeInput

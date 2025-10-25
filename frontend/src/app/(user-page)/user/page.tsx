@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { requestApi } from "lib/api";
+import { requestApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { getCookie } from "@/utils/cookies";
 import {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useState, useEffect } from "react";
 import { FC } from "react";
 import DatePicker from "react-datepicker";
 import { Popover, Transition } from "@headlessui/react";
@@ -10,6 +10,7 @@ import DatePickerCustomDay from "@/components/DatePickerCustomDay";
 import ClearDataButton from "../ClearDataButton";
 import ButtonSubmit from "../ButtonSubmit";
 import { vi } from "date-fns/locale";
+import { useSearch } from "../../../book-plane/SearchContext";
 
 export interface FlightDateRangeInputProps {
   className?: string;
@@ -26,18 +27,46 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
   selectsRange = true,
   onSubmit,
 }) => {
+  const { searchData, updateDepartureDate, updateReturnDate } = useSearch();
   const today = new Date();
   const [startDate, setStartDate] = useState<Date | null>(
-    today
+    searchData.departureDate || today
   );
   const [endDate, setEndDate] = useState<Date | null>(
-    new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000)
+    searchData.returnDate || new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000)
   );
+
+  // Đồng bộ state với context khi searchData thay đổi
+  useEffect(() => {
+    if (searchData.departureDate) {
+      setStartDate(searchData.departureDate);
+    }
+    if (searchData.returnDate) {
+      setEndDate(searchData.returnDate);
+    }
+  }, [searchData.departureDate, searchData.returnDate]);
+
+  // Cập nhật context với giá trị mặc định khi component mount
+  useEffect(() => {
+    if (!searchData.departureDate) {
+      updateDepartureDate(startDate);
+    }
+    if (!searchData.returnDate) {
+      updateReturnDate(endDate);
+    }
+  }, []); // Chỉ chạy một lần khi component mount
 
   const onChangeRangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates;
     setStartDate(start);
     setEndDate(end);
+
+    // Debug: Log dates để kiểm tra
+    console.log('FlightDateRangeInput - onChangeRangeDate:', { start, end });
+
+    // Cập nhật context với ngày đi và ngày về
+    updateDepartureDate(start);
+    updateReturnDate(end);
   };
 
   const renderInput = () => {
@@ -157,7 +186,10 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
                   ) : (
                     <DatePicker
                       selected={startDate}
-                      onChange={(date) => setStartDate(date)}
+                      onChange={(date) => {
+                        setStartDate(date);
+                        updateDepartureDate(date);
+                      }}
                       monthsShown={2}
                       showPopperArrow={false}
                       inline

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Link from 'next/link';
 import { useBooking } from "../BookingContext";
+import { useSearch } from "../SearchContext";
 
 interface FareOption {
   name: string;
@@ -250,13 +251,17 @@ const recoveryReturnFlights: FlightItem[] = [
 const formatVnd = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " VND";
 
 // Component: Flight Route Display
-const FlightRoute = ({ type }: { type: 'departure' | 'return' }) => (
+const FlightRoute = ({ type, searchData }: { type: 'departure' | 'return', searchData: any }) => (
   <div className="bg-white rounded-xl p-6 shadow-xl border border-gray-100">
     <div className="flex items-center justify-center">
       <div className="flex items-center space-x-6">
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-800">{type === 'departure' ? 'HAN' : 'VCA'}</div>
-          <div className="text-sm text-gray-600">{type === 'departure' ? 'Hà Nội' : 'Cần Thơ'}</div>
+          <div className="text-2xl font-bold text-gray-800">
+            {type === 'departure' ? searchData.departureAirport?.airportCode : searchData.arrivalAirport?.airportCode}
+          </div>
+          <div className="text-sm text-gray-600">
+            {type === 'departure' ? searchData.departureAirport?.city : searchData.arrivalAirport?.city}
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-12 h-0.5 bg-gray-300"></div>
@@ -264,8 +269,12 @@ const FlightRoute = ({ type }: { type: 'departure' | 'return' }) => (
           <div className="w-12 h-0.5 bg-gray-300"></div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-800">{type === 'departure' ? 'VCA' : 'HAN'}</div>
-          <div className="text-sm text-gray-600">{type === 'departure' ? 'Cần Thơ' : 'Hà Nội'}</div>
+          <div className="text-2xl font-bold text-gray-800">
+            {type === 'departure' ? searchData.arrivalAirport?.airportCode : searchData.departureAirport?.airportCode}
+          </div>
+          <div className="text-sm text-gray-600">
+            {type === 'departure' ? searchData.arrivalAirport?.city : searchData.departureAirport?.city}
+          </div>
         </div>
       </div>
     </div>
@@ -273,8 +282,21 @@ const FlightRoute = ({ type }: { type: 'departure' | 'return' }) => (
 );
 
 // Component: Date Navigation
-const DateNavigation = ({ selectedDate, setSelectedDate }: { selectedDate: number, setSelectedDate: (date: number) => void }) => {
-  const [visibleDates, setVisibleDates] = useState([13, 14, 15, 16]);
+const DateNavigation = ({ selectedDate, setSelectedDate, searchData, type }: {
+  selectedDate: number,
+  setSelectedDate: (date: number) => void,
+  searchData: any,
+  type: 'departure' | 'return'
+}) => {
+  // Khởi tạo visibleDates dựa trên ngày từ searchData
+  const getInitialDates = () => {
+    const baseDate = type === 'departure'
+      ? (searchData.departureDate ? searchData.departureDate.getDate() : 14)
+      : (searchData.returnDate ? searchData.returnDate.getDate() : 14);
+    return [baseDate - 1, baseDate, baseDate + 1, baseDate + 2];
+  };
+
+  const [visibleDates, setVisibleDates] = useState(getInitialDates());
   const currentIndex = visibleDates.indexOf(selectedDate);
 
   const goToPrevious = () => {
@@ -339,7 +361,10 @@ const DateNavigation = ({ selectedDate, setSelectedDate }: { selectedDate: numbe
                   })()}
                 </div>
                 <div className={`text-sm font-bold ${date === selectedDate ? 'text-black' : 'text-gray-700'}`}>
-                  10
+                  {type === 'departure'
+                    ? (searchData.departureDate ? searchData.departureDate.getMonth() + 1 : 10)
+                    : (searchData.returnDate ? searchData.returnDate.getMonth() + 1 : 10)
+                  }
                 </div>
               </div>
             </div>
@@ -481,7 +506,7 @@ const ExpandedDetails = ({
       {/* Flight route and duration */}
       <div className="flex items-center justify-between mb-6 ">
         <div className="text-base text-gray-700 font-medium">
-          {type === 'departure' ? state.origin : state.destination} {flight.departTime}, {type === 'departure' ? state.departureDate : state.returnDate}
+          {type === 'departure' ? state.departureAirport?.city : state.arrivalAirport?.city} {flight.departTime}, {type === 'departure' ? state.departureDate?.toLocaleDateString('vi-VN') : state.returnDate?.toLocaleDateString('vi-VN')}
         </div>
         <div className="flex items-center space-x-2">
           <div className="text-base text-gray-700 font-medium">2 giờ 10 phút</div>
@@ -489,7 +514,7 @@ const ExpandedDetails = ({
           <div className="text-base text-blue-600 font-medium">Bay thẳng</div>
         </div>
         <div className="text-base text-gray-700 font-medium">
-          {type === 'departure' ? state.destination : state.origin} {flight.arriveTime}, {type === 'departure' ? state.departureDate : state.returnDate}
+          {type === 'departure' ? state.arrivalAirport?.city : state.departureAirport?.city} {flight.arriveTime}, {type === 'departure' ? state.departureDate?.toLocaleDateString('vi-VN') : state.returnDate?.toLocaleDateString('vi-VN')}
         </div>
       </div>
 
@@ -566,7 +591,13 @@ const FlightSummaryCard = ({
   const getFullDateString = (date: number) => {
     const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
     const dayOfWeek = dayNames[date % 7];
-    return `${dayOfWeek}, ${date}/10/2025`;
+    const month = type === 'departure'
+      ? (state.departureDate ? state.departureDate.getMonth() + 1 : 10)
+      : (state.returnDate ? state.returnDate.getMonth() + 1 : 10);
+    const year = type === 'departure'
+      ? (state.departureDate ? state.departureDate.getFullYear() : 2025)
+      : (state.returnDate ? state.returnDate.getFullYear() : 2025);
+    return `${dayOfWeek}, ${date}/${month}/${year}`;
   };
 
   return (
@@ -582,7 +613,7 @@ const FlightSummaryCard = ({
       </div>
 
       <div className="text-base text-gray-700 mb-2">
-        {type === 'departure' ? 'Hà Nội (HAN) ✈ Cần Thơ (VCA)' : `${state.destination} ✈ ${state.origin}`}
+        {type === 'departure' ? `${state.departureAirport?.city} (${state.departureAirport?.airportCode}) ✈ ${state.arrivalAirport?.city} (${state.arrivalAirport?.airportCode})` : `${state.arrivalAirport?.city} (${state.arrivalAirport?.airportCode}) ✈ ${state.departureAirport?.city} (${state.departureAirport?.airportCode})`}
       </div>
       <div className="text-base text-gray-700 mb-3">
         {type === 'departure'
@@ -626,11 +657,35 @@ const FlightSummaryCard = ({
 
 export default function SelectFlightRecoveryPage() {
   const { state, setSelectedDeparture, setSelectedReturn, grandTotal } = useBooking();
+  const { searchData } = useSearch();
+
+  // Debug: Log searchData để kiểm tra dữ liệu
+  console.log('SearchData in select-flight-recovery:', searchData);
+  console.log('Departure Date:', searchData.departureDate);
+  console.log('Return Date:', searchData.returnDate);
+
   const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
   const [selectedReturnFlight, setSelectedReturnFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
-  const [selectedDepartureDate, setSelectedDepartureDate] = useState(14); // Thứ ba 14 tháng 10
-  const [selectedReturnDate, setSelectedReturnDate] = useState(14); // Thứ ba 14 tháng 10
-  const [expandedFlight, setExpandedFlight] = useState<{ flightId: string, fareIndex: number, type: 'departure' | 'return' } | null>(null); // Track which fare is expanded
+
+  // Sử dụng ngày từ searchData hoặc mặc định
+  const [selectedDepartureDate, setSelectedDepartureDate] = useState(
+    searchData.departureDate ? searchData.departureDate.getDate() : 14
+  );
+  const [selectedReturnDate, setSelectedReturnDate] = useState(
+    searchData.returnDate ? searchData.returnDate.getDate() : 14
+  );
+
+  // Đồng bộ ngày với searchData khi context thay đổi
+  useEffect(() => {
+    if (searchData.departureDate) {
+      setSelectedDepartureDate(searchData.departureDate.getDate());
+    }
+    if (searchData.returnDate) {
+      setSelectedReturnDate(searchData.returnDate.getDate());
+    }
+  }, [searchData.departureDate, searchData.returnDate]);
+
+  const [expandedFlight, setExpandedFlight] = useState<{ flightId: string, fareIndex: number, type: 'departure' | 'return' } | null>(null);
 
   const departureFlight = recoveryFlights.find(f => f.id === selectedDepartureFlight?.flightId);
   const returnFlight = recoveryReturnFlights.find(f => f.id === selectedReturnFlight?.flightId);
@@ -671,8 +726,12 @@ export default function SelectFlightRecoveryPage() {
             <div className="hidden md:block w-px h-8 bg-white/30"></div>
             <div className="flex items-center space-x-3">
               <div className="text-center">
-                <div className="text-xl font-bold text-white">{type === 'departure' ? 'HAN' : 'VCA'}</div>
-                <div className="text-xs text-blue-100">{type === 'departure' ? 'Hà Nội' : 'Cần Thơ'}</div>
+                <div className="text-xl font-bold text-white">
+                  {type === 'departure' ? searchData.departureAirport?.airportCode : searchData.arrivalAirport?.airportCode}
+                </div>
+                <div className="text-xs text-blue-100">
+                  {type === 'departure' ? searchData.departureAirport?.city : searchData.arrivalAirport?.city}
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-0.5 bg-white/40"></div>
@@ -680,15 +739,19 @@ export default function SelectFlightRecoveryPage() {
                 <div className="w-8 h-0.5 bg-white/40"></div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-white">{type === 'departure' ? 'VCA' : 'HAN'}</div>
-                <div className="text-xs text-blue-100">{type === 'departure' ? 'Cần Thơ' : 'Hà Nội'}</div>
+                <div className="text-xl font-bold text-white">
+                  {type === 'departure' ? searchData.arrivalAirport?.airportCode : searchData.departureAirport?.airportCode}
+                </div>
+                <div className="text-xs text-blue-100">
+                  {type === 'departure' ? searchData.arrivalAirport?.city : searchData.departureAirport?.city}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <DateNavigation selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+      <DateNavigation selectedDate={selectedDate} setSelectedDate={setSelectedDate} searchData={searchData} type={type} />
       <FareHeaders />
 
       {/* Flight Rows */}
@@ -750,7 +813,7 @@ export default function SelectFlightRecoveryPage() {
                 flight={flight}
                 fare={flight.fares[expandedFlight.fareIndex]}
                 type={type}
-                state={state}
+                state={searchData}
               />
             )}
           </div>
@@ -767,16 +830,16 @@ export default function SelectFlightRecoveryPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-black">
-                Chuyến bay khứ hồi | {state.passengers} Người lớn
+                Chuyến bay khứ hồi | {searchData.passengers.adults} Người lớn
               </h1>
               <div className="text-black mt-2 font-medium">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                  <span>Điểm khởi hành {state.origin}</span>
+                  <span>Điểm khởi hành {searchData.departureAirport?.city || 'Chưa chọn'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  <span>Điểm đến {state.destination}</span>
+                  <span>Điểm đến {searchData.arrivalAirport?.city || 'Chưa chọn'}</span>
                 </div>
               </div>
             </div>
@@ -836,7 +899,7 @@ export default function SelectFlightRecoveryPage() {
               flight={departureFlight}
               fare={departureFare}
               type="departure"
-              state={state}
+              state={searchData}
               selectedDate={selectedDepartureDate}
             />
 
@@ -846,7 +909,7 @@ export default function SelectFlightRecoveryPage() {
               flight={returnFlight}
               fare={returnFare}
               type="return"
-              state={state}
+              state={searchData}
               selectedDate={selectedReturnDate}
             />
 

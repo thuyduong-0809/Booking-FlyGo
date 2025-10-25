@@ -5,7 +5,7 @@ import Input from "@/shared/Input";
 import ButtonPrimary from "@/shared/ButtonPrimary";
 import Image from "next/image";
 import Link from "next/link";
-import { requestApi } from "lib/api";
+import { requestApi } from "@/lib/api";
 import { loginSuccess, logout, updateLocalStorage } from "stores/features/masterSlice";
 import { useAppDispatch, useAppSelector } from "stores/hookStore";
 import { useRouter, useSearchParams } from "next/navigation";

@@ -3,6 +3,7 @@
 import { ClockIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import React, { useState, useRef, useEffect, FC } from "react";
 import ClearDataButton from "./ClearDataButton";
+import { Airport } from "../../../services/airports.service";
 
 export interface LocationInputProps {
   placeHolder?: string;
@@ -10,6 +11,9 @@ export interface LocationInputProps {
   className?: string;
   divHideVerticalLineClass?: string;
   autoFocus?: boolean;
+  airports?: Airport[];
+  onLocationSelect?: (airport: Airport) => void;
+  selectedAirport?: Airport | null;
 }
 
 const LocationInput: FC<LocationInputProps> = ({
@@ -18,12 +22,25 @@ const LocationInput: FC<LocationInputProps> = ({
   desc = "Where are you going?",
   className = "nc-flex-1.5",
   divHideVerticalLineClass = "left-10 -right-0.5",
+  airports = [],
+  onLocationSelect,
+  selectedAirport,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [value, setValue] = useState("");
   const [showPopover, setShowPopover] = useState(autoFocus);
+
+  // Cập nhật value khi selectedAirport thay đổi
+  useEffect(() => {
+    if (selectedAirport) {
+      const displayText = `${selectedAirport.city}, ${selectedAirport.country}`;
+      setValue(displayText);
+    } else {
+      setValue("");
+    }
+  }, [selectedAirport]);
 
   useEffect(() => {
     setShowPopover(autoFocus);
@@ -56,35 +73,37 @@ const LocationInput: FC<LocationInputProps> = ({
     setShowPopover(false);
   };
 
-  const handleSelectLocation = (item: string) => {
-    setValue(item);
+  const handleSelectLocation = (airport: Airport) => {
+    const displayText = `${airport.city}, ${airport.country}`;
+    setValue(displayText);
     setShowPopover(false);
+    onLocationSelect?.(airport);
   };
 
   const renderRecentSearches = () => {
     return (
       <>
         <h3 className="block mt-2 sm:mt-0 px-4 sm:px-8 font-semibold text-base sm:text-lg text-neutral-800 dark:text-neutral-100">
-          Recent searches
+          Các thành phố phổ biến
         </h3>
         <div className="mt-2">
-          {[
-            "Hamptons, Suffolk County, NY",
-            "Las Vegas, NV, United States",
-            "Ueno, Taito, Tokyo",
-            "Ikebukuro, Toshima, Tokyo",
-          ].map((item) => (
+          {airports.slice(0, 4).map((airport) => (
             <span
-              onClick={() => handleSelectLocation(item)}
-              key={item}
+              onClick={() => handleSelectLocation(airport)}
+              key={airport.airportId}
               className="flex px-4 sm:px-8 items-center space-x-3 sm:space-x-4 py-4 hover:bg-neutral-100 dark:hover:bg-neutral-700 cursor-pointer"
             >
               <span className="block text-neutral-400">
-                <ClockIcon className="h-4 sm:h-6 w-4 sm:w-6" />
+                <MapPinIcon className="h-4 sm:h-6 w-4 sm:w-6" />
               </span>
-              <span className=" block font-medium text-neutral-700 dark:text-neutral-200">
-                {item}
-              </span>
+              <div className="flex flex-col">
+                <span className="block font-medium text-neutral-700 dark:text-neutral-200">
+                  {airport.city}, {airport.country}
+                </span>
+                <span className="block text-sm text-neutral-500 dark:text-neutral-400">
+                  {airport.airportName} ({airport.airportCode})
+                </span>
+              </div>
             </span>
           ))}
         </div>
@@ -93,27 +112,47 @@ const LocationInput: FC<LocationInputProps> = ({
   };
 
   const renderSearchValue = () => {
+    const filteredAirports = airports.filter((airport) =>
+      airport.city.toLowerCase().includes(value.toLowerCase()) ||
+      airport.airportName.toLowerCase().includes(value.toLowerCase()) ||
+      airport.airportCode.toLowerCase().includes(value.toLowerCase()) ||
+      airport.country.toLowerCase().includes(value.toLowerCase())
+    );
+
+    if (filteredAirports.length === 0) {
+      return (
+        <div className="px-4 sm:px-8 py-4 text-center text-neutral-500 dark:text-neutral-400">
+          Không tìm thấy thành phố nào phù hợp
+        </div>
+      );
+    }
+
     return (
       <>
-        {[
-          "Ha Noi, Viet Nam",
-          "San Diego, CA",
-          "Humboldt Park, Chicago, IL",
-          "Bangor, Northern Ireland",
-        ].map((item) => (
-          <span
-            onClick={() => handleSelectLocation(item)}
-            key={item}
-            className="flex px-4 sm:px-8 items-center space-x-3 sm:space-x-4 py-4 hover:bg-neutral-100 dark:hover:bg-neutral-700 cursor-pointer"
-          >
-            <span className="block text-neutral-400">
-              <ClockIcon className="h-4 w-4 sm:h-6 sm:w-6" />
+        <h3 className="block mt-2 sm:mt-0 px-4 sm:px-8 font-semibold text-base sm:text-lg text-neutral-800 dark:text-neutral-100">
+          Kết quả tìm kiếm
+        </h3>
+        <div className="mt-2">
+          {filteredAirports.map((airport) => (
+            <span
+              onClick={() => handleSelectLocation(airport)}
+              key={airport.airportId}
+              className="flex px-4 sm:px-8 items-center space-x-3 sm:space-x-4 py-4 hover:bg-neutral-100 dark:hover:bg-neutral-700 cursor-pointer"
+            >
+              <span className="block text-neutral-400">
+                <MapPinIcon className="h-4 w-4 sm:h-6 sm:w-6" />
+              </span>
+              <div className="flex flex-col">
+                <span className="block font-medium text-neutral-700 dark:text-neutral-200">
+                  {airport.city}, {airport.country}
+                </span>
+                <span className="block text-sm text-neutral-500 dark:text-neutral-400">
+                  {airport.airportName} ({airport.airportCode})
+                </span>
+              </div>
             </span>
-            <span className="block font-medium text-neutral-700 dark:text-neutral-200">
-              {item}
-            </span>
-          </span>
-        ))}
+          ))}
+        </div>
       </>
     );
   };
@@ -122,9 +161,8 @@ const LocationInput: FC<LocationInputProps> = ({
     <div className={`relative flex ${className}`} ref={containerRef}>
       <div
         onClick={() => setShowPopover(true)}
-        className={`flex z-10 flex-1 relative [ nc-hero-field-padding ] flex-shrink-0 items-center space-x-3 cursor-pointer focus:outline-none text-left  ${
-          showPopover ? "nc-hero-field-focused" : ""
-        }`}
+        className={`flex z-10 flex-1 relative [ nc-hero-field-padding ] flex-shrink-0 items-center space-x-3 cursor-pointer focus:outline-none text-left  ${showPopover ? "nc-hero-field-focused" : ""
+          }`}
       >
         <div className="text-neutral-300 dark:text-neutral-400">
           <MapPinIcon className="w-5 h-5 lg:w-7 lg:h-7" />

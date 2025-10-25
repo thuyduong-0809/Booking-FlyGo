@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Input from "@/shared/Input";
 import ButtonPrimary from "@/shared/ButtonPrimary";
 import { useRouter } from "next/navigation";
-import { requestApi } from "lib/api";
+import { requestApi } from "@/lib/api";
 
 const PageOtp = () => {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
@@ -69,21 +69,21 @@ const PageOtp = () => {
     try {
       setLoading(true);
       setError("");
-      const res = await requestApi("auth/verify-otp", "POST", { 
-        email, 
-        otp: code 
+      const res = await requestApi("auth/verify-otp", "POST", {
+        email,
+        otp: code
       });
-      
+
       if (res.success) {
         alert("Xác thực OTP thành công! Đăng ký hoàn tất.");
         router.push("/login");
       } else {
         setError("OTP không hợp lệ");
-        setOtp(["", "", "", "", "", ""]); 
+        setOtp(["", "", "", "", "", ""]);
       }
     } catch (err: any) {
       setError("OTP không hợp lệ");
-      setOtp(["", "", "", "", "", ""]); 
+      setOtp(["", "", "", "", "", ""]);
     } finally {
       setLoading(false);
     }
