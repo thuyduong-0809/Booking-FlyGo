@@ -33,6 +33,9 @@ export default function PassengersPage() {
   const totalChildren = searchData.passengers?.children || 0;
   const totalInfants = searchData.passengers?.infants || 0;
 
+  // Kiểm tra loại chuyến bay
+  const isOneWay = searchData.tripType === 'oneWay';
+
   const [passengers, setPassengers] = useState<Passenger[]>(
     Array.from({ length: totalAdults }, (_, index) => ({
       id: index + 1,
@@ -81,11 +84,24 @@ export default function PassengersPage() {
     // Người lớn + trẻ em tính giá như nhau
     const adultAndChildrenCount = totalAdults + totalChildren;
 
-    // Tổng cho chuyến đi (chỉ tính chuyến đi cho one-way)
+    // Tổng cho chuyến đi
     const depAdultPrice = depPricePerPerson * adultAndChildrenCount;
     const depInfantPrice = 100000 * totalInfants;
     const depTaxAmount = depTaxPerPerson * adultAndChildrenCount;
     const totalDeparture = depAdultPrice + depInfantPrice + depTaxAmount;
+
+    // Nếu là chuyến bay khứ hồi, tính thêm chuyến về
+    if (!isOneWay && returnFlight) {
+      const retPricePerPerson = (Number(returnFlight?.price) || 0);
+      const retTaxPerPerson = (Number(returnFlight?.tax) || 0);
+
+      const retAdultPrice = retPricePerPerson * adultAndChildrenCount;
+      const retInfantPrice = 100000 * totalInfants;
+      const retTaxAmount = retTaxPerPerson * adultAndChildrenCount;
+      const totalReturn = retAdultPrice + retInfantPrice + retTaxAmount;
+
+      return totalDeparture + totalReturn;
+    }
 
     // Debug log để kiểm tra
     console.log('Passengers Page - Calculated Total:', {
@@ -96,11 +112,12 @@ export default function PassengersPage() {
       depInfantPrice,
       depTaxAmount,
       totalDeparture,
-      departureFlight
+      departureFlight,
+      isOneWay
     });
 
     return totalDeparture;
-  }, [departureFlight, totalAdults, totalChildren, totalInfants]);
+  }, [departureFlight, returnFlight, totalAdults, totalChildren, totalInfants, isOneWay]);
 
   // Debug useEffect
   useEffect(() => {
@@ -133,7 +150,7 @@ export default function PassengersPage() {
 
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-black">
-                  CHUYẾN BAY KHỨ HỒI | {totalAdults} Người lớn {totalChildren > 0 && `${totalChildren} Trẻ em`} {totalInfants > 0 && `${totalInfants} Em bé`}
+                  {isOneWay ? 'CHUYẾN BAY MỘT CHIỀU' : 'CHUYẾN BAY KHỨ HỒI'} | {totalAdults} Người lớn {totalChildren > 0 && `${totalChildren} Trẻ em`} {totalInfants > 0 && `${totalInfants} Em bé`}
                 </h1>
                 <div className="text-black mt-2 font-medium">
                   <div className="flex items-center space-x-2">
@@ -480,80 +497,82 @@ export default function PassengersPage() {
               </div>
             </div>
 
-            {/* Return Flight */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-lg font-bold text-black">Chuyến về</h4>
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg font-bold text-black">{formatVnd(((Number(returnFlight?.price) || 0) + (Number(returnFlight?.tax) || 0)) * (totalAdults + totalChildren) + 100000 * totalInfants)} VND</span>
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
+            {/* Return Flight - chỉ hiển thị khi không phải chuyến bay một chiều */}
+            {!isOneWay && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-lg font-bold text-black">Chuyến về</h4>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-lg font-bold text-black">{formatVnd(((Number(returnFlight?.price) || 0) + (Number(returnFlight?.tax) || 0)) * (totalAdults + totalChildren) + 100000 * totalInfants)} VND</span>
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                  {/* Route */}
+                  <div className="text-base text-gray-700">{searchData.arrivalAirport?.city || ''} ({searchData.arrivalAirport?.airportCode || ''}) ✈ {searchData.departureAirport?.city || ''} ({searchData.departureAirport?.airportCode || ''})</div>
+
+                  {/* Date - Format: "Thứ hai, 29/10/2025" */}
+                  <div className="text-base text-gray-700">
+                    {(() => {
+                      const date = searchData.returnDate || new Date();
+                      const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+                      const dayName = dayNames[date.getDay()];
+                      const day = date.getDate();
+                      const month = date.getMonth() + 1;
+                      const year = date.getFullYear();
+                      return `${dayName}, ${day}/${month}/${year}`;
+                    })()}
+                  </div>
+
+                  {/* Time */}
+                  <div className="text-base text-gray-700">Giờ bay: {returnFlight?.departTime || ''} - {returnFlight?.arriveTime || ''}</div>
+
+                  {/* Flight Code */}
+                  <div className="text-base text-gray-700">Số hiệu: {returnFlight?.code || ''}</div>
+
+                  {/* Fare Class */}
+                  <div className="text-base font-bold text-gray-700">Hạng vé: {returnFlight?.fareName || ''}</div>
+
+                  {/* Price Breakdown */}
+                  <div className="pt-2 space-y-3 border-t border-gray-200">
+                    {/* Giá vé cho người lớn */}
+                    {totalAdults > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-base text-gray-700">Người lớn x {totalAdults}</span>
+                        <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.price) || 0) * totalAdults)} VND</span>
+                      </div>
+                    )}
+
+                    {/* Giá vé cho trẻ em */}
+                    {totalChildren > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-base text-gray-700">Trẻ em x {totalChildren}</span>
+                        <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.price) || 0) * totalChildren)} VND</span>
+                      </div>
+                    )}
+
+                    {/* Giá vé cho em bé */}
+                    {totalInfants > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-base text-gray-700">Em bé x {totalInfants}</span>
+                        <span className="font-semibold text-gray-700">{formatVnd(100000 * totalInfants)} VND</span>
+                      </div>
+                    )}
+
+                    {/* Thuế VAT */}
+                    {(totalAdults > 0 || totalChildren > 0 || totalInfants > 0) && (
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                        <span className="text-base text-gray-700">Thuế VAT</span>
+                        <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                {/* Route */}
-                <div className="text-base text-gray-700">{searchData.arrivalAirport?.city || ''} ({searchData.arrivalAirport?.airportCode || ''}) ✈ {searchData.departureAirport?.city || ''} ({searchData.departureAirport?.airportCode || ''})</div>
-
-                {/* Date - Format: "Thứ hai, 29/10/2025" */}
-                <div className="text-base text-gray-700">
-                  {(() => {
-                    const date = searchData.returnDate || new Date();
-                    const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-                    const dayName = dayNames[date.getDay()];
-                    const day = date.getDate();
-                    const month = date.getMonth() + 1;
-                    const year = date.getFullYear();
-                    return `${dayName}, ${day}/${month}/${year}`;
-                  })()}
-                </div>
-
-                {/* Time */}
-                <div className="text-base text-gray-700">Giờ bay: {returnFlight?.departTime || ''} - {returnFlight?.arriveTime || ''}</div>
-
-                {/* Flight Code */}
-                <div className="text-base text-gray-700">Số hiệu: {returnFlight?.code || ''}</div>
-
-                {/* Fare Class */}
-                <div className="text-base font-bold text-gray-700">Hạng vé: {returnFlight?.fareName || ''}</div>
-
-                {/* Price Breakdown */}
-                <div className="pt-2 space-y-3 border-t border-gray-200">
-                  {/* Giá vé cho người lớn */}
-                  {totalAdults > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-base text-gray-700">Người lớn x {totalAdults}</span>
-                      <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.price) || 0) * totalAdults)} VND</span>
-                    </div>
-                  )}
-
-                  {/* Giá vé cho trẻ em */}
-                  {totalChildren > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-base text-gray-700">Trẻ em x {totalChildren}</span>
-                      <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.price) || 0) * totalChildren)} VND</span>
-                    </div>
-                  )}
-
-                  {/* Giá vé cho em bé */}
-                  {totalInfants > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-base text-gray-700">Em bé x {totalInfants}</span>
-                      <span className="font-semibold text-gray-700">{formatVnd(100000 * totalInfants)} VND</span>
-                    </div>
-                  )}
-
-                  {/* Thuế VAT */}
-                  {(totalAdults > 0 || totalChildren > 0 || totalInfants > 0) && (
-                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                      <span className="text-base text-gray-700">Thuế VAT</span>
-                      <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* Total */}
             <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8 rounded-2xl text-center mb-8 shadow-xl">
