@@ -5,7 +5,7 @@ import { FlightsService } from 'src/flights/flights.service';
 
 @Controller('flights')
 export class FlightsController {
-    constructor(private flightsService: FlightsService) {}
+    constructor(private flightsService: FlightsService) { }
 
     @Get()
     async findAll(): Promise<any> {
@@ -13,28 +13,28 @@ export class FlightsController {
     }
 
     @Get(':id')
-    async findOne(@Param('id') id:string): Promise<any> {
+    async findOne(@Param('id') id: string): Promise<any> {
         return this.flightsService.findOne(Number(id));
     }
 
     @UsePipes(ValidationPipe)
     @Post()
-    async create(@Body() createFlightDto:CreateFlightDto): Promise<any> {
+    async create(@Body() createFlightDto: CreateFlightDto): Promise<any> {
         return this.flightsService.create(createFlightDto);
     }
 
     @UsePipes(ValidationPipe)
     @Put(':id')
-    async update(@Param('id') id:string, @Body() updateFlightDto:UpdateFlightDto): Promise<any> {
+    async update(@Param('id') id: string, @Body() updateFlightDto: UpdateFlightDto): Promise<any> {
         return this.flightsService.update(Number(id), updateFlightDto);
     }
 
     @Delete(':id')
-    async delete(@Param('id') id:string): Promise<any> {
+    async delete(@Param('id') id: string): Promise<any> {
         return this.flightsService.delete(Number(id));
     }
     @Get('generate-flight-number/:airlineId')
-        async generateFlightNumber(@Param('airlineId') airlineId: number) {
+    async generateFlightNumber(@Param('airlineId') airlineId: number) {
         return this.flightsService.generateFlightNumber(airlineId);
     }
 }

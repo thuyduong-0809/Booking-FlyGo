@@ -4,6 +4,9 @@ import React, { useMemo, useState, useEffect } from "react";
 import Link from 'next/link';
 import { useBooking } from "../BookingContext";
 import { useSearch } from "../SearchContext";
+import { flightsService, Flight } from "../../../services/flights.service";
+import { requestApi } from "@/lib/api";
+import { getCookie } from "@/utils/cookies";
 
 interface FareOption {
   name: string;
@@ -23,6 +26,7 @@ interface FlightItem {
   aircraft: string;
   note?: string;
   fares: FareOption[];
+  flightData?: Flight; // Thêm dữ liệu flight từ API
 }
 
 // Recovery flights data - both departure and return flights
@@ -248,7 +252,11 @@ const recoveryReturnFlights: FlightItem[] = [
 ];
 
 // Utility functions
-const formatVnd = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " VND";
+const formatVnd = (n: number) => {
+  // Làm tròn số về số nguyên để tránh hiển thị phần thập phân
+  const roundedNumber = Math.round(n);
+  return new Intl.NumberFormat("vi-VN").format(roundedNumber) + " VND";
+};
 
 // Component: Flight Route Display
 const FlightRoute = ({ type, searchData }: { type: 'departure' | 'return', searchData: any }) => (
@@ -600,57 +608,68 @@ const FlightSummaryCard = ({
     return `${dayOfWeek}, ${date}/${month}/${year}`;
   };
 
+  // Kiểm tra nếu không có dữ liệu
+  const hasNoData = !flight || !fare;
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-bold text-lg text-black">{title}</h4>
-        <div className="flex items-center">
-          <span className="font-bold text-lg text-black mr-2">{formatVnd(total)}</span>
-          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        </div>
+        {!hasNoData && (
+          <div className="flex items-center">
+            <span className="font-bold text-lg text-black mr-2">{formatVnd(total)}</span>
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </div>
+        )}
       </div>
 
-      <div className="text-base text-gray-700 mb-2">
-        {type === 'departure' ? `${state.departureAirport?.city} (${state.departureAirport?.airportCode}) ✈ ${state.arrivalAirport?.city} (${state.arrivalAirport?.airportCode})` : `${state.arrivalAirport?.city} (${state.arrivalAirport?.airportCode}) ✈ ${state.departureAirport?.city} (${state.departureAirport?.airportCode})`}
-      </div>
-      <div className="text-base text-gray-700 mb-3">
-        {type === 'departure'
-          ? `${getFullDateString(selectedDate)} | ${flight?.departTime} - ${flight?.arriveTime} | ${flight?.code} | ${fare?.name}`
-          : `${getFullDateString(selectedDate)} | ${flight?.departTime} - ${flight?.arriveTime} | ${flight?.code} | ${fare?.name}`
-        }
-      </div>
+      {hasNoData ? (
+        <div className="text-sm text-gray-500 italic text-center py-4">
+          Chưa chọn chuyến bay
+        </div>
+      ) : (
+        <>
+          {/* Route */}
+          <div className="text-base text-gray-700 mb-2">
+            {type === 'departure'
+              ? `${state.departureAirport?.city || ''} (${state.departureAirport?.airportCode || ''}) ✈ ${state.arrivalAirport?.city || ''} (${state.arrivalAirport?.airportCode || ''})`
+              : `${state.arrivalAirport?.city || ''} (${state.arrivalAirport?.airportCode || ''}) ✈ ${state.departureAirport?.city || ''} (${state.departureAirport?.airportCode || ''})`
+            }
+          </div>
 
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-base text-gray-700">Giá vé</span>
-          <div className="flex items-center">
-            <span className="font-semibold text-gray-700">{formatVnd(fare?.price || 0)}</span>
-            <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+          {/* Flight details - chia thành nhiều dòng */}
+          <div className="text-base text-gray-700 mb-3 space-y-1">
+            <div>{getFullDateString(selectedDate)}</div>
+            {flight?.departTime && flight?.arriveTime && (
+              <div>Giờ bay: {flight.departTime} - {flight.arriveTime}</div>
+            )}
+            {flight?.code && (
+              <div>Số hiệu: {flight.code}</div>
+            )}
+            {fare?.name && (
+              <div className="text-base font-bold text-gray-700">Hạng vé: {fare.name}</div>
+            )}
           </div>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-base text-gray-700">Thuế, phí</span>
-          <div className="flex items-center">
-            <span className="font-semibold text-gray-700">{formatVnd(fare?.tax || 0)}</span>
-            <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+
+          {/* Price breakdown - chia thành nhiều dòng */}
+          <div className="space-y-2 border-t pt-2">
+            <div className="flex justify-between items-center">
+              <span className="text-base text-gray-700">Giá vé</span>
+              <span className="font-semibold text-gray-700">{formatVnd(fare?.price || 0)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-base text-gray-700">Thuế, phí</span>
+              <span className="font-semibold text-gray-700">{formatVnd(fare?.tax || 0)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-base text-gray-700">Dịch vụ</span>
+              <span className="font-semibold text-gray-700">{formatVnd(fare?.service || 0)}</span>
+            </div>
           </div>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-base text-gray-700">Dịch vụ</span>
-          <div className="flex items-center">
-            <span className="font-semibold text-gray-700">{formatVnd(fare?.service || 0)}</span>
-            <svg className="w-4 h-4 ml-1 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };
@@ -667,6 +686,16 @@ export default function SelectFlightRecoveryPage() {
   const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
   const [selectedReturnFlight, setSelectedReturnFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
 
+  // State cho flights từ API
+  const [departureFlights, setDepartureFlights] = useState<FlightItem[]>([]);
+  const [returnFlights, setReturnFlights] = useState<FlightItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+
+  // State cho user info
+  const [userData, setUserData] = useState<any>(null);
+  const [passengerName, setPassengerName] = useState<string>('');
+
   // Sử dụng ngày từ searchData hoặc mặc định
   const [selectedDepartureDate, setSelectedDepartureDate] = useState(
     searchData.departureDate ? searchData.departureDate.getDate() : 14
@@ -674,6 +703,33 @@ export default function SelectFlightRecoveryPage() {
   const [selectedReturnDate, setSelectedReturnDate] = useState(
     searchData.returnDate ? searchData.returnDate.getDate() : 14
   );
+
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = getCookie("access_token");
+        if (!token) return;
+
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userId = payload.userId;
+
+        if (!userId) return;
+
+        const response = await requestApi(`users/${userId}`, "GET");
+        if (response.success && response.data) {
+          setUserData(response.data);
+          // Tự động điền tên user
+          const fullName = `${response.data.firstName || ''} ${response.data.lastName || ''}`.trim();
+          setPassengerName(fullName);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Đồng bộ ngày với searchData khi context thay đổi
   useEffect(() => {
@@ -685,22 +741,173 @@ export default function SelectFlightRecoveryPage() {
     }
   }, [searchData.departureDate, searchData.returnDate]);
 
+  // Fetch flights khi component mount hoặc searchData thay đổi
+  useEffect(() => {
+    if (searchData.departureAirport && searchData.arrivalAirport && searchData.departureDate) {
+      // Luôn gọi searchFlights khi có đủ thông tin
+      searchFlights();
+    }
+    // Nếu không có searchData, sử dụng dữ liệu mẫu
+    else if (!searchData.departureAirport && departureFlights.length === 0) {
+      setDepartureFlights(recoveryFlights);
+      setReturnFlights(recoveryReturnFlights);
+    }
+  }, [searchData.departureAirport?.airportCode, searchData.arrivalAirport?.airportCode]);
+
+  // Hàm chuyển đổi flight từ API sang FlightItem
+  const convertFlightToFlightItem = (flight: Flight): FlightItem => {
+    // Parse departureTime và arrivalTime
+    const departureTime = new Date(flight.departureTime);
+    const arrivalTime = new Date(flight.arrivalTime);
+
+    const departTimeStr = departureTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const arriveTimeStr = arrivalTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+    // Tạo fares từ economyPrice, businessPrice, firstClassPrice
+    const fares: FareOption[] = [];
+
+    if (flight.firstClassPrice > 0 && flight.availableFirstClassSeats > 0) {
+      fares.push({
+        name: "FIST CLASS",
+        price: flight.firstClassPrice,
+        tax: Math.round(flight.firstClassPrice * 0.10),
+        service: 0,
+        includes: [
+          "Hành lý xách tay: 18kg",
+          "Hành lý ký gửi: 60kg",
+          "Phòng chờ sang trọng",
+          "Ưu tiên làm thủ tục",
+          "Thưởng thức ẩm thực suốt chuyến bay",
+        ],
+        excludes: []
+      });
+    }
+
+    if (flight.businessPrice > 0 && flight.availableBusinessSeats > 0) {
+      fares.push({
+        name: "BUSSINESS",
+        price: flight.businessPrice,
+        tax: Math.round(flight.businessPrice * 0.10),
+        service: 0,
+        includes: [
+          "Hành lý xách tay: 14kg",
+          "Hành lý ký gửi: 50kg",
+          "Phòng chờ",
+          "Ưu tiên làm thủ tục",
+        ],
+        excludes: []
+      });
+    }
+
+    if (flight.economyPrice > 0 && flight.availableEconomySeats > 0) {
+      fares.push({
+        name: "Eco",
+        price: flight.economyPrice,
+        tax: Math.round(flight.economyPrice * 0.10),
+        service: 0,
+        includes: [
+          "Hành lý xách tay: 07Kg"
+        ],
+        excludes: [
+          "Hành lý ký gửi (tùy chọn)",
+          "Suất ăn",
+          "Chọn trước chỗ ngồi",
+        ]
+      });
+    }
+
+    return {
+      id: `flight-${flight.flightId}`,
+      code: flight.flightNumber,
+      departTime: departTimeStr,
+      arriveTime: arriveTimeStr,
+      aircraft: flight.aircraft?.model || 'Airbus A320',
+      note: "Bay thẳng",
+      fares: fares.length > 0 ? fares : [{
+        name: "Eco",
+        price: 0,
+        soldOut: true,
+        tax: 0,
+        service: 0,
+        includes: [],
+        excludes: []
+      }],
+      flightData: flight
+    };
+  };
+
+  // Hàm tìm kiếm chuyến bay
+  const searchFlights = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      // Format date
+      const formatDate = (date: Date) => {
+        return date.toISOString().split('T')[0];
+      };
+
+      // Tìm kiếm chuyến đi
+      const departureSearchResult = await flightsService.searchFlights({
+        departureAirportCode: searchData.departureAirport?.airportCode,
+        arrivalAirportCode: searchData.arrivalAirport?.airportCode,
+        departureDate: formatDate(searchData.departureDate!)
+      });
+
+      if (departureSearchResult.success && departureSearchResult.data) {
+        const departureItems = departureSearchResult.data.map(flight => convertFlightToFlightItem(flight));
+        setDepartureFlights(departureItems);
+      } else {
+        setDepartureFlights([]);
+      }
+
+      // Tìm kiếm chuyến về (nếu có returnDate)
+      if (searchData.returnDate) {
+        const returnSearchResult = await flightsService.searchFlights({
+          departureAirportCode: searchData.arrivalAirport?.airportCode,
+          arrivalAirportCode: searchData.departureAirport?.airportCode,
+          departureDate: formatDate(searchData.returnDate)
+        });
+
+        if (returnSearchResult.success && returnSearchResult.data) {
+          const returnItems = returnSearchResult.data.map(flight => convertFlightToFlightItem(flight));
+          setReturnFlights(returnItems);
+        } else {
+          setReturnFlights([]);
+        }
+      }
+    } catch (err: any) {
+      console.error('Error searching flights:', err);
+      setError(`Lỗi khi tìm kiếm chuyến bay: ${err.message || 'Không thể kết nối đến server'}`);
+      setDepartureFlights([]);
+      setReturnFlights([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const [expandedFlight, setExpandedFlight] = useState<{ flightId: string, fareIndex: number, type: 'departure' | 'return' } | null>(null);
 
-  const departureFlight = recoveryFlights.find(f => f.id === selectedDepartureFlight?.flightId);
-  const returnFlight = recoveryReturnFlights.find(f => f.id === selectedReturnFlight?.flightId);
+  const departureFlight = departureFlights.find(f => f.id === selectedDepartureFlight?.flightId);
+  const returnFlight = returnFlights.find(f => f.id === selectedReturnFlight?.flightId);
 
   const departureFare = departureFlight?.fares[selectedDepartureFlight?.fareIndex || 0];
   const returnFare = returnFlight?.fares[selectedReturnFlight?.fareIndex || 0];
 
   const totalDeparture = useMemo(() => {
     if (!departureFare) return 0;
-    return departureFare.price + departureFare.tax + departureFare.service;
+    const price = Number(departureFare.price) || 0;
+    const tax = Number(departureFare.tax) || 0;
+    const service = Number(departureFare.service) || 0;
+    return price + tax + service;
   }, [departureFare]);
 
   const totalReturn = useMemo(() => {
     if (!returnFare) return 0;
-    return returnFare.price + returnFare.tax + returnFare.service;
+    const price = Number(returnFare.price) || 0;
+    const tax = Number(returnFare.tax) || 0;
+    const service = Number(returnFare.service) || 0;
+    return price + tax + service;
   }, [returnFare]);
 
   const computedGrandTotal = totalDeparture + totalReturn;
@@ -847,29 +1054,64 @@ export default function SelectFlightRecoveryPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="container mx-auto px-4 py-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Flights table */}
         <div className="lg:col-span-2">
-          {/* Departure Flights */}
-          {renderFlightSection(
-            recoveryFlights,
-            'departure',
-            'CHUYẾN ĐI',
-            selectedDepartureFlight,
-            setSelectedDepartureFlight,
-            selectedDepartureDate,
-            setSelectedDepartureDate
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <span className="ml-4 text-lg font-semibold">Đang tìm kiếm chuyến bay...</span>
+            </div>
           )}
 
-          {/* Return Flights */}
-          {renderFlightSection(
-            recoveryReturnFlights,
-            'return',
-            'CHUYẾN VỀ',
-            selectedReturnFlight,
-            setSelectedReturnFlight,
-            selectedReturnDate,
-            setSelectedReturnDate
+          {!loading && (
+            <>
+              {/* Departure Flights */}
+              {departureFlights.length > 0 ? (
+                renderFlightSection(
+                  departureFlights,
+                  'departure',
+                  'CHUYẾN ĐI',
+                  selectedDepartureFlight,
+                  setSelectedDepartureFlight,
+                  selectedDepartureDate,
+                  setSelectedDepartureDate
+                )
+              ) : (
+                !loading && (
+                  <div className="bg-white rounded-xl p-8 shadow-xl mb-8 text-center">
+                    <p className="text-lg text-gray-600">Không tìm thấy chuyến bay đi phù hợp</p>
+                  </div>
+                )
+              )}
+
+              {/* Return Flights */}
+              {returnFlights.length > 0 ? (
+                renderFlightSection(
+                  returnFlights,
+                  'return',
+                  'CHUYẾN VỀ',
+                  selectedReturnFlight,
+                  setSelectedReturnFlight,
+                  selectedReturnDate,
+                  setSelectedReturnDate
+                )
+              ) : (
+                !loading && searchData.returnDate && (
+                  <div className="bg-white rounded-xl p-8 shadow-xl mb-8 text-center">
+                    <p className="text-lg text-gray-600">Không tìm thấy chuyến bay về phù hợp</p>
+                  </div>
+                )
+              )}
+            </>
           )}
         </div>
 
@@ -887,7 +1129,9 @@ export default function SelectFlightRecoveryPage() {
               </label>
               <input
                 type="text"
-                className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                value={passengerName}
+                onChange={(e) => setPassengerName(e.target.value)}
+                className="w-full border-2 text-black  border-gray-300 rounded-xl px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                 placeholder="Nhập thông tin hành khách"
               />
             </div>
