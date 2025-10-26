@@ -45,7 +45,7 @@ export class BookingsService {
                         }
                         const newBooking = this.bookingRepository.create({
                             ...createBookingDto,
-                            user: user, 
+                            user: user,
                             bookingReference:this.generateBookingReference()
                         });
                         await this.bookingRepository.save(newBooking);

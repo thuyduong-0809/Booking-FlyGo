@@ -6,9 +6,10 @@ export class CreateBookingDto {
   @IsString()
   bookingReference: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  totalAmount: number;
+ @IsNumber()
+ @Type(() => Number)
+ @IsOptional()
+ totalAmount: number = 0;
 
   @IsEnum(['Pending', 'Paid', 'Failed', 'Refunded'])
   @IsOptional()

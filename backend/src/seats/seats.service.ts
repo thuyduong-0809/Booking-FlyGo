@@ -58,29 +58,35 @@ export class SeatsService {
                     }
                     return response;
                 }
-                
-                async findOneSeatNumberByAircraft(aircraftId:number,seatNumber: string): Promise<any> {
-                    let response = { ...common_response };
-                    try {
-                        const seat= await this.seatRepository.findOne({
-                            where: [{seatNumber},{aircraft:{aircraftId}}],
-                            relations: ['aircraft'],
-                        });
-                        if (seat) {
-                            response.success = true;
-                            response.data =  seat;
-                            response.message = 'Successfully retrieved seat information';
-                        } else {
-                            response.success = false;
-                            response.message = ' seat not found';
-                        }
-                    } catch (error) {
-                        console.error(error);
-                        response.success = false;
-                        response.message = 'Error while retrieving  seat by ID';
-                    }
-                    return response;
-                }   
+            async findOneSeatNumberByAircraft(aircraftId: number, seatNumber: string): Promise<any> {
+                const response = { ...common_response };
+
+                try {
+                const seat = await this.seatRepository.findOne({
+                    where: {
+                    seatNumber,
+                    aircraft: { aircraftId }, // AND condition (đúng mong muốn)
+                    },
+                    relations: ['aircraft'],
+                });
+
+                if (seat) {
+                    response.success = true;
+                    response.data = seat;
+                    response.message = 'Successfully retrieved seat information';
+                } else {
+                    response.success = false;
+                    response.message = 'Seat not found';
+                }
+                } catch (error) {
+                console.error(error);
+                response.success = false;
+                response.message = 'Error while retrieving seat by aircraft and seat number';
+                }
+
+                return response;
+                }
+
                   
 
                 async create(createSeatDto: CreateSeatDto) {

@@ -21,7 +21,7 @@ export class Booking {
   @Column({ length: 10, unique: true })
   bookingReference: string;
 
-  @Column('decimal', { precision: 12, scale: 2 })
+  @Column('decimal', { precision: 12, scale: 2 ,default:0})
   totalAmount: number;
 
   @Column({

@@ -15,6 +15,7 @@ export class BookingsController {
         findOne(@Param('id') id:string) {
             return this.bookingsService.findOne(Number(id));
         }
+        
             
         @UsePipes(ValidationPipe)
         @Post()
