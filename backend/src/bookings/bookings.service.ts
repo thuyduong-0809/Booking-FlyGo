@@ -32,6 +32,27 @@ export class BookingsService {
         return response;
     }
 
+    async findByUserId(userId: number): Promise<any> {
+        let response = { ...common_response };
+        try {
+            console.log('🔍 Finding bookings for userId:', userId);
+            const bookings = await this.bookingRepository.find({
+                where: { user: { userId } },
+                relations: ['user', 'bookingFlights', 'bookingFlights.flight', 'bookingFlights.flight.arrivalAirport', 'bookingFlights.flight.departureAirport'],
+                order: { bookingId: 'DESC' }
+            });
+            console.log('📋 Found bookings:', bookings.length);
+            response.success = true;
+            response.data = bookings;
+            response.message = 'Successfully retrieved bookings for user';
+        } catch (error) {
+            console.error('❌ Error finding bookings:', error);
+            response.success = false;
+            response.message = 'Error while fetching bookings for user';
+        }
+        return response;
+    }
+
 
     async create(createBookingDto: CreateBookingDto): Promise<any> {
         let response = { ...common_response };
@@ -66,10 +87,21 @@ export class BookingsService {
     async findOne(id: number): Promise<any> {
         let response = { ...common_response };
         try {
+            console.log('🔍 Finding booking with id:', id);
             const booking = await this.bookingRepository.findOne({
                 where: { bookingId: id },
-                relations: ['user'],
+                relations: [
+                    'user',
+                    'bookingFlights',
+                    'bookingFlights.flight',
+                    'bookingFlights.flight.arrivalAirport',
+                    'bookingFlights.flight.departureAirport',
+                    'bookingFlights.flight.airline',
+                    'passengers'
+                ],
             });
+            console.log('📋 Found booking:', booking);
+
             if (booking) {
                 response.success = true;
                 response.data = booking;

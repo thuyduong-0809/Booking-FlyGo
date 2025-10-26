@@ -14,6 +14,8 @@ export interface SelectedFare {
   code?: string;
   departTime?: string;
   arriveTime?: string;
+  departureAirport?: any;
+  arrivalAirport?: any;
 }
 
 export interface SelectedService {

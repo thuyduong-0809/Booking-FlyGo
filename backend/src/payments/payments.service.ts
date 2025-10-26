@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment, MoMoPaymentDetails } from './entities/payments.entity';
 import { Booking } from 'src/bookings/entities/bookings.entity';
+import { EmailService } from 'src/email/email.service';
 import * as crypto from 'crypto';
 import axios from 'axios';
 
@@ -18,6 +19,7 @@ export class PaymentsService {
         private paymentRepository: Repository<Payment>,
         @InjectRepository(Booking)
         private bookingRepository: Repository<Booking>,
+        private emailService: EmailService,
     ) { }
 
     async createPayment(amount: number, bookingId: number, paymentMethod: string, transactionId?: string) {
@@ -83,6 +85,30 @@ export class PaymentsService {
                 payment.booking.paymentStatus = 'Paid';
                 await this.bookingRepository.save(payment.booking);
                 console.log(`✅ Backend: Booking status updated to Completed`);
+
+                // Send confirmation email
+                try {
+                    const booking = await this.bookingRepository.findOne({
+                        where: { bookingId: payment.booking.bookingId },
+                        relations: ['user', 'bookingFlights', 'bookingFlights.flight', 'bookingFlights.flight.arrivalAirport', 'bookingFlights.flight.departureAirport']
+                    });
+
+                    if (booking && booking.user) {
+                        const flightDetailsHtml = this.generateFlightDetailsHtml(booking);
+
+                        await this.emailService.sendPaymentConfirmationEmail(
+                            booking.user.email,
+                            booking.bookingReference,
+                            payment.amount,
+                            payment.paymentMethod,
+                            flightDetailsHtml
+                        );
+                        console.log('✅ Email sent successfully');
+                    }
+                } catch (emailError) {
+                    console.error('❌ Error sending email:', emailError);
+                    // Don't throw error, continue with payment update
+                }
             }
         }
 
@@ -296,5 +322,32 @@ export class PaymentsService {
                 `Failed to handle MoMo callback: ${error.message}`,
             );
         }
+    }
+
+    private generateFlightDetailsHtml(booking: any): string {
+        if (!booking.bookingFlights || booking.bookingFlights.length === 0) {
+            return '<p style="color: #666;">Thông tin chuyến bay</p>';
+        }
+
+        let html = '';
+        booking.bookingFlights.forEach((bf: any, index: number) => {
+            const flight = bf.flight;
+            const departure = flight.departureAirport;
+            const arrival = flight.arrivalAirport;
+
+            html += `
+                <div style="margin-bottom: 20px; padding: 15px; background-color: ${index === 0 ? '#e8f5e9' : '#fff3e0'}; border-radius: 8px;">
+                    <p style="margin: 5px 0; font-weight: bold; color: #333;">${index === 0 ? '✈️ Chuyến đi' : '✈️ Chuyến về'}</p>
+                    <p style="margin: 5px 0; color: #666;"><strong>Số hiệu:</strong> ${flight.flightNumber}</p>
+                    <p style="margin: 5px 0; color: #666;"><strong>Từ:</strong> ${departure.city} (${departure.airportCode})</p>
+                    <p style="margin: 5px 0; color: #666;"><strong>Đến:</strong> ${arrival.city} (${arrival.airportCode})</p>
+                    <p style="margin: 5px 0; color: #666;"><strong>Khởi hành:</strong> ${bf.departTime || flight.departTime}</p>
+                    <p style="margin: 5px 0; color: #666;"><strong>Đến nơi:</strong> ${bf.arriveTime || flight.arriveTime}</p>
+                    <p style="margin: 5px 0; color: #666;"><strong>Hạng vé:</strong> ${flight.fareName || 'Standard'}</p>
+                </div>
+            `;
+        });
+
+        return html;
     }
 }
