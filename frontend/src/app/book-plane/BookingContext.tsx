@@ -16,6 +16,13 @@ export interface SelectedFare {
   arriveTime?: string;
 }
 
+export interface SelectedService {
+  id: string;
+  name: string;
+  price: number;
+  isSelected: boolean;
+}
+
 export interface BookingState {
   tripType: "round" | "oneway";
   origin: string;
@@ -25,6 +32,8 @@ export interface BookingState {
   returnDate?: string; // ISO
   selectedDeparture?: SelectedFare;
   selectedReturn?: SelectedFare;
+  selectedServices?: SelectedService[];
+  bookingId?: number; // ID của booking đã tạo
 }
 
 const initialState: BookingState = {
@@ -41,6 +50,8 @@ interface BookingContextValue {
   setDates: (departureISO?: string, returnISO?: string) => void;
   setSelectedDeparture: (fare: SelectedFare | undefined) => void;
   setSelectedReturn: (fare: SelectedFare | undefined) => void;
+  setSelectedServices: (services: SelectedService[]) => void;
+  setBookingId: (id: number | undefined) => void;
   grandTotal: number;
 }
 
@@ -69,11 +80,22 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setState(prev => ({ ...prev, selectedReturn: fare }));
   }, []);
 
+  const setSelectedServices = useCallback((services: SelectedService[]) => {
+    setState(prev => ({ ...prev, selectedServices: services }));
+  }, []);
+
+  const setBookingId = useCallback((id: number | undefined) => {
+    setState(prev => ({ ...prev, bookingId: id }));
+  }, []);
+
   const grandTotal = useMemo(() => {
     const dep = state.selectedDeparture ? (state.selectedDeparture.price + state.selectedDeparture.tax + state.selectedDeparture.service) : 0;
     const ret = state.selectedReturn ? (state.selectedReturn.price + state.selectedReturn.tax + state.selectedReturn.service) : 0;
-    return (dep + ret) * state.passengers;
-  }, [state.selectedDeparture, state.selectedReturn, state.passengers]);
+    const servicesTotal = state.selectedServices ? state.selectedServices
+      .filter(service => service.isSelected)
+      .reduce((total, service) => total + service.price, 0) : 0;
+    return (dep + ret) * state.passengers + servicesTotal;
+  }, [state.selectedDeparture, state.selectedReturn, state.passengers, state.selectedServices]);
 
   const value: BookingContextValue = useMemo(() => ({
     state,
@@ -82,8 +104,10 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setDates,
     setSelectedDeparture,
     setSelectedReturn,
+    setSelectedServices,
+    setBookingId,
     grandTotal,
-  }), [state, setPassengers, setRoute, setDates, setSelectedDeparture, setSelectedReturn, grandTotal]);
+  }), [state, setPassengers, setRoute, setDates, setSelectedDeparture, setSelectedReturn, setSelectedServices, setBookingId, grandTotal]);
 
   return (
     <BookingContext.Provider value={value}>

@@ -1,42 +1,28 @@
 import {
-  IsNotEmpty,
-  IsNumber,
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsJSON,
-  IsDateString,
+    IsNotEmpty,
+    IsNumber,
+    IsString,
+    IsOptional,
+    Min,
 } from 'class-validator';
 
 export class CreatePaymentDto {
-  @IsNotEmpty()
-  @IsNumber()
-  amount: number;
+    @IsNotEmpty()
+    @IsNumber()
+    @Min(0)
+    amount: number;
 
-  @IsNotEmpty()
-  @IsEnum(['CreditCard', 'DebitCard', 'PayPal', 'BankTransfer'], {
-    message: 'paymentMethod must be one of: CreditCard, DebitCard, PayPal, BankTransfer',
-  })
-  paymentMethod: string;
+    @IsNotEmpty()
+    @IsNumber()
+    @Min(1)
+    bookingId: number;
 
-  @IsOptional()
-  @IsEnum(['Pending', 'Completed', 'Failed', 'Refunded'], {
-    message: 'paymentStatus must be one of: Pending, Completed, Failed, Refunded',
-  })
-  paymentStatus?: string;
+    @IsOptional()
+    @IsString()
+    orderInfo?: string;
 
-  @IsOptional()
-  @IsString()
-  transactionId?: string;
-
-  @IsOptional()
-  paymentDetails?: object;
-
-  @IsOptional()
-  @IsDateString()
-  paidAt?: Date;
-
-  @IsNotEmpty()
-  @IsNumber()
-  bookingId: number;
+    @IsOptional()
+    @IsString()
+    requestId?: string;
 }
+

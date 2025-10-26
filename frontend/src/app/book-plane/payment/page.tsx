@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../BookingContext';
 import { useSearch } from '../SearchContext';
+import PaymentMoMo from './payment-momo/PaymentMoMo';
+import { paymentsService } from '@/services/payments.service';
 
 function formatVnd(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + " VND";
@@ -14,13 +17,21 @@ export default function PaymentPage() {
   const { state, grandTotal } = useBooking();
   const { searchData } = useSearch();
 
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('atm');
+  const [showMoMoPayment, setShowMoMoPayment] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const dep = state.selectedDeparture;
   const ret = state.selectedReturn;
+  const selectedServices = state.selectedServices || [];
 
   // Lấy số lượng người từ searchData
   const totalAdults = searchData.passengers?.adults || 0;
   const totalChildren = searchData.passengers?.children || 0;
   const totalInfants = searchData.passengers?.infants || 0;
+
+  // Kiểm tra loại chuyến bay
+  const isOneWay = searchData.tripType === 'oneWay';
 
   // Tính toán giá vé
   const calculateFlightPrice = (flight: any) => {
@@ -35,7 +46,106 @@ export default function PaymentPage() {
 
   const departurePrice = calculateFlightPrice(dep);
   const returnPrice = calculateFlightPrice(ret);
-  const totalPrice = departurePrice + returnPrice;
+  const servicesTotal = selectedServices
+    .filter(service => service.isSelected)
+    .reduce((total, service) => total + service.price, 0);
+  const totalPrice = isOneWay ? departurePrice + servicesTotal : departurePrice + returnPrice + servicesTotal;
+
+  // Handle payment confirmation
+  const handlePaymentConfirm = async () => {
+    if (!state.bookingId) {
+      alert('Không tìm thấy booking. Vui lòng quay lại trang trước.');
+      return;
+    }
+
+    if (selectedPaymentMethod === 'momo') {
+      // Hiển thị PaymentMoMo component
+      setShowMoMoPayment(true);
+    } else {
+      alert('Phương thức thanh toán này chưa được hỗ trợ. Vui lòng chọn MoMo.');
+    }
+  };
+
+  const handleMoMoComplete = async () => {
+    if (!state.bookingId) {
+      alert('Không tìm thấy booking. Vui lòng quay lại trang trước.');
+      return;
+    }
+
+    console.log('🚀 === STARTING PAYMENT COMPLETION PROCESS ===');
+    console.log('📌 Booking ID:', state.bookingId);
+
+    try {
+      setIsProcessing(true);
+      console.log('🔄 Step 1: Getting payments for booking:', state.bookingId);
+
+      // Get all payments for this booking
+      const payments = await paymentsService.getPaymentsByBooking(Number(state.bookingId));
+      console.log('📋 Step 1 complete - Found payments:', payments);
+      console.log('📋 Number of payments:', payments?.length);
+
+      if (payments && payments.length > 0) {
+        // Find the most recent payment
+        const latestPayment = payments.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0];
+
+        console.log('🔍 Step 2: Latest payment found:', latestPayment);
+        console.log('📌 Payment ID:', latestPayment.paymentId);
+        console.log('📌 Current Status:', latestPayment.paymentStatus);
+
+        // Check if payment is already completed
+        if (latestPayment.paymentStatus === 'Completed') {
+          console.log('✅ Payment already completed, redirecting...');
+          setShowMoMoPayment(false);
+          window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
+          return;
+        }
+
+        // Payment is still pending → Update to Completed
+        console.log('⏳ Step 3: Updating payment from Pending to Completed...');
+        console.log('📌 Calling updatePaymentStatus with:');
+        console.log('   - paymentId:', latestPayment.paymentId);
+        console.log('   - newStatus: Completed');
+
+        try {
+          const result = await paymentsService.updatePaymentStatus(
+            latestPayment.paymentId,
+            'Completed'
+          );
+
+          console.log('✅ Step 3 complete - Payment status updated successfully:', result);
+          console.log('✅ New payment status from response:', result.paymentStatus);
+
+          // Redirect to success page
+          console.log('🚀 Step 4: Redirecting to success page...');
+          setShowMoMoPayment(false);
+          setIsProcessing(false);
+
+          // Wait a bit to ensure backend update is complete
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
+        } catch (updateError) {
+          console.error('❌ Error updating payment status:', updateError);
+          setIsProcessing(false);
+          alert('Lỗi cập nhật trạng thái: ' + (updateError as any)?.message || 'Vui lòng thử lại.');
+        }
+      } else {
+        console.warn('⚠️ No payments found');
+        setIsProcessing(false);
+        alert('Không tìm thấy thông tin thanh toán. Vui lòng thử lại.');
+      }
+    } catch (error) {
+      console.error('❌ Error processing payment:', error);
+      setIsProcessing(false);
+      alert('Có lỗi xảy ra: ' + (error as any)?.message || 'Vui lòng thử lại.');
+    }
+  };
+
+  const handleMoMoClose = () => {
+    setShowMoMoPayment(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -118,38 +228,40 @@ export default function PaymentPage() {
                 </div>
               </div>
 
-              {/* Return Flight */}
-              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-green-800">Chuyến về</h3>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-                    <span className="text-sm font-medium text-green-700">{ret?.code}</span>
+              {/* Return Flight - chỉ hiển thị khi không phải chuyến bay một chiều */}
+              {!isOneWay && (
+                <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-green-800">Chuyến về</h3>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                      <span className="text-sm font-medium text-green-700">{ret?.code}</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-800">{searchData.arrivalAirport?.airportCode}</div>
+                      <div className="text-base text-gray-600">{searchData.arrivalAirport?.city}</div>
+                      <div className="text-xl font-semibold text-gray-800 mt-2">{ret?.departTime}</div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex-1 h-px bg-gray-300"></div>
+                      <svg className="w-6 h-6 text-gray-500 mx-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+                      </svg>
+                      <div className="flex-1 h-px bg-gray-300"></div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-800">{searchData.departureAirport?.airportCode}</div>
+                      <div className="text-base text-gray-600">{searchData.departureAirport?.city}</div>
+                      <div className="text-xl font-semibold text-gray-800 mt-2">{ret?.arriveTime}</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 text-center">
+                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">{ret?.fareName}</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-gray-800">{searchData.arrivalAirport?.airportCode}</div>
-                    <div className="text-base text-gray-600">{searchData.arrivalAirport?.city}</div>
-                    <div className="text-xl font-semibold text-gray-800 mt-2">{ret?.departTime}</div>
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <div className="flex-1 h-px bg-gray-300"></div>
-                    <svg className="w-6 h-6 text-gray-500 mx-2" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-                    </svg>
-                    <div className="flex-1 h-px bg-gray-300"></div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-gray-800">{searchData.departureAirport?.airportCode}</div>
-                    <div className="text-base text-gray-600">{searchData.departureAirport?.city}</div>
-                    <div className="text-xl font-semibold text-gray-800 mt-2">{ret?.arriveTime}</div>
-                  </div>
-                </div>
-                <div className="mt-4 text-center">
-                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">{ret?.fareName}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -162,8 +274,17 @@ export default function PaymentPage() {
               Phương thức thanh toán
             </h2>
             <div className="space-y-4">
-              <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
-                <input type="radio" name="pay" defaultChecked className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
+              <label
+                onClick={() => setSelectedPaymentMethod('atm')}
+                className={`flex items-center p-4 border-2 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group ${selectedPaymentMethod === 'atm' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              >
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={selectedPaymentMethod === 'atm'}
+                  onChange={() => setSelectedPaymentMethod('atm')}
+                  className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                />
                 <div className="ml-4 flex items-center space-x-3">
                   <div className="w-12 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded flex items-center justify-center">
                     <span className="text-white font-bold text-sm">ATM</span>
@@ -175,8 +296,17 @@ export default function PaymentPage() {
                 </div>
               </label>
 
-              <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
-                <input type="radio" name="pay" className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
+              <label
+                onClick={() => setSelectedPaymentMethod('visa')}
+                className={`flex items-center p-4 border-2 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group ${selectedPaymentMethod === 'visa' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              >
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={selectedPaymentMethod === 'visa'}
+                  onChange={() => setSelectedPaymentMethod('visa')}
+                  className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                />
                 <div className="ml-4 flex items-center space-x-3">
                   <div className="w-12 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded flex items-center justify-center">
                     <span className="text-white font-bold text-xs">VISA</span>
@@ -188,8 +318,17 @@ export default function PaymentPage() {
                 </div>
               </label>
 
-              <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
-                <input type="radio" name="pay" className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
+              <label
+                onClick={() => setSelectedPaymentMethod('momo')}
+                className={`flex items-center p-4 border-2 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group ${selectedPaymentMethod === 'momo' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              >
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={selectedPaymentMethod === 'momo'}
+                  onChange={() => setSelectedPaymentMethod('momo')}
+                  className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                />
                 <div className="ml-4 flex items-center space-x-3">
                   <div className="w-12 h-8 bg-gradient-to-r from-pink-500 to-pink-600 rounded flex items-center justify-center">
                     <span className="text-white font-bold text-xs">MOMO</span>
@@ -211,8 +350,12 @@ export default function PaymentPage() {
             >
               Quay lại
             </Link>
-            <button className="px-12 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              Xác nhận thanh toán
+            <button
+              onClick={handlePaymentConfirm}
+              disabled={isProcessing}
+              className="px-12 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isProcessing ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
             </button>
           </div>
         </div>
@@ -262,17 +405,19 @@ export default function PaymentPage() {
                   </div>
                 </div>
 
-                {/* Return */}
-                <div className="bg-green-50 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-semibold text-green-800 text-lg">Chuyến về</h5>
-                    <span className="text-base text-green-600 font-medium">{ret?.code}</span>
+                {/* Return - chỉ hiển thị khi không phải chuyến bay một chiều */}
+                {!isOneWay && (
+                  <div className="bg-green-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-semibold text-green-800 text-lg">Chuyến về</h5>
+                      <span className="text-base text-green-600 font-medium">{ret?.code}</span>
+                    </div>
+                    <div className="text-base text-gray-700">
+                      <div>{searchData.arrivalAirport?.city} → {searchData.departureAirport?.city}</div>
+                      <div className="text-sm text-gray-600 mt-1">{ret?.departTime} - {ret?.arriveTime}</div>
+                    </div>
                   </div>
-                  <div className="text-base text-gray-700">
-                    <div>{searchData.arrivalAirport?.city} → {searchData.departureAirport?.city}</div>
-                    <div className="text-sm text-gray-600 mt-1">{ret?.departTime} - {ret?.arriveTime}</div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -312,37 +457,59 @@ export default function PaymentPage() {
                   </div>
                 </div>
 
-                {/* Chuyến về */}
-                <div className="bg-green-50 rounded-lg p-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-green-800 font-medium text-lg">Chuyến về</span>
-                    <span className="font-semibold text-green-800 text-lg">{formatVnd(returnPrice)}</span>
-                  </div>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    {totalAdults > 0 && (
-                      <div className="flex justify-between">
-                        <span>Người lớn x {totalAdults}</span>
-                        <span>{formatVnd((Number(ret?.price) || 0) * totalAdults)}</span>
+                {/* Chuyến về - chỉ hiển thị khi không phải chuyến bay một chiều */}
+                {!isOneWay && (
+                  <div className="bg-green-50 rounded-lg p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-green-800 font-medium text-lg">Chuyến về</span>
+                      <span className="font-semibold text-green-800 text-lg">{formatVnd(returnPrice)}</span>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      {totalAdults > 0 && (
+                        <div className="flex justify-between">
+                          <span>Người lớn x {totalAdults}</span>
+                          <span>{formatVnd((Number(ret?.price) || 0) * totalAdults)}</span>
+                        </div>
+                      )}
+                      {totalChildren > 0 && (
+                        <div className="flex justify-between">
+                          <span>Trẻ em x {totalChildren}</span>
+                          <span>{formatVnd((Number(ret?.price) || 0) * totalChildren)}</span>
+                        </div>
+                      )}
+                      {totalInfants > 0 && (
+                        <div className="flex justify-between">
+                          <span>Em bé x {totalInfants}</span>
+                          <span>{formatVnd(100000 * totalInfants)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-green-200 pt-1">
+                        <span>Thuế VAT</span>
+                        <span>{formatVnd((Number(ret?.tax) || 0) * (totalAdults + totalChildren))}</span>
                       </div>
-                    )}
-                    {totalChildren > 0 && (
-                      <div className="flex justify-between">
-                        <span>Trẻ em x {totalChildren}</span>
-                        <span>{formatVnd((Number(ret?.price) || 0) * totalChildren)}</span>
-                      </div>
-                    )}
-                    {totalInfants > 0 && (
-                      <div className="flex justify-between">
-                        <span>Em bé x {totalInfants}</span>
-                        <span>{formatVnd(100000 * totalInfants)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between border-t border-green-200 pt-1">
-                      <span>Thuế VAT</span>
-                      <span>{formatVnd((Number(ret?.tax) || 0) * (totalAdults + totalChildren))}</span>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Dịch vụ bổ sung - chỉ hiển thị khi có dịch vụ được chọn */}
+                {servicesTotal > 0 && (
+                  <div className="bg-orange-50 rounded-lg p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-orange-800 font-medium text-lg">Dịch vụ bổ sung</span>
+                      <span className="font-semibold text-orange-800 text-lg">{formatVnd(servicesTotal)}</span>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      {selectedServices
+                        .filter(service => service.isSelected)
+                        .map((service) => (
+                          <div key={service.id} className="flex justify-between">
+                            <span>{service.name}</span>
+                            <span>{formatVnd(service.price)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between text-red-600 items-center font-bold text-xl">
@@ -366,6 +533,18 @@ export default function PaymentPage() {
           </div>
         </div>
       </div>
+
+      {/* PaymentMoMo Modal */}
+      {showMoMoPayment && state.bookingId && (
+        <PaymentMoMo
+          isOpen={showMoMoPayment}
+          onClose={handleMoMoClose}
+          onComplete={handleMoMoComplete}
+          bookingId={state.bookingId.toString()}
+          totalAmount={totalPrice}
+          orderInfo="Thanh toan ve may bay FlyGo"
+        />
+      )}
     </div>
   );
 }

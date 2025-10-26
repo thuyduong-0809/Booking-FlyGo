@@ -6,8 +6,8 @@ import { PaymentsController } from 'src/payments/payments.controller';
 import { PaymentsService } from 'src/payments/payments.service';
 
 @Module({
-    imports:[TypeOrmModule.forFeature([Payment,Booking])],
-    providers:[PaymentsService],
-    controllers:[PaymentsController]
+    imports: [TypeOrmModule.forFeature([Payment, Booking])],
+    providers: [PaymentsService],
+    controllers: [PaymentsController]
 })
-export class PaymentsModule {}
+export class PaymentsModule { }
