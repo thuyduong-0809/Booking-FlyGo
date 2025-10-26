@@ -139,6 +139,25 @@ export class BookingsService {
         return response;
     }
 
+    async findByUserId(userId: number): Promise<any> {
+        let response = { ...common_response };
+        try {
+            const bookings = await this.bookingRepository.find({
+                where: { user: { userId } },
+                relations: ['user', 'bookingFlights', 'bookingFlights.flight', 'bookingFlights.flight.arrivalAirport', 'bookingFlights.flight.departureAirport'],
+                order: { bookingId: 'DESC' }
+            });
+            console.log('📋 Found bookings:', bookings.length);
+            response.success = true;
+            response.data = bookings;
+            response.message = 'Successfully retrieved bookings for user';
+        } catch (error) {
+            response.success = false;
+            response.message = 'Error while fetching bookings for user';
+        }
+        return response;
+    }
+
 
     async create(createBookingDto: CreateBookingDto): Promise<any> {
         let response = { ...common_response };
@@ -175,8 +194,17 @@ export class BookingsService {
         try {
             const booking = await this.bookingRepository.findOne({
                 where: { bookingId: id },
-                relations: ['user'],
+                relations: [
+                    'user',
+                    'bookingFlights',
+                    'bookingFlights.flight',
+                    'bookingFlights.flight.arrivalAirport',
+                    'bookingFlights.flight.departureAirport',
+                    'bookingFlights.flight.airline',
+                    'passengers'
+                ],
             });
+
             if (booking) {
                 response.success = true;
                 response.data = booking;

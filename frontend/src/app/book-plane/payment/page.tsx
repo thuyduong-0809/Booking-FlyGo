@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useBooking } from '../BookingContext';
 import { useSearch } from '../SearchContext';
 import PaymentMoMo from './payment-momo/PaymentMoMo';
 import { paymentsService } from '@/services/payments.service';
+import { requestApi } from '@/lib/api';
 
 function formatVnd(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + " VND";
@@ -14,24 +15,101 @@ function formatVnd(n: number) {
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { state, grandTotal } = useBooking();
+  const searchParams = useSearchParams();
+  const { state, grandTotal, setBookingId } = useBooking();
   const { searchData } = useSearch();
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('atm');
   const [showMoMoPayment, setShowMoMoPayment] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const dep = state.selectedDeparture;
-  const ret = state.selectedReturn;
+  const [bookingData, setBookingData] = useState<any>(null);
+  const [loadingBooking, setLoadingBooking] = useState(false);
+
+  // Handle bookingId from URL (when coming from my-bookings)
+  useEffect(() => {
+    const urlBookingId = searchParams.get('bookingId');
+    if (urlBookingId && !state.bookingId) {
+      console.log('📌 Found bookingId in URL:', urlBookingId);
+      setBookingId(Number(urlBookingId));
+      fetchBookingDetails(Number(urlBookingId));
+    }
+  }, [searchParams, state.bookingId, setBookingId]);
+
+  // Fetch booking details from API
+  const fetchBookingDetails = async (bookingId: number) => {
+    try {
+      setLoadingBooking(true);
+      console.log('🔍 Fetching booking details for:', bookingId);
+
+      const response = await requestApi(`bookings/${bookingId}`, "GET");
+      console.log('📋 Booking response:', response);
+
+      if (response.success && response.data) {
+        console.log('✅ Booking data received:', response.data);
+        console.log('📦 Booking flights:', response.data.bookingFlights);
+        console.log('👥 Passengers:', response.data.passengers);
+        setBookingData(response.data);
+      } else {
+        console.warn('⚠️ No booking data in response');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching booking details:', error);
+    } finally {
+      setLoadingBooking(false);
+    }
+  };
+
+  // Sử dụng bookingData nếu có (từ my-bookings), nếu không thì dùng state (từ booking flow)
+  const dep = bookingData?.bookingFlights?.[0] ? {
+    flightId: bookingData.bookingFlights[0].flight.flightId,
+    fareName: bookingData.bookingFlights[0].travelClass,
+    price: bookingData.bookingFlights[0].fare,
+    tax: 0,
+    service: 0,
+    code: bookingData.bookingFlights[0].flight.flightNumber,
+    departTime: bookingData.bookingFlights[0].flight.departureTime
+      ? new Date(bookingData.bookingFlights[0].flight.departureTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      : '',
+    arriveTime: bookingData.bookingFlights[0].flight.arrivalTime
+      ? new Date(bookingData.bookingFlights[0].flight.arrivalTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      : '',
+    departureAirport: bookingData.bookingFlights[0].flight.departureAirport,
+    arrivalAirport: bookingData.bookingFlights[0].flight.arrivalAirport,
+  } : state.selectedDeparture;
+
+  const ret = bookingData?.bookingFlights?.[1] ? {
+    flightId: bookingData.bookingFlights[1].flight.flightId,
+    fareName: bookingData.bookingFlights[1].travelClass,
+    price: bookingData.bookingFlights[1].fare,
+    tax: 0,
+    service: 0,
+    code: bookingData.bookingFlights[1].flight.flightNumber,
+    departTime: bookingData.bookingFlights[1].flight.departureTime
+      ? new Date(bookingData.bookingFlights[1].flight.departureTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      : '',
+    arriveTime: bookingData.bookingFlights[1].flight.arrivalTime
+      ? new Date(bookingData.bookingFlights[1].flight.arrivalTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      : '',
+    departureAirport: bookingData.bookingFlights[1].flight.departureAirport,
+    arrivalAirport: bookingData.bookingFlights[1].flight.arrivalAirport,
+  } : state.selectedReturn;
+
   const selectedServices = state.selectedServices || [];
 
-  // Lấy số lượng người từ searchData
-  const totalAdults = searchData.passengers?.adults || 0;
-  const totalChildren = searchData.passengers?.children || 0;
-  const totalInfants = searchData.passengers?.infants || 0;
+  // Lấy số lượng người từ bookingData hoặc searchData
+  const totalAdults = bookingData?.passengers?.filter((p: any) => p.ageCategory === 'Adult').length || searchData.passengers?.adults || 0;
+  const totalChildren = bookingData?.passengers?.filter((p: any) => p.ageCategory === 'Child').length || searchData.passengers?.children || 0;
+  const totalInfants = bookingData?.passengers?.filter((p: any) => p.ageCategory === 'Infant').length || searchData.passengers?.infants || 0;
+
+  // Debug logging
+  console.log('🔍 Booking data:', bookingData);
+  console.log('✈️ Departure flight:', dep);
+  console.log('✈️ Return flight:', ret);
+  console.log('👥 Passengers - Adults:', totalAdults, 'Children:', totalChildren, 'Infants:', totalInfants);
 
   // Kiểm tra loại chuyến bay
-  const isOneWay = searchData.tripType === 'oneWay';
+  const isOneWay = bookingData?.bookingFlights?.length === 1 || searchData.tripType === 'oneWay';
 
   // Tính toán giá vé
   const calculateFlightPrice = (flight: any) => {
@@ -77,12 +155,8 @@ export default function PaymentPage() {
 
     try {
       setIsProcessing(true);
-      console.log('🔄 Step 1: Getting payments for booking:', state.bookingId);
 
-      // Get all payments for this booking
       const payments = await paymentsService.getPaymentsByBooking(Number(state.bookingId));
-      console.log('📋 Step 1 complete - Found payments:', payments);
-      console.log('📋 Number of payments:', payments?.length);
 
       if (payments && payments.length > 0) {
         // Find the most recent payment
@@ -90,9 +164,6 @@ export default function PaymentPage() {
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )[0];
 
-        console.log('🔍 Step 2: Latest payment found:', latestPayment);
-        console.log('📌 Payment ID:', latestPayment.paymentId);
-        console.log('📌 Current Status:', latestPayment.paymentStatus);
 
         // Check if payment is already completed
         if (latestPayment.paymentStatus === 'Completed') {
@@ -102,42 +173,25 @@ export default function PaymentPage() {
           return;
         }
 
-        // Payment is still pending → Update to Completed
-        console.log('⏳ Step 3: Updating payment from Pending to Completed...');
-        console.log('📌 Calling updatePaymentStatus with:');
-        console.log('   - paymentId:', latestPayment.paymentId);
-        console.log('   - newStatus: Completed');
-
         try {
-          const result = await paymentsService.updatePaymentStatus(
-            latestPayment.paymentId,
-            'Completed'
-          );
-
-          console.log('✅ Step 3 complete - Payment status updated successfully:', result);
-          console.log('✅ New payment status from response:', result.paymentStatus);
 
           // Redirect to success page
-          console.log('🚀 Step 4: Redirecting to success page...');
           setShowMoMoPayment(false);
           setIsProcessing(false);
 
           // Wait a bit to ensure backend update is complete
           await new Promise(resolve => setTimeout(resolve, 500));
 
-          window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
+          window.location.href = `/confirm?bookingId=${state.bookingId}`;
         } catch (updateError) {
-          console.error('❌ Error updating payment status:', updateError);
           setIsProcessing(false);
           alert('Lỗi cập nhật trạng thái: ' + (updateError as any)?.message || 'Vui lòng thử lại.');
         }
       } else {
-        console.warn('⚠️ No payments found');
         setIsProcessing(false);
         alert('Không tìm thấy thông tin thanh toán. Vui lòng thử lại.');
       }
     } catch (error) {
-      console.error('❌ Error processing payment:', error);
       setIsProcessing(false);
       alert('Có lỗi xảy ra: ' + (error as any)?.message || 'Vui lòng thử lại.');
     }
@@ -146,6 +200,18 @@ export default function PaymentPage() {
   const handleMoMoClose = () => {
     setShowMoMoPayment(false);
   };
+
+  // Show loading if fetching booking data
+  if (loadingBooking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-xl text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải thông tin đặt chỗ...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -171,11 +237,11 @@ export default function PaymentPage() {
                 <div className="text-black mt-2 font-medium">
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span>Điểm khởi hành {searchData.departureAirport?.city}</span>
+                    <span>Điểm khởi hành {(dep as any)?.departureAirport?.city || searchData.departureAirport?.city}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                    <span>Điểm đến {searchData.arrivalAirport?.city}</span>
+                    <span>Điểm đến {(dep as any)?.arrivalAirport?.city || searchData.arrivalAirport?.city}</span>
                   </div>
                 </div>
               </div>
@@ -206,8 +272,8 @@ export default function PaymentPage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-gray-800">{searchData.departureAirport?.airportCode}</div>
-                    <div className="text-base text-gray-600">{searchData.departureAirport?.city}</div>
+                    <div className="text-3xl font-bold text-gray-800">{(dep as any)?.departureAirport?.airportCode || searchData.departureAirport?.airportCode}</div>
+                    <div className="text-base text-gray-600">{(dep as any)?.departureAirport?.city || searchData.departureAirport?.city}</div>
                     <div className="text-xl font-semibold text-gray-800 mt-2">{dep?.departTime}</div>
                   </div>
                   <div className="flex items-center justify-center">
@@ -218,8 +284,8 @@ export default function PaymentPage() {
                     <div className="flex-1 h-px bg-gray-300"></div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-gray-800">{searchData.arrivalAirport?.airportCode}</div>
-                    <div className="text-base text-gray-600">{searchData.arrivalAirport?.city}</div>
+                    <div className="text-3xl font-bold text-gray-800">{(dep as any)?.arrivalAirport?.airportCode || searchData.arrivalAirport?.airportCode}</div>
+                    <div className="text-base text-gray-600">{(dep as any)?.arrivalAirport?.city || searchData.arrivalAirport?.city}</div>
                     <div className="text-xl font-semibold text-gray-800 mt-2">{dep?.arriveTime}</div>
                   </div>
                 </div>
@@ -240,8 +306,8 @@ export default function PaymentPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-gray-800">{searchData.arrivalAirport?.airportCode}</div>
-                      <div className="text-base text-gray-600">{searchData.arrivalAirport?.city}</div>
+                      <div className="text-3xl font-bold text-gray-800">{(ret as any)?.departureAirport?.airportCode || searchData.arrivalAirport?.airportCode}</div>
+                      <div className="text-base text-gray-600">{(ret as any)?.departureAirport?.city || searchData.arrivalAirport?.city}</div>
                       <div className="text-xl font-semibold text-gray-800 mt-2">{ret?.departTime}</div>
                     </div>
                     <div className="flex items-center justify-center">
@@ -252,8 +318,8 @@ export default function PaymentPage() {
                       <div className="flex-1 h-px bg-gray-300"></div>
                     </div>
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-gray-800">{searchData.departureAirport?.airportCode}</div>
-                      <div className="text-base text-gray-600">{searchData.departureAirport?.city}</div>
+                      <div className="text-3xl font-bold text-gray-800">{(ret as any)?.arrivalAirport?.airportCode || searchData.departureAirport?.airportCode}</div>
+                      <div className="text-base text-gray-600">{(ret as any)?.arrivalAirport?.city || searchData.departureAirport?.city}</div>
                       <div className="text-xl font-semibold text-gray-800 mt-2">{ret?.arriveTime}</div>
                     </div>
                   </div>
@@ -400,7 +466,7 @@ export default function PaymentPage() {
                     <span className="text-base text-blue-600 font-medium">{dep?.code}</span>
                   </div>
                   <div className="text-base text-gray-700">
-                    <div>{searchData.departureAirport?.city} → {searchData.arrivalAirport?.city}</div>
+                    <div>{((dep as any)?.departureAirport?.city || searchData.departureAirport?.city)} → {((dep as any)?.arrivalAirport?.city || searchData.arrivalAirport?.city)}</div>
                     <div className="text-sm text-gray-600 mt-1">{dep?.departTime} - {dep?.arriveTime}</div>
                   </div>
                 </div>
@@ -413,7 +479,7 @@ export default function PaymentPage() {
                       <span className="text-base text-green-600 font-medium">{ret?.code}</span>
                     </div>
                     <div className="text-base text-gray-700">
-                      <div>{searchData.arrivalAirport?.city} → {searchData.departureAirport?.city}</div>
+                      <div>{((ret as any)?.departureAirport?.city || searchData.arrivalAirport?.city)} → {((ret as any)?.arrivalAirport?.city || searchData.departureAirport?.city)}</div>
                       <div className="text-sm text-gray-600 mt-1">{ret?.departTime} - {ret?.arriveTime}</div>
                     </div>
                   </div>

@@ -64,8 +64,9 @@ export default function PaymentSuccessPage() {
             console.log('📌 Found bookingId:', bookingId);
 
             if (bookingId) {
-                // Update status với bookingId này
+                // Update status với bookingId này và redirect
                 await updatePaymentStatus(bookingId);
+                // Redirect will be handled in updatePaymentStatus
             } else {
                 console.warn('⚠️ Could not find bookingId');
                 setLoading(false);
@@ -147,6 +148,10 @@ export default function PaymentSuccessPage() {
                         'Completed'
                     );
                     console.log('✅ Payment status updated successfully:', result);
+
+                    // Redirect to confirm page after successful update
+                    window.location.href = `/confirm?bookingId=${bookingId}`;
+                    return;
                 } else {
                     console.warn('⚠️ No pending payment found or paymentId is missing');
                 }
@@ -160,69 +165,69 @@ export default function PaymentSuccessPage() {
         }
     };
 
-    const fetchPaymentInfo = async (bookingId: number) => {
-        try {
-            console.log('🔍 Fetching payment info for bookingId:', bookingId);
+    // const fetchPaymentInfo = async (bookingId: number) => {
+    //     try {
+    //         console.log('🔍 Fetching payment info for bookingId:', bookingId);
 
-            const payments = await paymentsService.getPaymentsByBooking(bookingId);
-            console.log('📋 All payments:', payments);
+    //         const payments = await paymentsService.getPaymentsByBooking(bookingId);
+    //         console.log('📋 All payments:', payments);
 
-            if (payments && payments.length > 0) {
-                const latestPayment = payments[payments.length - 1];
-                console.log('📝 Latest payment:', latestPayment);
+    //         if (payments && payments.length > 0) {
+    //             const latestPayment = payments[payments.length - 1];
+    //             console.log('📝 Latest payment:', latestPayment);
 
-                // Nếu payment đang là Pending → Cập nhật thành Completed
-                if (latestPayment.paymentStatus === 'Pending' && latestPayment.paymentId) {
-                    console.log('⏳ Found pending payment, auto-updating to Completed...');
-                    console.log('🔄 PaymentId to update:', latestPayment.paymentId);
+    //             // Nếu payment đang là Pending → Cập nhật thành Completed
+    //             if (latestPayment.paymentStatus === 'Pending' && latestPayment.paymentId) {
+    //                 console.log('⏳ Found pending payment, auto-updating to Completed...');
+    //                 console.log('🔄 PaymentId to update:', latestPayment.paymentId);
 
-                    try {
-                        const updateResult = await paymentsService.updatePaymentStatus(
-                            latestPayment.paymentId,
-                            'Completed'
-                        );
-                        console.log('✅ Payment status updated successfully:', updateResult);
+    //                 try {
+    //                     const updateResult = await paymentsService.updatePaymentStatus(
+    //                         latestPayment.paymentId,
+    //                         'Completed'
+    //                     );
+    //                     console.log('✅ Payment status updated successfully:', updateResult);
 
-                        // Đợi một chút rồi fetch lại
-                        await new Promise(resolve => setTimeout(resolve, 500));
+    //                     // Đợi một chút rồi fetch lại
+    //                     await new Promise(resolve => setTimeout(resolve, 500));
 
-                        // Cập nhật lại payment để có status mới
-                        const updatedPayments = await paymentsService.getPaymentsByBooking(bookingId);
-                        const updatedPayment = updatedPayments.find(p => p.paymentId === latestPayment.paymentId);
-                        console.log('✅ Updated payment:', updatedPayment);
+    //                     // Cập nhật lại payment để có status mới
+    //                     const updatedPayments = await paymentsService.getPaymentsByBooking(bookingId);
+    //                     const updatedPayment = updatedPayments.find(p => p.paymentId === latestPayment.paymentId);
+    //                     console.log('✅ Updated payment:', updatedPayment);
 
-                        setPaymentData({
-                            orderId: updatedPayment?.paymentDetails?.momoOrderId || 'N/A',
-                            resultCode: 0, // Success
-                            amount: updatedPayment?.amount || latestPayment.amount,
-                        });
-                    } catch (updateError) {
-                        console.error('❌ Error updating payment status:', updateError);
-                        // Vẫn hiển thị thông tin payment dù update fail
-                        setPaymentData({
-                            orderId: latestPayment.paymentDetails?.momoOrderId || 'N/A',
-                            resultCode: 0,
-                            amount: latestPayment.amount,
-                        });
-                    }
-                } else {
-                    console.log('ℹ️ Payment already has status:', latestPayment.paymentStatus);
-                    // Payment đã Completed hoặc Failed
-                    setPaymentData({
-                        orderId: latestPayment.paymentDetails?.momoOrderId || 'N/A',
-                        resultCode: latestPayment.paymentStatus === 'Completed' ? 0 : -1,
-                        amount: latestPayment.amount,
-                    });
-                }
-            } else {
-                console.warn('⚠️ No payments found');
-            }
-            setLoading(false);
-        } catch (error) {
-            console.error('❌ Error fetching payment info:', error);
-            setLoading(false);
-        }
-    };
+    //                     setPaymentData({
+    //                         orderId: updatedPayment?.paymentDetails?.momoOrderId || 'N/A',
+    //                         resultCode: 0, // Success
+    //                         amount: updatedPayment?.amount || latestPayment.amount,
+    //                     });
+    //                 } catch (updateError) {
+    //                     console.error('❌ Error updating payment status:', updateError);
+    //                     // Vẫn hiển thị thông tin payment dù update fail
+    //                     setPaymentData({
+    //                         orderId: latestPayment.paymentDetails?.momoOrderId || 'N/A',
+    //                         resultCode: 0,
+    //                         amount: latestPayment.amount,
+    //                     });
+    //                 }
+    //             } else {
+    //                 console.log('ℹ️ Payment already has status:', latestPayment.paymentStatus);
+    //                 // Payment đã Completed hoặc Failed
+    //                 setPaymentData({
+    //                     orderId: latestPayment.paymentDetails?.momoOrderId || 'N/A',
+    //                     resultCode: latestPayment.paymentStatus === 'Completed' ? 0 : -1,
+    //                     amount: latestPayment.amount,
+    //                 });
+    //             }
+    //         } else {
+    //             console.warn('⚠️ No payments found');
+    //         }
+    //         setLoading(false);
+    //     } catch (error) {
+    //         console.error('❌ Error fetching payment info:', error);
+    //         setLoading(false);
+    //     }
+    // };
 
     const formatVnd = (n: number) => {
         return new Intl.NumberFormat('vi-VN').format(n) + ' VND';
