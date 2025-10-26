@@ -1,6 +1,7 @@
-import { IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateBookingFlightDto {
+
   @IsNotEmpty()
   bookingId: number;
 
@@ -11,7 +12,10 @@ export class CreateBookingFlightDto {
   travelClass: string;
 
   @IsNumber()
-  baggageAllowance: number;
+  baggageAllowance: number=0;
 
   seatNumber?: string; // có thể null
+
+  @IsInt()
+ passengerId: number;
 }
