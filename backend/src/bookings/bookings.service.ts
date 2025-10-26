@@ -35,7 +35,6 @@ export class BookingsService {
     async findByUserId(userId: number): Promise<any> {
         let response = { ...common_response };
         try {
-            console.log('🔍 Finding bookings for userId:', userId);
             const bookings = await this.bookingRepository.find({
                 where: { user: { userId } },
                 relations: ['user', 'bookingFlights', 'bookingFlights.flight', 'bookingFlights.flight.arrivalAirport', 'bookingFlights.flight.departureAirport'],
@@ -46,7 +45,6 @@ export class BookingsService {
             response.data = bookings;
             response.message = 'Successfully retrieved bookings for user';
         } catch (error) {
-            console.error('❌ Error finding bookings:', error);
             response.success = false;
             response.message = 'Error while fetching bookings for user';
         }
@@ -87,7 +85,6 @@ export class BookingsService {
     async findOne(id: number): Promise<any> {
         let response = { ...common_response };
         try {
-            console.log('🔍 Finding booking with id:', id);
             const booking = await this.bookingRepository.findOne({
                 where: { bookingId: id },
                 relations: [
@@ -100,7 +97,6 @@ export class BookingsService {
                     'passengers'
                 ],
             });
-            console.log('📋 Found booking:', booking);
 
             if (booking) {
                 response.success = true;

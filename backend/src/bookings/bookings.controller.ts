@@ -22,7 +22,6 @@ export class BookingsController {
 
     @Get('user/:userId')
     findByUserId(@Param('userId') userId: string) {
-        console.log('🔍 Getting bookings for userId:', userId);
         return this.bookingsService.findByUserId(Number(userId));
     }
 
