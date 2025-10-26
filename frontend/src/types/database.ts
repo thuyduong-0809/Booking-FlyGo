@@ -155,7 +155,7 @@ export interface Payment {
   PaymentID: number;
   BookingID: number;
   Amount: number;
-  PaymentMethod: 'CreditCard' | 'DebitCard' | 'PayPal' | 'BankTransfer';
+  PaymentMethod: 'CreditCard' | 'DebitCard' | 'PayPal' | 'BankTransfer' | 'MoMo';
   PaymentStatus: 'Pending' | 'Completed' | 'Failed' | 'Refunded';
   TransactionID: string;
   PaymentDetails: any;

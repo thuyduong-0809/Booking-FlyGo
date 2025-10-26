@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../BookingContext';
 import { useSearch } from '../SearchContext';
+import PaymentMoMo from './payment-momo/PaymentMoMo';
+import { paymentsService } from '@/services/payments.service';
 
 function formatVnd(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + " VND";
@@ -13,6 +16,10 @@ export default function PaymentPage() {
   const router = useRouter();
   const { state, grandTotal } = useBooking();
   const { searchData } = useSearch();
+
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('atm');
+  const [showMoMoPayment, setShowMoMoPayment] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const dep = state.selectedDeparture;
   const ret = state.selectedReturn;
@@ -43,6 +50,102 @@ export default function PaymentPage() {
     .filter(service => service.isSelected)
     .reduce((total, service) => total + service.price, 0);
   const totalPrice = isOneWay ? departurePrice + servicesTotal : departurePrice + returnPrice + servicesTotal;
+
+  // Handle payment confirmation
+  const handlePaymentConfirm = async () => {
+    if (!state.bookingId) {
+      alert('Không tìm thấy booking. Vui lòng quay lại trang trước.');
+      return;
+    }
+
+    if (selectedPaymentMethod === 'momo') {
+      // Hiển thị PaymentMoMo component
+      setShowMoMoPayment(true);
+    } else {
+      alert('Phương thức thanh toán này chưa được hỗ trợ. Vui lòng chọn MoMo.');
+    }
+  };
+
+  const handleMoMoComplete = async () => {
+    if (!state.bookingId) {
+      alert('Không tìm thấy booking. Vui lòng quay lại trang trước.');
+      return;
+    }
+
+    console.log('🚀 === STARTING PAYMENT COMPLETION PROCESS ===');
+    console.log('📌 Booking ID:', state.bookingId);
+
+    try {
+      setIsProcessing(true);
+      console.log('🔄 Step 1: Getting payments for booking:', state.bookingId);
+
+      // Get all payments for this booking
+      const payments = await paymentsService.getPaymentsByBooking(Number(state.bookingId));
+      console.log('📋 Step 1 complete - Found payments:', payments);
+      console.log('📋 Number of payments:', payments?.length);
+
+      if (payments && payments.length > 0) {
+        // Find the most recent payment
+        const latestPayment = payments.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0];
+
+        console.log('🔍 Step 2: Latest payment found:', latestPayment);
+        console.log('📌 Payment ID:', latestPayment.paymentId);
+        console.log('📌 Current Status:', latestPayment.paymentStatus);
+
+        // Check if payment is already completed
+        if (latestPayment.paymentStatus === 'Completed') {
+          console.log('✅ Payment already completed, redirecting...');
+          setShowMoMoPayment(false);
+          window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
+          return;
+        }
+
+        // Payment is still pending → Update to Completed
+        console.log('⏳ Step 3: Updating payment from Pending to Completed...');
+        console.log('📌 Calling updatePaymentStatus with:');
+        console.log('   - paymentId:', latestPayment.paymentId);
+        console.log('   - newStatus: Completed');
+
+        try {
+          const result = await paymentsService.updatePaymentStatus(
+            latestPayment.paymentId,
+            'Completed'
+          );
+
+          console.log('✅ Step 3 complete - Payment status updated successfully:', result);
+          console.log('✅ New payment status from response:', result.paymentStatus);
+
+          // Redirect to success page
+          console.log('🚀 Step 4: Redirecting to success page...');
+          setShowMoMoPayment(false);
+          setIsProcessing(false);
+
+          // Wait a bit to ensure backend update is complete
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
+        } catch (updateError) {
+          console.error('❌ Error updating payment status:', updateError);
+          setIsProcessing(false);
+          alert('Lỗi cập nhật trạng thái: ' + (updateError as any)?.message || 'Vui lòng thử lại.');
+        }
+      } else {
+        console.warn('⚠️ No payments found');
+        setIsProcessing(false);
+        alert('Không tìm thấy thông tin thanh toán. Vui lòng thử lại.');
+      }
+    } catch (error) {
+      console.error('❌ Error processing payment:', error);
+      setIsProcessing(false);
+      alert('Có lỗi xảy ra: ' + (error as any)?.message || 'Vui lòng thử lại.');
+    }
+  };
+
+  const handleMoMoClose = () => {
+    setShowMoMoPayment(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -171,8 +274,17 @@ export default function PaymentPage() {
               Phương thức thanh toán
             </h2>
             <div className="space-y-4">
-              <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
-                <input type="radio" name="pay" defaultChecked className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
+              <label
+                onClick={() => setSelectedPaymentMethod('atm')}
+                className={`flex items-center p-4 border-2 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group ${selectedPaymentMethod === 'atm' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              >
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={selectedPaymentMethod === 'atm'}
+                  onChange={() => setSelectedPaymentMethod('atm')}
+                  className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                />
                 <div className="ml-4 flex items-center space-x-3">
                   <div className="w-12 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded flex items-center justify-center">
                     <span className="text-white font-bold text-sm">ATM</span>
@@ -184,8 +296,17 @@ export default function PaymentPage() {
                 </div>
               </label>
 
-              <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
-                <input type="radio" name="pay" className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
+              <label
+                onClick={() => setSelectedPaymentMethod('visa')}
+                className={`flex items-center p-4 border-2 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group ${selectedPaymentMethod === 'visa' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              >
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={selectedPaymentMethod === 'visa'}
+                  onChange={() => setSelectedPaymentMethod('visa')}
+                  className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                />
                 <div className="ml-4 flex items-center space-x-3">
                   <div className="w-12 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded flex items-center justify-center">
                     <span className="text-white font-bold text-xs">VISA</span>
@@ -197,8 +318,17 @@ export default function PaymentPage() {
                 </div>
               </label>
 
-              <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
-                <input type="radio" name="pay" className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
+              <label
+                onClick={() => setSelectedPaymentMethod('momo')}
+                className={`flex items-center p-4 border-2 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group ${selectedPaymentMethod === 'momo' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              >
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={selectedPaymentMethod === 'momo'}
+                  onChange={() => setSelectedPaymentMethod('momo')}
+                  className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                />
                 <div className="ml-4 flex items-center space-x-3">
                   <div className="w-12 h-8 bg-gradient-to-r from-pink-500 to-pink-600 rounded flex items-center justify-center">
                     <span className="text-white font-bold text-xs">MOMO</span>
@@ -220,8 +350,12 @@ export default function PaymentPage() {
             >
               Quay lại
             </Link>
-            <button className="px-12 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              Xác nhận thanh toán
+            <button
+              onClick={handlePaymentConfirm}
+              disabled={isProcessing}
+              className="px-12 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isProcessing ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
             </button>
           </div>
         </div>
@@ -399,6 +533,18 @@ export default function PaymentPage() {
           </div>
         </div>
       </div>
+
+      {/* PaymentMoMo Modal */}
+      {showMoMoPayment && state.bookingId && (
+        <PaymentMoMo
+          isOpen={showMoMoPayment}
+          onClose={handleMoMoClose}
+          onComplete={handleMoMoComplete}
+          bookingId={state.bookingId.toString()}
+          totalAmount={totalPrice}
+          orderInfo="Thanh toan ve may bay FlyGo"
+        />
+      )}
     </div>
   );
 }

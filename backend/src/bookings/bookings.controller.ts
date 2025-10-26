@@ -5,33 +5,33 @@ import { UpdateBookingDto } from 'src/bookings/dto/update-booking.dto';
 
 @Controller('bookings')
 export class BookingsController {
-     constructor(private bookingsService: BookingsService) {}
-        @Get()
-        findAll() {
-         return this.bookingsService.findAll();
-        }
+    constructor(private bookingsService: BookingsService) { }
+    @Get()
+    findAll() {
+        return this.bookingsService.findAll();
+    }
 
-        @Get(':id')
-        findOne(@Param('id') id:string) {
-            return this.bookingsService.findOne(Number(id));
-        }
-        
-            
-        @UsePipes(ValidationPipe)
-        @Post()
-        create(@Body() createBookingDto:CreateBookingDto) {
-          return this.bookingsService.create(createBookingDto);
-        }
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+        return this.bookingsService.findOne(Number(id));
+    }
 
 
-        @UsePipes(ValidationPipe)
-        @Put(':id')
-        update(@Param('id') id:string, @Body() updateBookingDto:UpdateBookingDto) {
-            return this.bookingsService.update(Number(id), updateBookingDto);
-        }
-    
-        @Delete(':id')
-        delete(@Param('id') id:string) {
-            return this.bookingsService.delete(Number(id));
-        }       
+    @UsePipes(ValidationPipe)
+    @Post()
+    create(@Body() createBookingDto: CreateBookingDto) {
+        return this.bookingsService.create(createBookingDto);
+    }
+
+
+    @UsePipes(ValidationPipe)
+    @Put(':id')
+    update(@Param('id') id: string, @Body() updateBookingDto: UpdateBookingDto) {
+        return this.bookingsService.update(Number(id), updateBookingDto);
+    }
+
+    @Delete(':id')
+    delete(@Param('id') id: string) {
+        return this.bookingsService.delete(Number(id));
+    }
 }

@@ -33,6 +33,7 @@ export interface BookingState {
   selectedDeparture?: SelectedFare;
   selectedReturn?: SelectedFare;
   selectedServices?: SelectedService[];
+  bookingId?: number; // ID của booking đã tạo
 }
 
 const initialState: BookingState = {
@@ -50,6 +51,7 @@ interface BookingContextValue {
   setSelectedDeparture: (fare: SelectedFare | undefined) => void;
   setSelectedReturn: (fare: SelectedFare | undefined) => void;
   setSelectedServices: (services: SelectedService[]) => void;
+  setBookingId: (id: number | undefined) => void;
   grandTotal: number;
 }
 
@@ -82,6 +84,10 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setState(prev => ({ ...prev, selectedServices: services }));
   }, []);
 
+  const setBookingId = useCallback((id: number | undefined) => {
+    setState(prev => ({ ...prev, bookingId: id }));
+  }, []);
+
   const grandTotal = useMemo(() => {
     const dep = state.selectedDeparture ? (state.selectedDeparture.price + state.selectedDeparture.tax + state.selectedDeparture.service) : 0;
     const ret = state.selectedReturn ? (state.selectedReturn.price + state.selectedReturn.tax + state.selectedReturn.service) : 0;
@@ -99,8 +105,9 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setSelectedDeparture,
     setSelectedReturn,
     setSelectedServices,
+    setBookingId,
     grandTotal,
-  }), [state, setPassengers, setRoute, setDates, setSelectedDeparture, setSelectedReturn, setSelectedServices, grandTotal]);
+  }), [state, setPassengers, setRoute, setDates, setSelectedDeparture, setSelectedReturn, setSelectedServices, setBookingId, grandTotal]);
 
   return (
     <BookingContext.Provider value={value}>

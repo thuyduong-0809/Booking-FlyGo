@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../BookingContext';
 import { useSearch } from '../SearchContext';
+import { requestApi } from '@/lib/api';
 
 interface Seat {
     id: string;
@@ -30,6 +31,7 @@ export default function ChooseSeatPage() {
     const router = useRouter();
     const { state, grandTotal, setSelectedServices } = useBooking();
     const { searchData } = useSearch();
+    const bookingId = state.bookingId;
 
     // Lấy số lượng người từ searchData
     const totalAdults = searchData.passengers?.adults || 0;
@@ -270,6 +272,16 @@ export default function ChooseSeatPage() {
 
         return totalDeparture + servicesTotal;
     }, [departureFlight, returnFlight, totalAdults, totalChildren, totalInfants, servicesTotal, isOneWay]);
+
+    // Effect để update booking total khi calculatedTotal thay đổi
+    useEffect(() => {
+        if (!bookingId) return;
+
+        // Update booking totalAmount
+        requestApi(`bookings/${bookingId}`, 'PUT', { totalAmount: calculatedTotal }).catch(err => {
+            console.error('Failed to update booking total:', err);
+        });
+    }, [calculatedTotal, bookingId]);
 
     const getSeatColor = (seat: Seat) => {
         if (seat.isOccupied) return 'bg-gray-400';

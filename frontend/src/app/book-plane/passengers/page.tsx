@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../BookingContext';
 import { useSearch } from '../SearchContext';
+import { requestApi } from '@/lib/api';
+import { getCookie } from '@/utils/cookies';
 
 interface Passenger {
   id: number;
@@ -40,11 +42,11 @@ export default function PassengersPage() {
     Array.from({ length: totalAdults }, (_, index) => ({
       id: index + 1,
       gender: 'male' as const,
-      lastName: '',
-      firstName: '',
-      dateOfBirth: '',
-      phoneNumber: '',
-      email: '',
+      lastName: `Nguyễn ${index > 0 ? index + 1 : ''}`.trim(),
+      firstName: `Văn A${index > 0 ? index + 1 : ''}`,
+      dateOfBirth: '1990-01-15',
+      phoneNumber: `091234567${index}`,
+      email: `avminh824@gmail.com`,
       country: 'Việt Nam',
       idNumber: '',
       currentResidence: '',
@@ -56,6 +58,8 @@ export default function PassengersPage() {
   );
 
   const [surveyChecked, setSurveyChecked] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { setBookingId } = useBooking();
 
   const updatePassenger = (passengerId: number, field: keyof Passenger, value: any) => {
     setPassengers(prev =>
@@ -65,6 +69,93 @@ export default function PassengersPage() {
           : passenger
       )
     );
+  };
+
+  // Hàm tạo booking và passenger khi submit
+  const handleSubmit = async () => {
+    try {
+      // Kiểm tra xem đã có booking chưa
+      if (state.bookingId) {
+        // Đã có booking, chỉ chuyển trang
+        router.push('/book-plane/choose-seat');
+        return;
+      }
+
+      // Kiểm tra validation
+      const isFormValid = passengers.every(p =>
+        p.lastName.trim() &&
+        p.firstName.trim() &&
+        p.email.trim() &&
+        p.phoneNumber.trim()
+      );
+
+      if (!isFormValid) {
+        alert('Vui lòng điền đầy đủ thông tin cho tất cả hành khách');
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      // Lấy userId từ token
+      const token = getCookie("access_token");
+      if (!token) {
+        alert('Vui lòng đăng nhập để đặt vé');
+        router.push('/login');
+        return;
+      }
+
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const userId = payload.userId;
+
+      if (!userId) {
+        alert('Không tìm thấy thông tin người dùng');
+        return;
+      }
+
+      // Tạo booking
+      const bookingData = {
+        contactEmail: passengers[0].email,
+        contactPhone: passengers[0].phoneNumber,
+        userId: userId,
+        totalAmount: calculatedTotal,
+        paymentStatus: 'Pending',
+        bookingStatus: 'Reserved'
+      };
+
+      const bookingResponse = await requestApi('bookings', 'POST', bookingData);
+
+      if (!bookingResponse.success) {
+        alert('Tạo đặt chỗ thất bại: ' + bookingResponse.message);
+        return;
+      }
+
+      const bookingId = bookingResponse.data.bookingId;
+
+      // Lưu bookingId vào context
+      setBookingId(bookingId);
+
+      // Tạo passengers
+      for (const passenger of passengers) {
+        const passengerData = {
+          firstName: passenger.firstName,
+          lastName: passenger.lastName,
+          dateOfBirth: passenger.dateOfBirth || new Date(),
+          passportNumber: passenger.idNumber || '',
+          passengerType: 'Adult',
+          bookingId: bookingId
+        };
+
+        await requestApi('passengers', 'POST', passengerData);
+      }
+
+      // Chuyển sang trang choose-seat
+      router.push('/book-plane/choose-seat');
+    } catch (error: any) {
+      console.error('Error creating booking:', error);
+      alert('Đã xảy ra lỗi: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatVnd = (amount: number) => {
@@ -241,11 +332,11 @@ export default function PassengersPage() {
                         Ngày sinh <span className="text-red-500">*</span>
                       </label>
                       <input
-                        type="text"
+                        type="date"
                         value={passenger.dateOfBirth}
                         onChange={(e) => updatePassenger(passenger.id, 'dateOfBirth', e.target.value)}
                         className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                        placeholder="DD/MM/YYYY"
+                        max={new Date().toISOString().split('T')[0]}
                       />
                     </div>
 
@@ -583,9 +674,13 @@ export default function PassengersPage() {
               <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
             </div>
 
-            <Link href="/book-plane/choose-seat" className="w-full block text-center bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              Đi tiếp
-            </Link>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="w-full text-center bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Đang xử lý...' : 'Đi tiếp'}
+            </button>
           </div>
         </div>
       </div>
@@ -602,9 +697,13 @@ export default function PassengersPage() {
             <div className="text-2xl font-bold text-red-600">{formatVnd(calculatedTotal)} VND</div>
           </div>
 
-          <Link href="/book-plane/choose-seat" className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-            Đi tiếp
-          </Link>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Đang xử lý...' : 'Đi tiếp'}
+          </button>
         </div>
       </div>
     </div>
