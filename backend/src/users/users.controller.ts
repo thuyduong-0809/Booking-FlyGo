@@ -19,6 +19,15 @@ export class UsersController {
         return this.userService.findAll();
     }
 
+
+    
+    @UseGuards(JwtAuthGuard,RolesGuard)
+    @Roles(Role.SystemAdmin,Role.CheckInStaff)
+    @Get('customers')
+    FindCustomers(){
+        return this.userService.findCustomers()
+    }
+
     @UseGuards(JwtAuthGuard)
     @Get(':id')
     FindOne(@Param('id') id:string){
@@ -44,6 +53,8 @@ export class UsersController {
     delete(@Param('id') id:string){
         return this.userService.delete(Number(id))
     }
+
+    
 
 
 }

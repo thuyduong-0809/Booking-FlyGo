@@ -6,6 +6,8 @@ import { CreateBookingFlightDto } from 'src/booking-flights/dto/create-bookingFl
 export class BookingFlightsController {
     constructor(private bookingflightsService:BookingFlightsService){}
 
+
+
         @Get()
         findAll() {
          return this.bookingflightsService.findAll();

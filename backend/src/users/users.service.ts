@@ -40,6 +40,25 @@ export class UsersService {
     }
 
 
+        async findCustomers(): Promise<any> {
+        let response = { ...common_response };
+        try {
+            const users = await this.userRepository.find({
+                where:{roleId:1},
+                relations: ['role'], // load role của user
+            });
+
+            response.success = true;
+            response.data = users;
+        } catch (error) {
+            console.error(error);
+            response.success = false;
+            response.message = 'Error fetching users';
+        }
+        return response;
+    }
+
+
     async create(createUserDto: CreateUserDto): Promise<User> {
         let response = { ...common_response };
         try {
@@ -153,6 +172,9 @@ export class UsersService {
         const saltRounds = 10;
         return bcrypt.hash(password, saltRounds);
     }
+
+
+
 
 
 

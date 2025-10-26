@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   UserGroupIcon,
   PlusIcon,
@@ -14,6 +14,7 @@ import {
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { User } from '../../types/database';
+import { requestApi } from '@/lib/api';
 
 // Extended interface for local state management with additional display fields
 interface ExtendedCustomer extends User {
@@ -26,82 +27,83 @@ interface ExtendedCustomer extends User {
 }
 
 export default function CustomerManagement() {
-  const [customers, setCustomers] = useState<ExtendedCustomer[]>([
-    {
-      UserID: 1,
-      Email: 'nguyenvana@email.com',
-      PasswordHash: '',
-      FirstName: 'Nguyễn Văn',
-      LastName: 'A',
-      Phone: '0901234567',
-      DateOfBirth: '1990-05-15',
-      PassportNumber: 'N1234567',
-      PassportExpiry: '2030-05-15',
-      RoleID: 2,
-      LoyaltyTier: 'Gold',
-      LoyaltyPoints: 4500,
-      IsActive: true,
-      CreatedAt: '2023-01-15T00:00:00Z',
-      LastLogin: '2024-01-15T08:30:00Z',
-      name: 'Nguyễn Văn A',
-      address: '123 Đường ABC, Quận 1, TP.HCM',
-      totalBookings: 15,
-      totalSpent: 45000000,
-      joinDate: '2023-01-15',
-      membershipLevel: 'Gold'
-    },
-    {
-      UserID: 2,
-      Email: 'tranthib@email.com',
-      PasswordHash: '',
-      FirstName: 'Trần Thị',
-      LastName: 'B',
-      Phone: '0907654321',
-      DateOfBirth: '1985-08-22',
-      PassportNumber: 'N1234568',
-      PassportExpiry: '2030-08-22',
-      RoleID: 2,
-      LoyaltyTier: 'Silver',
-      LoyaltyPoints: 1800,
-      IsActive: true,
-      CreatedAt: '2023-06-10T00:00:00Z',
-      LastLogin: '2024-01-14T15:20:00Z',
-      name: 'Trần Thị B',
-      address: '456 Đường XYZ, Quận 2, TP.HCM',
-      totalBookings: 8,
-      totalSpent: 18000000,
-      joinDate: '2023-06-10',
-      membershipLevel: 'Silver'
-    },
-    {
-      UserID: 3,
-      Email: 'levanc@email.com',
-      PasswordHash: '',
-      FirstName: 'Lê Văn',
-      LastName: 'C',
-      Phone: '0909876543',
-      DateOfBirth: '1992-12-03',
-      PassportNumber: 'N1234569',
-      PassportExpiry: '2030-12-03',
-      RoleID: 2,
-      LoyaltyTier: 'Standard',
-      LoyaltyPoints: 750,
-      IsActive: false,
-      CreatedAt: '2023-11-20T00:00:00Z',
-      LastLogin: '2024-01-10T12:45:00Z',
-      name: 'Lê Văn C',
-      address: '789 Đường DEF, Quận 3, TP.HCM',
-      totalBookings: 3,
-      totalSpent: 7500000,
-      joinDate: '2023-11-20',
-      membershipLevel: 'Bronze'
-    }
-  ]);
+  // const [customers, setCustomers] = useState<ExtendedCustomer[]>([
+  //   {
+  //     UserID: 1,
+  //     Email: 'nguyenvana@email.com',
+  //     PasswordHash: '',
+  //     FirstName: 'Nguyễn Văn',
+  //     LastName: 'A',
+  //     Phone: '0901234567',
+  //     DateOfBirth: '1990-05-15',
+  //     PassportNumber: 'N1234567',
+  //     PassportExpiry: '2030-05-15',
+  //     RoleID: 2,
+  //     LoyaltyTier: 'Gold',
+  //     LoyaltyPoints: 4500,
+  //     IsActive: true,
+  //     CreatedAt: '2023-01-15T00:00:00Z',
+  //     LastLogin: '2024-01-15T08:30:00Z',
+  //     name: 'Nguyễn Văn A',
+  //     address: '123 Đường ABC, Quận 1, TP.HCM',
+  //     totalBookings: 15,
+  //     totalSpent: 45000000,
+  //     joinDate: '2023-01-15',
+  //     membershipLevel: 'Gold'
+  //   },
+  //   {
+  //     UserID: 2,
+  //     Email: 'tranthib@email.com',
+  //     PasswordHash: '',
+  //     FirstName: 'Trần Thị',
+  //     LastName: 'B',
+  //     Phone: '0907654321',
+  //     DateOfBirth: '1985-08-22',
+  //     PassportNumber: 'N1234568',
+  //     PassportExpiry: '2030-08-22',
+  //     RoleID: 2,
+  //     LoyaltyTier: 'Silver',
+  //     LoyaltyPoints: 1800,
+  //     IsActive: true,
+  //     CreatedAt: '2023-06-10T00:00:00Z',
+  //     LastLogin: '2024-01-14T15:20:00Z',
+  //     name: 'Trần Thị B',
+  //     address: '456 Đường XYZ, Quận 2, TP.HCM',
+  //     totalBookings: 8,
+  //     totalSpent: 18000000,
+  //     joinDate: '2023-06-10',
+  //     membershipLevel: 'Silver'
+  //   },
+  //   {
+  //     UserID: 3,
+  //     Email: 'levanc@email.com',
+  //     PasswordHash: '',
+  //     FirstName: 'Lê Văn',
+  //     LastName: 'C',
+  //     Phone: '0909876543',
+  //     DateOfBirth: '1992-12-03',
+  //     PassportNumber: 'N1234569',
+  //     PassportExpiry: '2030-12-03',
+  //     RoleID: 2,
+  //     LoyaltyTier: 'Standard',
+  //     LoyaltyPoints: 750,
+  //     IsActive: false,
+  //     CreatedAt: '2023-11-20T00:00:00Z',
+  //     LastLogin: '2024-01-10T12:45:00Z',
+  //     name: 'Lê Văn C',
+  //     address: '789 Đường DEF, Quận 3, TP.HCM',
+  //     totalBookings: 3,
+  //     totalSpent: 7500000,
+  //     joinDate: '2023-11-20',
+  //     membershipLevel: 'Bronze'
+  //   }
+  // ]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [membershipFilter, setMembershipFilter] = useState('');
+  const [customers,setCustomers] = useState([])
 
   const getStatusColor = (isActive: boolean) => {
     return isActive ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
@@ -121,15 +123,31 @@ export default function CustomerManagement() {
     return isActive ? 'Hoạt động' : 'Không hoạt động';
   };
 
-  const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.Phone.includes(searchTerm) ||
-                         customer.UserID.toString().includes(searchTerm);
-    const matchesStatus = !statusFilter || (statusFilter === 'Active' ? customer.IsActive : !customer.IsActive);
-    const matchesMembership = !membershipFilter || customer.membershipLevel === membershipFilter;
-    return matchesSearch && matchesStatus && matchesMembership;
-  });
+  // const filteredCustomers = customers.filter(customer => {
+  //   const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //                        customer.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //                        customer.Phone.includes(searchTerm) ||
+  //                        customer.UserID.toString().includes(searchTerm);
+  //   const matchesStatus = !statusFilter || (statusFilter === 'Active' ? customer.IsActive : !customer.IsActive);
+  //   const matchesMembership = !membershipFilter || customer.membershipLevel === membershipFilter;
+  //   return matchesSearch && matchesStatus && matchesMembership;
+  // });
+
+  useEffect(()=>{
+      loadCustomers()
+  },[])
+
+  const loadCustomers = async () => {
+    await requestApi("users/customers", "GET").then((res: any) => {
+      // console.log("res",res);
+      if (res.success) {
+         setCustomers(res.data)
+      }
+    }).catch((error: any) => {
+      console.error(error)
+    });
+  }
+
 
   return (
     <div className="space-y-6">
@@ -169,7 +187,7 @@ export default function CustomerManagement() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Hoạt động</p>
               <p className="text-2xl font-bold text-gray-900">
-                {customers.filter(c => c.status === 'Active').length}
+                {customers.filter((c:any) => c.status === 'Active').length}
               </p>
             </div>
           </div>
@@ -182,7 +200,7 @@ export default function CustomerManagement() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Thành viên VIP</p>
               <p className="text-2xl font-bold text-gray-900">
-                {customers.filter(c => c.membershipLevel === 'Gold' || c.membershipLevel === 'Platinum').length}
+                {customers.filter((c:any) => c.loyaltyTier === 'Gold' || c.loyaltyTier === 'Platinum').length}
               </p>
             </div>
           </div>
@@ -195,7 +213,8 @@ export default function CustomerManagement() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Tổng đặt chỗ</p>
               <p className="text-2xl font-bold text-gray-900">
-                {customers.reduce((sum, c) => sum + c.totalBookings, 0)}
+                0
+                {/* {customers.reduce((sum, (c:any)) => sum + c.totalBookings, 0)} */}
               </p>
             </div>
           </div>
@@ -257,9 +276,9 @@ export default function CustomerManagement() {
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Hạng thành viên
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                {/* <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Thống kê
-                </th>
+                </th> */}
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái
                 </th>
@@ -272,16 +291,16 @@ export default function CustomerManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCustomers.map((customer) => (
-                <tr key={customer.UserID} className="hover:bg-gray-50">
+              {customers.map((customer:any) => (
+                <tr key={customer.userId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                         <UserGroupIcon className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                        <div className="text-sm text-gray-500">#{customer.UserID}</div>
+                        <div className="text-sm font-medium text-gray-900">{customer.firstName} {customer.lastName}</div>
+                        <div className="text-sm text-gray-500">#{customer.userId}</div>
                       </div>
                     </div>
                   </td>
@@ -289,32 +308,32 @@ export default function CustomerManagement() {
                     <div>
                       <div className="flex items-center text-sm text-gray-900">
                         <EnvelopeIcon className="h-5 w-5 text-gray-400 mr-2" />
-                        {customer.Email}
+                        {customer.email}
                       </div>
                       <div className="flex items-center text-sm text-gray-500">
                         <PhoneIcon className="h-5 w-5 text-gray-400 mr-2" />
-                        {customer.Phone}
+                        {customer.phone}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMembershipColor(customer.membershipLevel)}`}>
-                      {customer.LoyaltyTier}
+                      {customer.loyaltyTier}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  {/* <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm text-gray-900">{customer.totalBookings} đặt chỗ</div>
                       <div className="text-sm text-gray-500">₫{customer.totalSpent.toLocaleString()}</div>
                     </div>
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(customer.IsActive)}`}>
-                      {getStatusText(customer.IsActive)}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(customer.isActive)}`}>
+                      {getStatusText(customer.isActive)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(customer.CreatedAt).toLocaleDateString('vi-VN')}
+                    {new Date(customer.createdAt).toLocaleDateString('vi-VN')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">

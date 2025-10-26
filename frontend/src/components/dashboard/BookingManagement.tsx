@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   DocumentTextIcon,
   PlusIcon,
@@ -18,15 +18,19 @@ import {
   User,
   Payment 
 } from '../../types/database';
+import { requestApi } from '@/lib/api';
+import { set } from 'date-fns';
+import { Dialog } from '@headlessui/react';
+import {XMarkIcon } from '@heroicons/react/24/outline';
 
 // Extended interfaces for local state management
-interface ExtendedBooking extends Booking {
-  customerName: string;
-  flightNumber: string;
-  route: string;
-  departureTime: string;
-  bookingDate: string;
-}
+// interface ExtendedBooking extends Booking {
+//   customerName: string;
+//   flightNumber: string;
+//   route: string;
+//   departureTime: string;
+//   bookingDate: string;
+// }
 
 interface ExtendedPassenger extends Passenger {
   bookingReference: string;
@@ -39,59 +43,61 @@ interface ExtendedPayment extends Payment {
 interface BookingManagementProps { activeSubTab?: string }
 
 export default function BookingManagement({ activeSubTab = 'bookings' }: BookingManagementProps) {
-  const [bookings, setBookings] = useState<ExtendedBooking[]>([
-    {
-      BookingID: 1,
-      BookingReference: 'FG240115001',
-      UserID: 1,
-      TotalAmount: 5000000,
-      PaymentStatus: 'Paid',
-      BookingStatus: 'Confirmed',
-      ContactEmail: 'nguyenvana@email.com',
-      ContactPhone: '0901234567',
-      SpecialRequests: '',
-      BookedAt: '2024-01-15T08:30:00Z',
-      customerName: 'Nguyễn Văn A',
-      flightNumber: 'VN001',
-      route: 'SGN → HAN',
-      departureTime: '08:30',
-      bookingDate: '2024-01-15'
-    },
-    {
-      BookingID: 2,
-      BookingReference: 'FG240115002',
-      UserID: 2,
-      TotalAmount: 2500000,
-      PaymentStatus: 'Pending',
-      BookingStatus: 'Reserved',
-      ContactEmail: 'tranthib@email.com',
-      ContactPhone: '0901234568',
-      SpecialRequests: '',
-      BookedAt: '2024-01-15T11:45:00Z',
-      customerName: 'Trần Thị B',
-      flightNumber: 'VN002',
-      route: 'HAN → DAD',
-      departureTime: '11:45',
-      bookingDate: '2024-01-15'
-    },
-    {
-      BookingID: 3,
-      BookingReference: 'FG240115003',
-      UserID: 3,
-      TotalAmount: 7500000,
-      PaymentStatus: 'Paid',
-      BookingStatus: 'Confirmed',
-      ContactEmail: 'levanc@email.com',
-      ContactPhone: '0901234569',
-      SpecialRequests: 'Vegetarian meal',
-      BookedAt: '2024-01-15T14:00:00Z',
-      customerName: 'Lê Văn C',
-      flightNumber: 'VN003',
-      route: 'DAD → SGN',
-      departureTime: '14:00',
-      bookingDate: '2024-01-15'
-    }
-  ]);
+  // const [bookings, setBookings] = useState<ExtendedBooking[]>([
+  //   {
+  //     BookingID: 1,
+  //     BookingReference: 'FG240115001',
+  //     UserID: 1,
+  //     TotalAmount: 5000000,
+  //     PaymentStatus: 'Paid',
+  //     BookingStatus: 'Confirmed',
+  //     ContactEmail: 'nguyenvana@email.com',
+  //     ContactPhone: '0901234567',
+  //     SpecialRequests: '',
+  //     BookedAt: '2024-01-15T08:30:00Z',
+  //     customerName: 'Nguyễn Văn A',
+  //     flightNumber: 'VN001',
+  //     route: 'SGN → HAN',
+  //     departureTime: '08:30',
+  //     bookingDate: '2024-01-15'
+  //   },
+  //   {
+  //     BookingID: 2,
+  //     BookingReference: 'FG240115002',
+  //     UserID: 2,
+  //     TotalAmount: 2500000,
+  //     PaymentStatus: 'Pending',
+  //     BookingStatus: 'Reserved',
+  //     ContactEmail: 'tranthib@email.com',
+  //     ContactPhone: '0901234568',
+  //     SpecialRequests: '',
+  //     BookedAt: '2024-01-15T11:45:00Z',
+  //     customerName: 'Trần Thị B',
+  //     flightNumber: 'VN002',
+  //     route: 'HAN → DAD',
+  //     departureTime: '11:45',
+  //     bookingDate: '2024-01-15'
+  //   },
+  //   {
+  //     BookingID: 3,
+  //     BookingReference: 'FG240115003',
+  //     UserID: 3,
+  //     TotalAmount: 7500000,
+  //     PaymentStatus: 'Paid',
+  //     BookingStatus: 'Confirmed',
+  //     ContactEmail: 'levanc@email.com',
+  //     ContactPhone: '0901234569',
+  //     SpecialRequests: 'Vegetarian meal',
+  //     BookedAt: '2024-01-15T14:00:00Z',
+  //     customerName: 'Lê Văn C',
+  //     flightNumber: 'VN003',
+  //     route: 'DAD → SGN',
+  //     departureTime: '14:00',
+  //     bookingDate: '2024-01-15'
+  //   }
+  // ]);
+
+  const [bookings,setBookings] = useState([])
 
   const [passengers, setPassengers] = useState<ExtendedPassenger[]>([
     {
@@ -141,6 +147,71 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
     }
   ]);
 
+  useEffect(()=>{
+    loadBookingSummary()
+  },[])
+
+    const loadBookingSummary = async () => {
+  
+      await requestApi(`bookings/summary`, "GET").then((res: any) => {
+        if (res.success) {
+           setBookings(res.data)
+        } else {
+           setBookings([])
+        }
+      }).catch((error: any) => {
+        console.error(error)
+      });
+    }
+
+  const [selectedBooking, setSelectedBooking] =useState({
+  bookingId: 0,
+  bookingReference: '',
+  bookedAt: '',
+  totalAmount: '',
+  bookingStatus: '',
+  paymentStatus: '',
+  customer: {
+    name: '',
+    email: '',
+  },
+  flights: [
+    {
+      flightNumber: '',
+      route: '',
+      departureTime: '',
+      arrivalTime: '',
+      travelClass: '',
+      baggage: 0,
+      seatAllocations: [
+        {
+          seatNumber: '',
+          passengerName: '',
+          passengerType: '',
+          passengerDob: '',
+        },
+      ],
+    },
+  ],
+});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+    const handleViewDetail = async (bookingId:number)=>{
+      
+      await requestApi(`bookings/${String(bookingId)}/detail`, "GET").then((res: any) => {
+        if (res.success) {
+            setSelectedBooking(res.data)
+            setIsModalOpen(true);
+        } else {
+            // setSelectedBooking()
+        }
+      }).catch((error: any) => {
+        console.error(error)
+      });
+    }
+
+
+    
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -173,13 +244,33 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
     }
   };
 
-  const filteredBookings = bookings.filter(booking => {
-    const matchesSearch = booking.BookingReference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredBookings = bookings.filter((booking:any) => {
+    const matchesSearch = booking.bookingReference.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          booking.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          booking.flightNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || booking.BookingStatus === statusFilter;
+    const matchesStatus = !statusFilter || booking.bookingStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
+ const confirmDelete = (bookingId: number) => {
+    setBookingToDelete(bookingId);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [bookingToDelete, setBookingToDelete] = useState<number | null>(null);
+
+    const deleteBooking = (id: string): void => {
+      requestApi(`bookings/${id}`, "DELETE").then((res: any) => {
+        if (res.success) {
+           loadBookingSummary();
+      setIsDeleteConfirmOpen(false);
+      setBookingToDelete(null);
+        } else {
+          alert("Xóa thất bại");
+        }
+      }).catch((error: any) => console.log(error))
+    }
+  
 
   // Render content based on active sub-tab
   const renderSubContent = () => {
@@ -233,58 +324,160 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Kết quả tìm kiếm</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Mã đặt chỗ</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Chuyến bay</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Tổng tiền</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredBookings.map((booking) => (
-                      <tr key={booking.BookingID} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {booking.BookingReference}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {booking.customerName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {booking.flightNumber} - {booking.route}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ₫{booking.TotalAmount.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.BookingStatus)}`}>
-                            {getStatusText(booking.BookingStatus)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            {/* BẢNG BOOKING */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Kết quả tìm kiếm</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Mã đặt chỗ</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Khách hàng</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Tổng tiền</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Thanh toán</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Trạng thái</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {bookings.map((booking:any) => (
+                <tr key={booking.bookingId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                        <DocumentTextIcon className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{booking.bookingReference}</div>
+                        <div className="text-sm text-gray-500">{booking.bookedAt}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">{booking.customerName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">₫{booking.totalAmount.toLocaleString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{booking.paymentStatus}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.bookingStatus)}`}>
+                          {getStatusText(booking.bookingStatus)}
+                        </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">
+                            <button className="text-blue-600 hover:text-blue-900"
+                            onClick={()=>handleViewDetail(booking.bookingId)}>
                               <EyeIcon className="h-5 w-5" />
                             </button>
                             <button className="text-green-600 hover:text-green-900">
                               <PencilIcon className="h-5 w-5" />
                             </button>
+                            <button onClick={()=>confirmDelete(booking.bookingId)} className="text-red-600 hover:text-red-900">
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                             {/* 🧾 Dialog xác nhận xóa */}
+                              <Dialog
+                                open={isDeleteConfirmOpen}
+                                onClose={() => setIsDeleteConfirmOpen(false)}
+                                className="relative z-50"
+                              >
+                                <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+                                <div className="fixed inset-0 flex items-center justify-center p-4">
+                                  <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
+                                    <div className="flex justify-between items-center mb-3">
+                                      <Dialog.Title className="text-lg font-semibold text-gray-800">
+                                        Xác nhận xóa
+                                      </Dialog.Title>
+                                      <button onClick={() => setIsDeleteConfirmOpen(false)}>
+                                        <XMarkIcon className="h-5 w-5 text-gray-500" />
+                                      </button>
+                                    </div>
+
+                                    <p className="text-gray-600 mb-5">
+                                      Bạn có chắc muốn xóa đặt chỗ này không?
+                                    </p>
+
+                                    <div className="flex justify-end space-x-3">
+                                      <button
+                                        onClick={() => setIsDeleteConfirmOpen(false)}
+                                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                      >
+                                        Hủy
+                                      </button>
+                                      <button
+                                        onClick={() => bookingToDelete && deleteBooking(booking.bookingId)}
+                                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                      >
+                                        Xóa
+                                      </button>
+                                    </div>
+                                  </Dialog.Panel>
+                                </div>
+                              </Dialog>
                           </div>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* MODAL CHI TIẾT */}
+      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 md:p-8 overflow-y-auto max-h-[90vh]">
+            <div className="flex justify-between items-center mb-4">
+              <Dialog.Title className="text-lg font-semibold">
+                Chi tiết đặt chỗ {selectedBooking?.bookingReference}
+              </Dialog.Title>
+              <button onClick={() => setIsModalOpen(false)}>
+                <XMarkIcon className="h-6 w-6 text-gray-500" />
+              </button>
             </div>
+
+            {selectedBooking && (
+              <>
+                <p><strong>Người đặt vé:</strong> {selectedBooking.customer.name}</p>
+                <p><strong>Email:</strong> {selectedBooking.customer.email}</p>
+                <p><strong>Tổng tiền:</strong> ₫{selectedBooking.totalAmount.toLocaleString()}</p>
+                <p><strong>Trạng thái:</strong> {selectedBooking.bookingStatus}</p>
+                <hr className="my-4" />
+
+                <h4 className="font-semibold text-gray-800 mb-2">Chuyến bay</h4>
+                <ul className="space-y-2">
+                  {selectedBooking.flights.map((f:any, idx:any) => (
+                    <li key={idx} className="border p-2 rounded-md">
+                      ✈️ {f.flightNumber} - {f.route}<br />
+                      Ghế: {f.seatNumber} ({f.travelClass}) | Hành lý: {f.baggage}kg<br />
+                      Giờ đi: {new Date(f.departureTime).toLocaleString()} <br />
+                      Giờ đến: {new Date(f.arrivalTime).toLocaleString()}
+                    </li>
+                  ))}
+                </ul>
+
+              {selectedBooking.flights?.length > 0 && (
+                <>
+                  <hr className="my-4" />
+                  <h4 className="font-semibold text-gray-800 mb-2">Hành khách</h4>
+                  <ul className="space-y-1">
+                    {selectedBooking.flights.flatMap((flight) =>
+                      flight.seatAllocations.map((sa, i) => (
+                        <li key={`${flight.flightNumber}-${i}`}>
+                          👤 {sa.passengerName} ({sa.passengerType}) –{' '}
+                          {new Date(sa.passengerDob).toLocaleDateString()} – Ghế: {sa.seatNumber}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </>
+              )}
+           </>
+           )}
+          </Dialog.Panel>
+        </div>
+      </Dialog>
           </div>
         );
 
@@ -550,73 +743,151 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Mã đặt chỗ
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Khách hàng
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Chuyến bay
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Tổng tiền
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Trạng thái
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Thao tác
-                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Mã đặt chỗ</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Người đặt v</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Tổng tiền</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Thanh toán</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Trạng thái</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredBookings.map((booking) => (
-                      <tr key={booking.BookingID} className="hover:bg-gray-50">
+                    {bookings.map((booking:any) => (
+                      <tr key={booking.bookingId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                               <DocumentTextIcon className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{booking.BookingReference}</div>
-                              <div className="text-sm text-gray-500">{booking.bookingDate}</div>
+                              <div className="text-sm font-medium text-gray-900">{booking.bookingReference}</div>
+                              <div className="text-sm text-gray-500">{booking.bookedAt}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {booking.customerName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {booking.flightNumber} - {booking.route}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ₫{booking.TotalAmount.toLocaleString()}
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{booking.customerName}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">₫{booking.totalAmount.toLocaleString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{booking.paymentStatus}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.BookingStatus)}`}>
-                            {getStatusText(booking.BookingStatus)}
-                          </span>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.bookingStatus)}`}>
+                                {getStatusText(booking.bookingStatus)}
+                              </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">
-                              <EyeIcon className="h-5 w-5" />
-                            </button>
-                            <button className="text-green-600 hover:text-green-900">
-                              <PencilIcon className="h-5 w-5" />
-                            </button>
-                            <button className="text-red-600 hover:text-red-900">
-                              <TrashIcon className="h-5 w-5" />
-                            </button>
-                          </div>
-                        </td>
+                                <div className="flex items-center space-x-2">
+                                  <button className="text-blue-600 hover:text-blue-900"
+                                  onClick={()=>handleViewDetail(booking.bookingId)}>
+                                    <EyeIcon className="h-5 w-5" />
+                                  </button>
+                                  <button className="text-green-600 hover:text-green-900">
+                                    <PencilIcon className="h-5 w-5" />
+                                  </button>
+                                  <button className="text-red-600 hover:text-red-900"
+                                  onClick={()=>confirmDelete(booking.bookingId)}>
+                                    <TrashIcon className="h-5 w-5" />
+                                  </button>
+                                  {/* Dialog xác nhận xóa */}
+                                    <Dialog
+                                      open={isDeleteConfirmOpen}
+                                      onClose={() => setIsDeleteConfirmOpen(false)}
+                                      className="relative z-50"
+                                    >
+                                      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+                                      <div className="fixed inset-0 flex items-center justify-center p-4">
+                                        <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
+                                          <div className="flex justify-between items-center mb-3">
+                                            <Dialog.Title className="text-lg font-semibold text-gray-800">
+                                              Xác nhận xóa
+                                            </Dialog.Title>
+                                            <button onClick={() => setIsDeleteConfirmOpen(false)}>
+                                              <XMarkIcon className="h-5 w-5 text-gray-500" />
+                                            </button>
+                                          </div>
+
+                                          <p className="text-gray-600 mb-5">
+                                            Bạn có chắc muốn xóa đặt chỗ này không?
+                                          </p>
+
+                                          <div className="flex justify-end space-x-3">
+                                            <button
+                                              onClick={() => setIsDeleteConfirmOpen(false)}
+                                              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                            >
+                                              Hủy
+                                            </button>
+                                            <button
+                                              onClick={() => bookingToDelete && deleteBooking(booking.bookingId)}
+                                              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                            >
+                                              Xóa
+                                            </button>
+                                          </div>
+                                        </Dialog.Panel>
+                                      </div>
+                                    </Dialog>
+                                </div>
+                              </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
+                  {/* MODAL CHI TIẾT */}
+      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 md:p-8 overflow-y-auto max-h-[90vh]">
+            <div className="flex justify-between items-center mb-4">
+              <Dialog.Title className="text-lg font-semibold">
+                Chi tiết đặt chỗ {selectedBooking?.bookingReference}
+              </Dialog.Title>
+              <button onClick={() => setIsModalOpen(false)}>
+                <XMarkIcon className="h-6 w-6 text-gray-500" />
+              </button>
+            </div>
+
+            {selectedBooking && (
+              <>
+                <p><strong>Người đặt vé:</strong> {selectedBooking.customer.name}</p>
+                <p><strong>Email:</strong> {selectedBooking.customer.email}</p>
+                <p><strong>Tổng tiền:</strong> ₫{selectedBooking.totalAmount.toLocaleString()}</p>
+                <p><strong>Trạng thái:</strong> {selectedBooking.bookingStatus}</p>
+                <hr className="my-4" />
+
+                <h4 className="font-semibold text-gray-800 mb-2">Chuyến bay</h4>
+                <ul className="space-y-2">
+                  {selectedBooking.flights.map((f:any, idx:any) => (
+                    <li key={idx} className="border p-2 rounded-md">
+                      ✈️ {f.flightNumber} - {f.route}<br />
+                      Ghế: {f.seatNumber} ({f.travelClass}) | Hành lý: {f.baggage}kg<br />
+                      Giờ đi: {new Date(f.departureTime).toLocaleString()} <br />
+                      Giờ đến: {new Date(f.arrivalTime).toLocaleString()}
+                    </li>
+                  ))}
+                </ul>
+
+              {selectedBooking.flights?.length > 0 && (
+                <>
+                  <hr className="my-4" />
+                  <h4 className="font-semibold text-gray-800 mb-2">Hành khách</h4>
+                  <ul className="space-y-1">
+                    {selectedBooking.flights.flatMap((flight) =>
+                      flight.seatAllocations.map((sa, i) => (
+                        <li key={`${flight.flightNumber}-${i}`}>
+                          👤 {sa.passengerName} ({sa.passengerType}) –{' '}
+                          {new Date(sa.passengerDob).toLocaleDateString()} – Ghế: {sa.seatNumber}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </>
+              )}
+           </>
+           )}
+          </Dialog.Panel>
+        </div>
+      </Dialog>
           </div>
         );
     }

@@ -6,6 +6,15 @@ import { UpdateBookingDto } from 'src/bookings/dto/update-booking.dto';
 @Controller('bookings')
 export class BookingsController {
      constructor(private bookingsService: BookingsService) {}
+
+        @Get('summary')
+        async getBookingSummaries() {
+            return this.bookingsService.getBookingSummaries();
+        }
+        @Get(':id/detail')
+        async getDetail(@Param('id') id: number) {
+        return this.bookingsService.getBookingDetail(id);
+        }
         @Get()
         findAll() {
          return this.bookingsService.findAll();

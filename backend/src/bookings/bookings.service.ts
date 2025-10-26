@@ -31,8 +31,114 @@ export class BookingsService {
                     }
                     return response;
                 }
-           
+
+                async getBookingSummaries() {
+                try {
+                    // Lấy toàn bộ thông tin booking + liên kết các bảng cần thiết
+                    const bookings = await this.bookingRepository
+                    .createQueryBuilder('booking')
+                    .leftJoinAndSelect('booking.user', 'user')
+                    .leftJoinAndSelect('booking.bookingFlights', 'bf')
+                    .leftJoinAndSelect('bf.flight', 'flight')
+                    .leftJoinAndSelect('flight.departureAirport', 'dep')
+                    .leftJoinAndSelect('flight.arrivalAirport', 'arr')
+                    .orderBy('booking.bookedAt', 'DESC')
+                    .getMany();
+
+                    // Gộp dữ liệu lại cho dễ dùng ở frontend
+                    const formatted = bookings.map(b => ({
+                    bookingId: b.bookingId,
+                    bookingReference: b.bookingReference,
+                    totalAmount: b.totalAmount,
+                    bookingStatus: b.bookingStatus,
+                    paymentStatus: b.paymentStatus,
+                    customerName: `${b.user.firstName} ${b.user.lastName}`,
+                    bookedAt: b.bookedAt,
+                    flights: b.bookingFlights.map(f => ({
+                        bookingFlightId: f.bookingFlightId,
+                        flightNumber: f.flight.flightNumber,
+                        route: `${f.flight.departureAirport.airportCode} → ${f.flight.arrivalAirport.airportCode}`,
+                        travelClass: f.travelClass,
+                        fare: f.fare,
+                        seatNumber: f.seatNumber,
+                        departureTime: f.flight.departureTime,
+                        arrivalTime: f.flight.arrivalTime,
+                        status: f.flight.status,
+                    })),
+                    }));
+
+                    return {
+                    success: true,
+                    message: 'Fetched full booking data successfully',
+                    data: formatted,
+                    };
+
+                } catch (error) {
+                    return {
+                    success: false,
+                    message: error.message || 'Error fetching booking data',
+                    };
+                }
+                }
                 
+                async getBookingDetail(bookingId: number) {
+                try {
+                    const booking = await this.bookingRepository.findOne({
+                    where: { bookingId },
+                    relations: [
+                        'user',
+                        'bookingFlights',
+                        'bookingFlights.flight',
+                        'bookingFlights.flight.departureAirport',
+                        'bookingFlights.flight.arrivalAirport',
+                        'bookingFlights.seatAllocations',
+                        'bookingFlights.seatAllocations.seat',
+                        'bookingFlights.seatAllocations.passenger',
+                    ],
+                    });
+
+                    if (!booking) {
+                    return { success: false, message: 'Booking not found' };
+                    }
+
+                    const result = {
+                    bookingId: booking.bookingId,
+                    bookingReference: booking.bookingReference,
+                    bookedAt: booking.bookedAt,
+                    totalAmount: booking.totalAmount,
+                    bookingStatus: booking.bookingStatus,
+                    paymentStatus: booking.paymentStatus,
+                    customer: {
+                        name: `${booking.user.firstName} ${booking.user.lastName}`,
+                        email: booking.user.email,
+                    },
+
+                    // Lấy tất cả chuyến bay thuộc booking
+                    flights: booking.bookingFlights.map((bf) => ({
+                        flightNumber: bf.flight.flightNumber,
+                        route: `${bf.flight.departureAirport.airportCode} → ${bf.flight.arrivalAirport.airportCode}`,
+                        departureTime: bf.flight.departureTime,
+                        arrivalTime: bf.flight.arrivalTime,
+                        travelClass: bf.travelClass,
+                        baggage: bf.baggageAllowance,
+                        seatAllocations: bf.seatAllocations.map((sa) => ({
+                        seatNumber: sa.seat?.seatNumber,
+                        passengerName: `${sa.passenger?.firstName} ${sa.passenger?.lastName}`,
+                        passengerType: sa.passenger?.passengerType,
+                        passengerDob: sa.passenger?.dateOfBirth,
+                        })),
+                    })),
+
+                    
+                    };
+
+                    return { success: true, data: result };
+                } catch (error) {
+                    return { success: false, message: error.message };
+                }
+                }
+
+               
             async create(createBookingDto: CreateBookingDto): Promise<any> {
                 let response = { ...common_response };
                     try {
