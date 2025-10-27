@@ -1,11 +1,26 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 import { CreateFlightDto } from 'src/flights/dto/create-flight.dto';
 import { UpdateFlightDto } from 'src/flights/dto/update-flight.dto';
+import { SearchFlightsDto } from 'src/flights/dto/search-flights.dto';
 import { FlightsService } from 'src/flights/flights.service';
 
 @Controller('flights')
 export class FlightsController {
     constructor(private flightsService: FlightsService) { }
+
+    @Get('search')
+    async searchFlights(
+        @Query('departureAirportCode') departureAirportCode?: string,
+        @Query('arrivalAirportCode') arrivalAirportCode?: string,
+        @Query('departureDate') departureDate?: string,
+    ): Promise<any> {
+        return this.flightsService.searchFlights(departureAirportCode, arrivalAirportCode, departureDate);
+    }
+
+    @Get('generate-flight-number/:airlineId')
+    async generateFlightNumber(@Param('airlineId') airlineId: number) {
+        return this.flightsService.generateFlightNumber(airlineId);
+    }
 
     @Get()
     async findAll(): Promise<any> {
@@ -32,9 +47,5 @@ export class FlightsController {
     @Delete(':id')
     async delete(@Param('id') id: string): Promise<any> {
         return this.flightsService.delete(Number(id));
-    }
-    @Get('generate-flight-number/:airlineId')
-    async generateFlightNumber(@Param('airlineId') airlineId: number) {
-        return this.flightsService.generateFlightNumber(airlineId);
     }
 }

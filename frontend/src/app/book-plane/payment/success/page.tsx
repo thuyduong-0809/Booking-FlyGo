@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { paymentsService } from '@/services/payments.service';
+import { bookingFlightsService } from '@/services/booking-flights.service';
+import { seatAllocationsService } from '@/services/seat-allocations.service';
+import { requestApi } from '@/lib/api';
 
 export default function PaymentSuccessPage() {
     const router = useRouter();
@@ -126,6 +129,90 @@ export default function PaymentSuccessPage() {
         }
     };
 
+    // Hàm tạo bookingFlights và seatAllocations
+    const createBookingFlightsAndSeatAllocations = async (bookingId: number) => {
+        try {
+            console.log('🚀 Creating booking flights and seat allocations for bookingId:', bookingId);
+
+            // 1. Lấy thông tin flight đã chọn từ localStorage
+            const savedFlight = localStorage.getItem('selectedFlight');
+            if (!savedFlight) {
+                console.warn('⚠️ No saved flight data found');
+                return;
+            }
+
+            const flightData = JSON.parse(savedFlight);
+            console.log('✈️ Flight data from localStorage:', flightData);
+
+            // Kiểm tra có flightId không
+            if (!flightData.flightId) {
+                console.error('❌ Missing flightId in flightData');
+                return;
+            }
+
+            // 2. Lấy passengers từ booking
+            const bookingResponse = await requestApi(`bookings/${bookingId}`, 'GET');
+            if (!bookingResponse.success || !bookingResponse.data) {
+                console.error('❌ Failed to get booking data');
+                return;
+            }
+
+            const passengers = bookingResponse.data.passengers || [];
+            console.log('👥 Passengers:', passengers);
+
+            if (passengers.length === 0) {
+                console.warn('⚠️ No passengers found for booking');
+                return;
+            }
+
+            // 3. Kiểm tra travelClass - map từ fare name sang database enum
+            let travelClass: 'Economy' | 'Business' | 'First' = 'Economy';
+            const travelClassName = flightData.travelClass?.toUpperCase();
+            if (travelClassName === 'FIRST CLASS' || travelClassName === 'FIST CLASS') {
+                travelClass = 'First';
+            } else if (travelClassName === 'BUSSINESS' || travelClassName === 'BUSINESS') {
+                travelClass = 'Business';
+            } else {
+                travelClass = 'Economy';
+            }
+
+            console.log('🎫 Travel class:', travelClass, 'from', flightData.travelClass);
+
+            // 4. Tạo bookingFlight cho mỗi passenger
+            for (const passenger of passengers) {
+                try {
+                    // Tạo bookingFlight với passengerId để backend tự động tạo seatAllocation
+                    const bookingFlightData = {
+                        bookingId: bookingId,
+                        flightId: Number(flightData.flightId), // Đảm bảo là number
+                        travelClass: travelClass,
+                        baggageAllowance: 0,
+                        // KHÔNG truyền seatNumber - để backend tự động chọn ghế
+                        // passengerId để backend tự động tạo seatAllocation
+                        passengerId: passenger.passengerId
+                    };
+
+                    console.log('📝 Creating booking flight with data:', bookingFlightData);
+                    const bookingFlightResult = await bookingFlightsService.create(bookingFlightData);
+                    console.log('✅ Booking flight created:', bookingFlightResult);
+
+                    // Backend đã tự động tạo seatAllocation với seat phù hợp
+                    // seatNumber sẽ được set tự động trong booking-flights.service.ts (dòng 142)
+
+                } catch (error) {
+                    console.error('❌ Error creating booking flight for passenger:', passenger.passengerId, error);
+                }
+            }
+
+            // 5. Xóa flight data khỏi localStorage sau khi đã sử dụng
+            localStorage.removeItem('selectedFlight');
+
+            console.log('✅ All booking flights and seat allocations created successfully');
+        } catch (error) {
+            console.error('❌ Error creating booking flights:', error);
+        }
+    };
+
     const updatePaymentStatus = async (bookingId: number) => {
         try {
             console.log('🔄 Updating payment status for bookingId:', bookingId);
@@ -148,6 +235,9 @@ export default function PaymentSuccessPage() {
                         'Completed'
                     );
                     console.log('✅ Payment status updated successfully:', result);
+
+                    // Tạo bookingFlights và seatAllocations
+                    await createBookingFlightsAndSeatAllocations(bookingId);
 
                     // Redirect to confirm page after successful update
                     window.location.href = `/confirm?bookingId=${bookingId}`;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Link from 'next/link';
 import { useBooking } from "../BookingContext";
 import { useSearch } from "../SearchContext";
@@ -525,21 +525,6 @@ export default function SelectFlightPage() {
     fetchUserData();
   }, []);
 
-  // Đồng bộ ngày với searchData khi context thay đổi
-  useEffect(() => {
-    if (searchData.departureDate) {
-      setSelectedDepartureDate(searchData.departureDate.getDate());
-    }
-  }, [searchData.departureDate]);
-
-  // Fetch flights khi component mount hoặc searchData thay đổi
-  useEffect(() => {
-    if (searchData.departureAirport && searchData.arrivalAirport && searchData.departureDate) {
-      // Luôn gọi searchFlights khi có đủ thông tin
-      searchFlights();
-    }
-  }, [searchData.departureAirport?.airportCode, searchData.arrivalAirport?.airportCode]);
-
   // Hàm chuyển đổi flight từ API sang FlightItem
   const convertFlightToFlightItem = (flight: Flight): FlightItem => {
     // Parse departureTime và arrivalTime
@@ -639,37 +624,67 @@ export default function SelectFlightPage() {
   };
 
   // Hàm tìm kiếm chuyến bay
-  const searchFlights = async () => {
+  const searchFlights = useCallback(async () => {
     setLoading(true);
     setError('');
 
     try {
       // Format date
       const formatDate = (date: Date) => {
-        return date.toISOString().split('T')[0];
+        const formatted = date.toISOString().split('T')[0];
+        console.log('📅 Formatting date:', date, '->', formatted);
+        return formatted;
       };
 
-      // Tìm kiếm chuyến đi
-      const departureSearchResult = await flightsService.searchFlights({
+      const searchParams = {
         departureAirportCode: searchData.departureAirport?.airportCode,
         arrivalAirportCode: searchData.arrivalAirport?.airportCode,
-        departureDate: formatDate(searchData.departureDate!)
-      });
+        departureDate: searchData.departureDate ? formatDate(searchData.departureDate) : undefined
+      };
+
+      console.log('✈️ Searching flights with params:', searchParams);
+
+      // Tìm kiếm chuyến đi
+      const departureSearchResult = await flightsService.searchFlights(searchParams);
+
+      console.log('🔍 Search result:', departureSearchResult);
 
       if (departureSearchResult.success && departureSearchResult.data) {
+        console.log('✅ Found', departureSearchResult.data.length, 'flights');
         const departureItems = departureSearchResult.data.map(flight => convertFlightToFlightItem(flight));
         setDepartureFlights(departureItems);
       } else {
+        console.warn('⚠️ No flights found');
         setDepartureFlights([]);
       }
     } catch (err: any) {
-      console.error('Error searching flights:', err);
+      console.error('❌ Error searching flights:', err);
       setError(`Lỗi khi tìm kiếm chuyến bay: ${err.message || 'Không thể kết nối đến server'}`);
       setDepartureFlights([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchData.departureAirport, searchData.arrivalAirport, searchData.departureDate]);
+
+  // Đồng bộ ngày với searchData khi context thay đổi
+  useEffect(() => {
+    if (searchData.departureDate) {
+      setSelectedDepartureDate(searchData.departureDate.getDate());
+    }
+  }, [searchData.departureDate]);
+
+  // Fetch flights khi component mount hoặc searchData thay đổi
+  useEffect(() => {
+    if (searchData.departureAirport && searchData.arrivalAirport && searchData.departureDate) {
+      // Luôn gọi searchFlights khi có đủ thông tin
+      console.log('🔍 Triggering search with:', {
+        departure: searchData.departureAirport.airportCode,
+        arrival: searchData.arrivalAirport.airportCode,
+        date: searchData.departureDate
+      });
+      searchFlights();
+    }
+  }, [searchFlights]);
 
   const [expandedFlight, setExpandedFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
 
@@ -837,6 +852,22 @@ export default function SelectFlightPage() {
                                   };
 
                                   setSelectedDeparture(flightData);
+
+                                  // Lưu flightId vào localStorage để dùng sau thanh toán
+                                  console.log('💾 Saving flight to localStorage:', {
+                                    flightId: flight.flightData?.flightId,
+                                    code: flight.code,
+                                    flightData: flight.flightData
+                                  });
+
+                                  localStorage.setItem('selectedFlight', JSON.stringify({
+                                    flightId: flight.flightData?.flightId, // ID từ database
+                                    flightNumber: flight.code, // VD: VN001
+                                    travelClass: fare.name,
+                                    price: fare.price,
+                                    tax: fare.tax,
+                                    aircraftId: flight.flightData?.aircraft?.aircraftId // Cần aircraftId để tìm seats
+                                  }));
                                 }}
                                 onToggleExpand={() => {
                                   if (isExpanded) {

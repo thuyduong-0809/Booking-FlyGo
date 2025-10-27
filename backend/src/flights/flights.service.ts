@@ -240,4 +240,115 @@ export class FlightsService {
         }
     }
 
+    async searchFlights(departureAirportCode?: string, arrivalAirportCode?: string, departureDate?: string): Promise<any> {
+        const response = { ...common_response };
+
+        try {
+            console.log('🔍 Searching flights with params:', {
+                departureAirportCode,
+                arrivalAirportCode,
+                departureDate
+            });
+
+            // Debug: Kiểm tra có flights nào trong database không
+            const totalFlights = await this.flightRepository.count();
+            console.log('📊 Total flights in database:', totalFlights);
+
+            // Nếu không có params, trả về empty
+            if (!departureAirportCode && !arrivalAirportCode && !departureDate) {
+                console.log('⚠️ No search parameters provided');
+                response.success = true;
+                response.message = 'No search parameters provided';
+                response.data = [];
+                return response;
+            }
+
+            // Xây dựng query builder
+            const queryBuilder = this.flightRepository
+                .createQueryBuilder('flight')
+                .leftJoinAndSelect('flight.airline', 'airline')
+                .leftJoinAndSelect('flight.departureAirport', 'departureAirport')
+                .leftJoinAndSelect('flight.arrivalAirport', 'arrivalAirport')
+                .leftJoinAndSelect('flight.aircraft', 'aircraft')
+                .leftJoinAndSelect('flight.departureTerminal', 'departureTerminal')
+                .leftJoinAndSelect('flight.arrivalTerminal', 'arrivalTerminal');
+
+            // Lọc theo departure airport code
+            if (departureAirportCode) {
+                // Debug: Kiểm tra airport có tồn tại không
+                const depAirport = await this.airportRepository.findOne({
+                    where: { airportCode: departureAirportCode }
+                });
+                console.log('🛫 Departure airport found:', depAirport ? `${depAirport.airportCode} - ${depAirport.airportName}` : 'NOT FOUND');
+
+                queryBuilder.andWhere('departureAirport.airportCode = :departureAirportCode', {
+                    departureAirportCode
+                });
+            }
+
+            // Lọc theo arrival airport code
+            if (arrivalAirportCode) {
+                // Debug: Kiểm tra airport có tồn tại không
+                const arrAirport = await this.airportRepository.findOne({
+                    where: { airportCode: arrivalAirportCode }
+                });
+                console.log('🛬 Arrival airport found:', arrAirport ? `${arrAirport.airportCode} - ${arrAirport.airportName}` : 'NOT FOUND');
+
+                queryBuilder.andWhere('arrivalAirport.airportCode = :arrivalAirportCode', {
+                    arrivalAirportCode
+                });
+            }
+
+            // Lọc theo departure date
+            if (departureDate) {
+                // So sánh theo ngày (bỏ qua giờ)
+                const startOfDay = new Date(departureDate);
+                startOfDay.setHours(0, 0, 0, 0);
+
+                const endOfDay = new Date(departureDate);
+                endOfDay.setHours(23, 59, 59, 999);
+
+                console.log('📅 Date range:', {
+                    start: startOfDay.toISOString(),
+                    end: endOfDay.toISOString()
+                });
+
+                queryBuilder.andWhere('flight.departureTime >= :startOfDay', { startOfDay });
+                queryBuilder.andWhere('flight.departureTime <= :endOfDay', { endOfDay });
+            }
+
+            // Sắp xếp theo thời gian khởi hành
+            queryBuilder.orderBy('flight.departureTime', 'ASC');
+
+            // Debug: Log SQL query
+            const sql = queryBuilder.getSql();
+            const parameters = queryBuilder.getParameters();
+            console.log('🔍 SQL Query:', sql);
+            console.log('📋 Parameters:', parameters);
+
+            const flights = await queryBuilder.getMany();
+
+            // Debug: Log chi tiết từng flight tìm được
+            if (flights.length > 0) {
+                console.log('✅ Flights found:');
+                flights.forEach(flight => {
+                    console.log(`  - ${flight.flightNumber}: ${flight.departureAirport?.airportCode} -> ${flight.arrivalAirport?.airportCode} at ${flight.departureTime}`);
+                });
+            } else {
+                console.log('❌ No flights match the criteria');
+            }
+
+            response.success = true;
+            response.message = 'Flights retrieved successfully';
+            response.data = flights;
+
+        } catch (error) {
+            console.error('❌ Error searching flights:', error);
+            response.success = false;
+            response.message = error.message || 'Error while searching flights';
+        }
+
+        return response;
+    }
+
 }
