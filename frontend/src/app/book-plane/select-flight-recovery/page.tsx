@@ -858,8 +858,30 @@ export default function SelectFlightRecoveryPage() {
 
                       if (type === 'departure') {
                         setSelectedDeparture(flightData);
+                        // Lưu chuyến đi vào localStorage để dùng sau thanh toán
+                        try {
+                          localStorage.setItem('selectedDepartureFlight', JSON.stringify({
+                            flightId: (flight as any)?.flightData?.flightId,
+                            flightNumber: flight.code,
+                            travelClass: fare.name,
+                            price: fare.price,
+                            tax: fare.tax,
+                            aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
+                          }));
+                        } catch { }
                       } else {
                         setSelectedReturn(flightData);
+                        // Lưu chuyến về vào localStorage để dùng sau thanh toán
+                        try {
+                          localStorage.setItem('selectedReturnFlight', JSON.stringify({
+                            flightId: (flight as any)?.flightData?.flightId,
+                            flightNumber: flight.code,
+                            travelClass: fare.name,
+                            price: fare.price,
+                            tax: fare.tax,
+                            aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
+                          }));
+                        } catch { }
                       }
                     }}
                     onToggleExpand={() => {
