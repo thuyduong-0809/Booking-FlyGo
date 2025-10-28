@@ -155,8 +155,11 @@ export default function PaymentSuccessPage() {
                 return;
             }
 
-            const passengers = bookingResponse.data.passengers || [];
-            console.log('👥 Passengers:', passengers);
+            // Chỉ tạo booking flights cho Người lớn và Trẻ em
+            const passengers = (bookingResponse.data.passengers || []).filter(
+                (p: any) => p.passengerType === 'Adult' || p.passengerType === 'Child'
+            );
+            console.log('👥 Passengers (Adult & Child only):', passengers);
 
             if (passengers.length === 0) {
                 console.warn('⚠️ No passengers found for booking');

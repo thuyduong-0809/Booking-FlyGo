@@ -134,7 +134,7 @@ export default function PassengersPage() {
       // Lưu bookingId vào context
       setBookingId(bookingId);
 
-      // Tạo passengers
+      // Tạo passengers người lớn
       for (const passenger of passengers) {
         const passengerData = {
           firstName: passenger.firstName,
@@ -146,6 +146,35 @@ export default function PassengersPage() {
         };
 
         await requestApi('passengers', 'POST', passengerData);
+      }
+
+      // Tạo passengers Trẻ em (Child)
+      if (totalChildren > 0) {
+        const refAdult = passengers[0];
+        for (let i = 0; i < totalChildren; i++) {
+          const childData = {
+            // Nếu không có tên, backend sẽ fallback tên người lớn
+            firstName: refAdult?.firstName,
+            lastName: refAdult?.lastName,
+            passengerType: 'Child',
+            bookingId: bookingId
+          } as any;
+          await requestApi('passengers', 'POST', childData);
+        }
+      }
+
+      // Tạo passengers Em bé (Infant)
+      if (totalInfants > 0) {
+        const refAdult = passengers[0];
+        for (let i = 0; i < totalInfants; i++) {
+          const infantData = {
+            firstName: refAdult?.firstName,
+            lastName: refAdult?.lastName,
+            passengerType: 'Infant',
+            bookingId: bookingId
+          } as any;
+          await requestApi('passengers', 'POST', infantData);
+        }
       }
 
       // Chuyển sang trang choose-seat
