@@ -93,17 +93,17 @@ export class PaymentsService {
                         relations: ['user', 'bookingFlights', 'bookingFlights.flight', 'bookingFlights.flight.arrivalAirport', 'bookingFlights.flight.departureAirport']
                     });
 
-                    if (booking && booking.user) {
+                    if (booking && booking.contactEmail) {
                         const flightDetailsHtml = this.generateFlightDetailsHtml(booking);
 
                         await this.emailService.sendPaymentConfirmationEmail(
-                            booking.user.email,
+                            booking.contactEmail,
                             booking.bookingReference,
                             payment.amount,
                             payment.paymentMethod,
                             flightDetailsHtml
                         );
-                        console.log('✅ Email sent successfully');
+                        console.log('✅ Email sent successfully to:', booking.contactEmail);
                     }
                 } catch (emailError) {
                     console.error('❌ Error sending email:', emailError);
@@ -301,6 +301,30 @@ export class PaymentsService {
                     payment.booking.paymentStatus = 'Paid';
                     await this.bookingRepository.save(payment.booking);
                     console.log('✅ Booking status updated to Completed');
+
+                    // Send confirmation email to contact email
+                    try {
+                        const booking = await this.bookingRepository.findOne({
+                            where: { bookingId: payment.booking.bookingId },
+                            relations: ['user', 'bookingFlights', 'bookingFlights.flight', 'bookingFlights.flight.arrivalAirport', 'bookingFlights.flight.departureAirport']
+                        });
+
+                        if (booking && booking.contactEmail) {
+                            const flightDetailsHtml = this.generateFlightDetailsHtml(booking);
+
+                            await this.emailService.sendPaymentConfirmationEmail(
+                                booking.contactEmail,
+                                booking.bookingReference,
+                                payment.amount,
+                                payment.paymentMethod,
+                                flightDetailsHtml
+                            );
+                            console.log('✅ Email sent successfully to:', booking.contactEmail);
+                        }
+                    } catch (emailError) {
+                        console.error('❌ Error sending email:', emailError);
+                        // Don't throw error, continue with payment update
+                    }
                 }
             } else {
                 payment.paymentStatus = 'Failed';
