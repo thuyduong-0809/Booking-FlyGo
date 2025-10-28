@@ -69,9 +69,7 @@ export default function PaymentSuccessPage() {
             if (bookingId) {
                 // Update status với bookingId này và redirect
                 await updatePaymentStatus(bookingId);
-                // Redirect will be handled in updatePaymentStatus
             } else {
-                console.warn('⚠️ Could not find bookingId');
                 setLoading(false);
             }
         } catch (error) {
@@ -175,19 +173,20 @@ export default function PaymentSuccessPage() {
             } else {
                 travelClass = 'Economy';
             }
-
-            console.log('🎫 Travel class:', travelClass, 'from', flightData.travelClass);
-
             // 4. Tạo bookingFlight cho mỗi passenger
-            for (const passenger of passengers) {
+            for (let i = 0; i < passengers.length; i++) {
+                const passenger = passengers[i];
+
                 try {
+
                     // Tạo bookingFlight với passengerId để backend tự động tạo seatAllocation
+                    // Backend sẽ tự động chọn ghế trống đầu tiên (01A, 02A, 03A...)
                     const bookingFlightData = {
                         bookingId: bookingId,
                         flightId: Number(flightData.flightId), // Đảm bảo là number
                         travelClass: travelClass,
                         baggageAllowance: 0,
-                        // KHÔNG truyền seatNumber - để backend tự động chọn ghế
+                        // KHÔNG truyền seatNumber - để backend tự động chọn ghế từ 01A
                         // passengerId để backend tự động tạo seatAllocation
                         passengerId: passenger.passengerId
                     };
@@ -196,13 +195,23 @@ export default function PaymentSuccessPage() {
                     const bookingFlightResult = await bookingFlightsService.create(bookingFlightData);
                     console.log('✅ Booking flight created:', bookingFlightResult);
 
-                    // Backend đã tự động tạo seatAllocation với seat phù hợp
-                    // seatNumber sẽ được set tự động trong booking-flights.service.ts (dòng 142)
+                    if (bookingFlightResult?.seatNumber) {
+                        console.log(`🎫 Ghế được gán: ${bookingFlightResult.seatNumber}`);
+                    }
+
+                    // Backend đã tự động:
+                    // 1. Tìm ghế trống đầu tiên (order by seatNumber ASC)
+                    // 2. Đánh dấu ghế đã được đặt (isAvailable = false)
+                    // 3. Set seatNumber vào bookingFlight
+                    // 4. Tạo seatAllocation
 
                 } catch (error) {
-                    console.error('❌ Error creating booking flight for passenger:', passenger.passengerId, error);
+                    console.error(`❌ Error creating booking flight for passenger ${passenger.passengerId}:`, error);
+                    // Tiếp tục với passenger tiếp theo
                 }
             }
+
+            console.log(`\n✅ Đã xử lý xong ${passengers.length} passengers`);
 
             // 5. Xóa flight data khỏi localStorage sau khi đã sử dụng
             localStorage.removeItem('selectedFlight');

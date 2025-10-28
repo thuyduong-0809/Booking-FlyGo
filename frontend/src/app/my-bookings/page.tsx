@@ -187,20 +187,20 @@ const MyBookingsPage = () => {
                                                         <div className="grid grid-cols-2 gap-4 text-sm">
                                                             <div>
                                                                 <span className="text-gray-600">Từ:</span>
-                                                                <span className="ml-2 font-semibold">{flight.departureAirport?.city} ({flight.departureAirport?.airportCode})</span>
+                                                                <span className="ml-2 text-black font-semibold">{flight.departureAirport?.city} ({flight.departureAirport?.airportCode})</span>
                                                             </div>
                                                             <div>
                                                                 <span className="text-gray-600">Đến:</span>
-                                                                <span className="ml-2 font-semibold">{flight.arrivalAirport?.city} ({flight.arrivalAirport?.airportCode})</span>
+                                                                <span className="ml-2 text-black font-semibold">{flight.arrivalAirport?.city} ({flight.arrivalAirport?.airportCode})</span>
                                                             </div>
-                                                            <div>
+                                                            {/* <div>
                                                                 <span className="text-gray-600">Khởi hành:</span>
-                                                                <span className="ml-2 font-semibold">{bf.departTime || flight.departTime}</span>
+                                                                <span className="ml-2 text-black font-semibold">{bf.departTime || flight.departTime}</span>
                                                             </div>
                                                             <div>
                                                                 <span className="text-gray-600">Đến nơi:</span>
-                                                                <span className="ml-2 font-semibold">{bf.arriveTime || flight.arriveTime}</span>
-                                                            </div>
+                                                                <span className="ml-2 text-black font-semibold">{bf.arriveTime || flight.arriveTime}</span>
+                                                            </div> */}
                                                         </div>
                                                     </div>
                                                 );
