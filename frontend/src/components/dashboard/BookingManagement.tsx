@@ -149,6 +149,7 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
 
   useEffect(()=>{
     loadBookingSummary()
+    loadBookingSearchData()
   },[])
 
     const loadBookingSummary = async () => {
@@ -208,6 +209,23 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
         console.error(error)
       });
     }
+
+  const [bookingSearchData,setBookingSearchData] = useState([]);
+
+  const loadBookingSearchData = async ()=>{
+      
+      await requestApi(`bookings`, "GET").then((res: any) => {
+        if (res.success) {
+            setBookingSearchData(res.data)
+            setIsModalOpen(true);
+        } else {
+            // setSelectedBooking()
+        }
+      }).catch((error: any) => {
+        console.error(error)
+      });
+    }
+
 
 
     
@@ -270,7 +288,39 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
         }
       }).catch((error: any) => console.log(error))
     }
-  
+
+
+  const [searchFields, setSearchFields] = useState({
+  bookingReference: "",
+  phone: "",
+  email: "",
+  passengerName: ""
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+  setSearchFields((prev) => ({ ...prev, [name]: value }));
+ };
+
+const handleSearch = () => {
+  const filtered = bookingSearchData.filter((b: any) => {
+    const fullName = `${b.user.firstName || ""} ${b.user.lastName || ""}`.toLowerCase();
+
+    return (
+      (!searchFields.bookingReference ||
+        b.bookingReference.toLowerCase().includes(searchFields.bookingReference.toLowerCase())) &&
+      (!searchFields.phone || b.contactPhone?.includes(searchFields.phone)) &&
+      (!searchFields.email ||
+        b.contactEmail?.toLowerCase().includes(searchFields.email.toLowerCase())) &&
+      (!searchFields.passengerName ||
+        fullName.includes(searchFields.passengerName.toLowerCase()))
+    );
+  });
+
+  setBookings(filtered);
+};
+
+
 
   // Render content based on active sub-tab
   const renderSubContent = () => {
@@ -281,44 +331,65 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Tìm kiếm đặt chỗ</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Mã đặt chỗ</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="FG240115001"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="0901234567"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="customer@email.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Tên hành khách</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Nguyễn Văn A"
-                  />
-                </div>
+                 <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">Mã đặt chỗ</label>
+                    <input
+                      type="text"
+                      name="bookingReference"
+                      value={searchFields.bookingReference}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      placeholder="FG240115001"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      value={searchFields.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      placeholder="0901234567"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={searchFields.email}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      placeholder="customer@email.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">Tên hành khách</label>
+                    <input
+                      type="text"
+                      name="passengerName"
+                      value={searchFields.passengerName}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      placeholder="Nguyễn Văn A"
+                    />
+                  </div>
               </div>
               <div className="mt-6 flex justify-end space-x-3">
-                <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                <button
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  onClick={() => {
+                    setSearchFields({ bookingReference: "", phone: "", email: "", passengerName: "" });
+                    loadBookingSummary(); // load lại tất cả
+                  }}
+                >
                   Xóa
                 </button>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button
+                  onClick={handleSearch}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
                   Tìm kiếm
                 </button>
               </div>
@@ -375,49 +446,49 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
                             <button onClick={()=>confirmDelete(booking.bookingId)} className="text-red-600 hover:text-red-900">
                               <TrashIcon className="h-5 w-5" />
                             </button>
-                             {/* 🧾 Dialog xác nhận xóa */}
-                              <Dialog
-                                open={isDeleteConfirmOpen}
-                                onClose={() => setIsDeleteConfirmOpen(false)}
-                                className="relative z-50"
-                              >
-                                <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-                                <div className="fixed inset-0 flex items-center justify-center p-4">
-                                  <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
-                                    <div className="flex justify-between items-center mb-3">
-                                      <Dialog.Title className="text-lg font-semibold text-gray-800">
-                                        Xác nhận xóa
-                                      </Dialog.Title>
-                                      <button onClick={() => setIsDeleteConfirmOpen(false)}>
-                                        <XMarkIcon className="h-5 w-5 text-gray-500" />
-                                      </button>
-                                    </div>
-
-                                    <p className="text-gray-600 mb-5">
-                                      Bạn có chắc muốn xóa đặt chỗ này không?
-                                    </p>
-
-                                    <div className="flex justify-end space-x-3">
-                                      <button
-                                        onClick={() => setIsDeleteConfirmOpen(false)}
-                                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                                      >
-                                        Hủy
-                                      </button>
-                                      <button
-                                        onClick={() => bookingToDelete && deleteBooking(booking.bookingId)}
-                                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                                      >
-                                        Xóa
-                                      </button>
-                                    </div>
-                                  </Dialog.Panel>
-                                </div>
-                              </Dialog>
                           </div>
                         </td>
                 </tr>
               ))}
+              {/* 🧾 Dialog xác nhận xóa */}
+              <Dialog
+                open={isDeleteConfirmOpen}
+                onClose={() => setIsDeleteConfirmOpen(false)}
+                className="relative z-50"
+              >
+                <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+                <div className="fixed inset-0 flex items-center justify-center p-4">
+                  <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
+                    <div className="flex justify-between items-center mb-3">
+                      <Dialog.Title className="text-lg font-semibold text-gray-800">
+                        Xác nhận xóa
+                      </Dialog.Title>
+                      <button onClick={() => setIsDeleteConfirmOpen(false)}>
+                        <XMarkIcon className="h-5 w-5 text-gray-500" />
+                      </button>
+                    </div>
+
+                    <p className="text-gray-600 mb-5">
+                      Bạn có chắc muốn xóa đặt chỗ này không?
+                    </p>
+
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => setIsDeleteConfirmOpen(false)}
+                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        onClick={() => bookingToDelete && deleteBooking(bookingToDelete.toString())}
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </div>
+              </Dialog>
             </tbody>
           </table>
         </div>
