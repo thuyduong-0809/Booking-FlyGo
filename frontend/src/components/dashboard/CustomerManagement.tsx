@@ -15,6 +15,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { User } from '../../types/database';
 import { requestApi } from '@/lib/api';
+import { clear } from 'console';
+import { XMarkIcon } from '@heroicons/react/24/solid';
+import { Dialog } from '@headlessui/react';
 
 // Extended interface for local state management with additional display fields
 interface ExtendedCustomer extends User {
@@ -23,7 +26,7 @@ interface ExtendedCustomer extends User {
   totalBookings: number;
   totalSpent: number;
   joinDate: string;
-  membershipLevel: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+  membershipLevel: 'Standard' | 'Silver' | 'Gold' | 'Platinum';
 }
 
 export default function CustomerManagement() {
@@ -100,6 +103,7 @@ export default function CustomerManagement() {
   // ]);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [membershipFilter, setMembershipFilter] = useState('');
@@ -111,7 +115,7 @@ export default function CustomerManagement() {
 
   const getMembershipColor = (level: string) => {
     switch (level) {
-      case 'Bronze': return 'text-orange-600 bg-orange-100';
+      case 'Standard': return 'text-orange-600 bg-orange-100';
       case 'Silver': return 'text-gray-600 bg-gray-100';
       case 'Gold': return 'text-yellow-600 bg-yellow-100';
       case 'Platinum': return 'text-purple-600 bg-purple-100';
@@ -123,18 +127,20 @@ export default function CustomerManagement() {
     return isActive ? 'Hoạt động' : 'Không hoạt động';
   };
 
-  // const filteredCustomers = customers.filter(customer => {
-  //   const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //                        customer.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //                        customer.Phone.includes(searchTerm) ||
-  //                        customer.UserID.toString().includes(searchTerm);
-  //   const matchesStatus = !statusFilter || (statusFilter === 'Active' ? customer.IsActive : !customer.IsActive);
-  //   const matchesMembership = !membershipFilter || customer.membershipLevel === membershipFilter;
-  //   return matchesSearch && matchesStatus && matchesMembership;
-  // });
+  const filteredCustomers = customers.filter((customer:any) => {
+    const matchesSearch = customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        //  customer.phone.toString().includes(searchTerm) ||
+                         customer.userId.toString().includes(searchTerm);
+    const matchesStatus = !statusFilter || (statusFilter === 'Active' ? customer.isActive : !customer.isActive);
+    const matchesMembership = !membershipFilter || customer.loyaltyTier === membershipFilter;
+    return matchesSearch && matchesStatus && matchesMembership;
+  });
 
   useEffect(()=>{
       loadCustomers()
+      loadBookings()
+
   },[])
 
   const loadCustomers = async () => {
@@ -146,6 +152,192 @@ export default function CustomerManagement() {
     }).catch((error: any) => {
       console.error(error)
     });
+  }
+
+  const [bookings,setBookings] = useState([])
+    const loadBookings = async () => {
+    await requestApi("bookings", "GET").then((res: any) => {
+      // console.log("res",res);
+      if (res.success) {
+         setBookings(res.data)
+      }
+    }).catch((error: any) => {
+      console.error(error)
+    });
+  }
+
+  const [customerData, setCustomerData] = useState({
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  passwordHash: "",
+  confirmPassword: "",
+  dateOfBirth: "",
+  loyaltyTier: "Standard",
+  isActive:true
+});
+
+  const clearData = () =>{
+    setCustomerData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      passwordHash: "",
+      confirmPassword: "",
+      dateOfBirth: "",
+      loyaltyTier: "Standard",
+      isActive:true,
+    })
+    
+  }
+
+  const [customerUpdateData, setCustomerUpdateData] = useState({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      passwordHash: "",
+      confirmPassword: "",
+      dateOfBirth: "",
+      loyaltyTier: "Standard",
+      isActive:true
+  })
+
+const [selectedId,setSelectedId]= useState(0)
+
+const [errors, setErrors] = useState<any>({});
+const [UpdateErrors, setUpdateErrors] = useState<any>({});
+const validateCustomerInputs = () => {
+    const newErrors: any = {};
+
+    // --- Họ và tên ---
+    if (!customerData.firstName || customerData.firstName.trim() === "") {
+      newErrors.firstName = "Vui lòng nhập họ.";
+    }
+
+    if (!customerData.lastName || customerData.lastName.trim() === "") {
+      newErrors.lastName = "Vui lòng nhập tên.";
+    }
+
+    // --- Email ---
+    if (!customerData.email || customerData.email.trim() === "") {
+      newErrors.email = "Vui lòng nhập email.";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customerData.email)) {
+        newErrors.email = "Email không hợp lệ.";
+      }
+    }
+
+    // --- Số điện thoại ---
+    if (!customerData.phone || customerData.phone.trim() === "") {
+      newErrors.phone = "Vui lòng nhập số điện thoại.";
+    } else {
+      const phoneRegex = /^(0|\+84)(\d{9,10})$/; // Ví dụ cho VN
+      if (!phoneRegex.test(customerData.phone)) {
+        newErrors.phone = "Số điện thoại không hợp lệ (phải có 10 chữ số).";
+      }
+    }
+
+    // --- Mật khẩu ---
+    if (!customerData.passwordHash || customerData.passwordHash.trim() === "") {
+      newErrors.passwordHash = "Vui lòng nhập mật khẩu.";
+    } else if (customerData.passwordHash.length < 6) {
+      newErrors.passwordHash = "Mật khẩu phải có ít nhất 6 ký tự.";
+    }
+
+    // --- Xác nhận mật khẩu ---
+    if (!customerData.confirmPassword || customerData.confirmPassword.trim() === "") {
+      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu.";
+    } else if (customerData.confirmPassword !== customerData.passwordHash) {
+      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
+    }
+
+    // --- Ngày sinh ---
+    if (!customerData.dateOfBirth) {
+      newErrors.dateOfBirth = "Vui lòng chọn ngày sinh.";
+    } else {
+      const dob = new Date(customerData.dateOfBirth);
+      const today = new Date();
+      if (dob >= today) {
+        newErrors.dateOfBirth = "Ngày sinh phải nhỏ hơn ngày hiện tại.";
+      }
+    }
+
+    // --- Hạng thành viên ---
+    if (!customerData.loyaltyTier) {
+      newErrors.loyaltyTier = "Vui lòng chọn hạng thành viên.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; 
+  };
+  
+  const addCustomer = ()=>{
+    if(!validateCustomerInputs()) return
+    requestApi("users","POST",customerData).then((res:any)=>{
+        if(res.success){
+           alert('Thêm khách hàng thành công!')
+           setShowAddModal(false)
+           setErrors({})
+           clearData()
+           loadCustomers()
+           
+        }
+    }).catch((err:any)=>{
+        console.error(err)
+    })
+  }
+
+    const handleSelectCustomerId = (id: string) => {
+      requestApi(`users/${id}`, "GET").then((res: any) => {
+        if (res.success)
+          setCustomerUpdateData(res.data)
+          setSelectedId(Number(id))
+      }).catch((err: any) => {
+        console.error(err)
+      })
+    }
+
+    const updateCustomer = ()=>{
+    // if(!validateCustomerInputs()) return
+    requestApi(`users/${String(selectedId)}`,"PUT",customerUpdateData).then((res:any)=>{
+        if(res.success){
+           alert('Cập nhật khách hàng thành công!')
+           setShowUpdateModal(false)
+           loadCustomers()
+          //  clearData()
+           
+        }
+    }).catch((err:any)=>{
+        console.error(err)
+    })
+
+
+
+  }
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<number | null>(null);
+  const confirmDelete = (userId: number) => {
+    setCustomerToDelete(userId);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const deleteCustomer =(id: string): void=>{
+    requestApi(`users/${id}`,"DELETE").then((res:any)=>{
+        if(res.success){
+           alert('xóa khách hàng thành công!')
+          //  setIsDeleteConfirmOpen(false)
+           loadCustomers()
+          //  clearData()
+           
+        }
+    }).catch((err:any)=>{
+        console.error(err)
+    })
+
   }
 
 
@@ -164,6 +356,7 @@ export default function CustomerManagement() {
           <PlusIcon className="h-5 w-5 mr-2" />
           Thêm khách hàng
         </button>
+        
       </div>
 
       {/* Stats Cards */}
@@ -187,7 +380,7 @@ export default function CustomerManagement() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Hoạt động</p>
               <p className="text-2xl font-bold text-gray-900">
-                {customers.filter((c:any) => c.status === 'Active').length}
+                {customers.filter((c:any) => c.isActive === true).length}
               </p>
             </div>
           </div>
@@ -213,7 +406,7 @@ export default function CustomerManagement() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Tổng đặt chỗ</p>
               <p className="text-2xl font-bold text-gray-900">
-                0
+                {bookings.length}
                 {/* {customers.reduce((sum, (c:any)) => sum + c.totalBookings, 0)} */}
               </p>
             </div>
@@ -250,7 +443,7 @@ export default function CustomerManagement() {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           >
             <option value="">Tất cả hạng thành viên</option>
-            <option value="Bronze">Bronze</option>
+            <option value="Standard">Standard</option>
             <option value="Silver">Silver</option>
             <option value="Gold">Gold</option>
             <option value="Platinum">Platinum</option>
@@ -291,7 +484,7 @@ export default function CustomerManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {customers.map((customer:any) => (
+              {filteredCustomers.map((customer:any) => (
                 <tr key={customer.userId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -317,7 +510,7 @@ export default function CustomerManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMembershipColor(customer.membershipLevel)}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMembershipColor(customer.loyaltyTier)}`}>
                       {customer.loyaltyTier}
                     </span>
                   </td>
@@ -340,16 +533,63 @@ export default function CustomerManagement() {
                       <button className="text-blue-600 hover:text-blue-900">
                         <EyeIcon className="h-5 w-5" />
                       </button>
-                      <button className="text-green-600 hover:text-green-900">
+                      <button className="text-green-600 hover:text-green-900"
+                      onClick={()=>{setShowUpdateModal(true),handleSelectCustomerId(customer.userId)}}>
                         <PencilIcon className="h-5 w-5" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button className="text-red-600 hover:text-red-900" onClick={()=>confirmDelete(customer.userId)}>
                         <TrashIcon className="h-5 w-5" />
                       </button>
+
+
                     </div>
                   </td>
                 </tr>
               ))}
+                                    <Dialog
+                      open={isDeleteConfirmOpen}
+                      onClose={() => setIsDeleteConfirmOpen(false)}
+                      className="relative z-50"
+                    >
+                      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+                      <div className="fixed inset-0 flex items-center justify-center p-4">
+                        <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
+                          <div className="flex justify-between items-center mb-3">
+                            <Dialog.Title className="text-lg font-semibold text-gray-800">
+                              Xác nhận xóa
+                            </Dialog.Title>
+                            <button onClick={() => setIsDeleteConfirmOpen(false)}>
+                              <XMarkIcon className="h-5 w-5 text-gray-500" />
+                            </button>
+                          </div>
+
+                          <p className="text-gray-600 mb-5">
+                            Bạn có chắc muốn xóa khách hàng này không?
+                          </p>
+
+                          <div className="flex justify-end space-x-3">
+                            <button
+                              onClick={() => setIsDeleteConfirmOpen(false)}
+                              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                            >
+                              Hủy
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (customerToDelete) {
+                                  deleteCustomer(customerToDelete.toString());
+                                  setIsDeleteConfirmOpen(false);
+                                  console.error('customerToDelete',customerToDelete)
+                                }
+                              }}
+                              className="px-3 py-1 bg-red-600 text-white ``rounded hover:bg-red-700"
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        </Dialog.Panel>
+                      </div>
+                    </Dialog>
             </tbody>
           </table>
         </div>
@@ -358,81 +598,381 @@ export default function CustomerManagement() {
       {/* Add Customer Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm khách hàng mới</h3>
-            <form className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Họ và tên</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Nguyễn Văn A"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="nguyenvana@email.com"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
-                  <input
-                    type="tel"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="0901234567"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Ngày sinh</label>
-                  <input
-                    type="date"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Địa chỉ</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="123 Đường ABC, Quận 1, TP.HCM"
-                />
-              </div>
-              <div>
-                <label className="block text-md font-medium text-gray-700 mb-1">Hạng thành viên</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                  <option value="Bronze">Bronze</option>
-                  <option value="Silver">Silver</option>
-                  <option value="Gold">Gold</option>
-                  <option value="Platinum">Platinum</option>
-                </select>
-              </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Thêm khách hàng
-                </button>
-              </div>
-            </form>
+                <form className="space-y-4" onSubmit={(e)=>{
+                  e.preventDefault()
+                  addCustomer()
+                }}>
+                  {/* Họ và tên */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Họ</label>
+                      <input
+                        type="text"
+                        name="firstName"
+                        value={customerData.firstName ?? ""}
+                        onChange={(e) => setCustomerData({ ...customerData, firstName: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.firstName ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Họ"
+                      />
+                      {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Tên</label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        value={customerData.lastName}
+                        onChange={(e) => setCustomerData({ ...customerData, lastName: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.lastName ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Tên đệm và tên"
+                      />
+                      {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                    </div>
+                  </div>
+
+                  {/* Email và số điện thoại */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={customerData.email}
+                        onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.email ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="simpleuser@example.com"
+                      />
+                      {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={customerData.phone}
+                        onChange={(e) => setCustomerData({ ...customerData, phone: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.phone ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Nhập số điện thoại"
+                      />
+                      {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                    </div>
+                  </div>
+
+                  {/* Mật khẩu và xác nhận mật khẩu */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Mật khẩu</label>
+                      <input
+                        type="password"
+                        name="passwordHash"
+                        value={customerData.passwordHash}
+                        onChange={(e) => setCustomerData({ ...customerData, passwordHash: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.passwordHash ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Nhập mật khẩu"
+                      />
+                      {errors.passwordHash && <p className="text-red-500 text-sm mt-1">{errors.passwordHash}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Xác nhận mật khẩu</label>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        value={customerData.confirmPassword}
+                        onChange={(e) => setCustomerData({ ...customerData, confirmPassword: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Nhập lại mật khẩu"
+                      />
+                      {errors.confirmPassword && (
+                        <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Ngày sinh và hạng thành viên */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Ngày sinh</label>
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        value={customerData.dateOfBirth}
+                        onChange={(e) => setCustomerData({ ...customerData, dateOfBirth: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.dateOfBirth ? "border-red-500" : "border-gray-300"
+                        }`}
+                      />
+                      {errors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Hạng thành viên</label>
+                      <select
+                        name="loyaltyTier"
+                        value={customerData.loyaltyTier}
+                        onChange={(e) => setCustomerData({ ...customerData, loyaltyTier: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.loyaltyTier ? "border-red-500" : "border-gray-300"
+                        }`}
+                      >
+                        <option value="Standard">Standard</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Platinum">Platinum</option>
+                      </select>
+                      {errors.loyaltyTier && <p className="text-red-500 text-sm mt-1">{errors.loyaltyTier}</p>}
+                    </div>
+                     <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
+                      <select
+                        name="isActive"
+                        value={customerData.isActive ? "true" : "false"}
+                        onChange={(e) =>
+                        setCustomerData({
+                          ...customerData,
+                          isActive: e.target.value === "true", // ép kiểu boolean
+                        })
+                      }
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.isActive ? "border-red-500" : "border-gray-300"
+                        }`}
+                      >
+                        <option value="false">Không hoạt động</option>
+                        <option value="true">Hoạt động</option>
+                      </select>
+                      {errors.isActive && <p className="text-red-500 text-sm mt-1">{errors.isActive}</p>}
+                    </div>
+                  </div>
+
+                  {/* Nút hành động */}
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {setShowAddModal(false),setErrors({})}}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Thêm khách hàng
+                    </button>
+                  </div>
+                </form>
           </div>
         </div>
+
+      )}
+
+
+
+    {/* Update Customer Modal */}
+      {showUpdateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cập nhật thông tin khách hàng</h3>
+                <form className="space-y-4" onSubmit={(e)=>{
+                  e.preventDefault()
+                  updateCustomer()
+                }}>
+                  {/* Họ và tên */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Họ</label>
+                      <input
+                        type="text"
+                        name="firstName"
+                        value={customerUpdateData.firstName ?? ""}
+                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, firstName: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          UpdateErrors.firstName ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Họ"
+                      />
+                      {UpdateErrors.firstName && <p className="text-red-500 text-sm mt-1">{UpdateErrors.firstName}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Tên</label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        value={customerUpdateData.lastName}
+                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, lastName: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          UpdateErrors.lastName ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Tên đệm và tên"
+                      />
+                      {UpdateErrors.lastName && <p className="text-red-500 text-sm mt-1">{UpdateErrors.lastName}</p>}
+                    </div>
+                  </div>
+
+                  {/* Email và số điện thoại */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        readOnly
+                        type="email"
+                        name="email"
+                        value={customerUpdateData.email}
+                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, email: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          UpdateErrors.email ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="simpleuser@example.com"
+                      />
+                      {UpdateErrors.email && <p className="text-red-500 text-sm mt-1">{UpdateErrors.email}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={customerUpdateData.phone}
+                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, phone: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                         UpdateErrors.phone ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Nhập số điện thoại"
+                      />
+                      {UpdateErrors.phone && <p className="text-red-500 text-sm mt-1">{UpdateErrors.phone}</p>}
+                    </div>
+                  </div>
+
+                  {/* Mật khẩu và xác nhận mật khẩu */}
+                  {/* <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Mật khẩu</label>
+                      <input
+                        type="password"
+                        name="passwordHash"
+                        value={customerUpdateData.passwordHash}
+                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, passwordHash: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.passwordHash ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Nhập mật khẩu"
+                      />
+                      {errors.passwordHash && <p className="text-red-500 text-sm mt-1">{errors.passwordHash}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Xác nhận mật khẩu</label>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        value={customerUpdateData.confirmPassword}
+                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, confirmPassword: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Nhập lại mật khẩu"
+                      />
+                      {errors.confirmPassword && (
+                        <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                      )}
+                    </div>
+                  </div> */}
+
+                  {/* Ngày sinh và hạng thành viên */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Ngày sinh</label>
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        value={customerUpdateData.dateOfBirth}
+                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, dateOfBirth: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                         UpdateErrors.dateOfBirth ? "border-red-500" : "border-gray-300"
+                        }`}
+                      />
+                      {UpdateErrors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{UpdateErrors.dateOfBirth}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Hạng thành viên</label>
+                      <select
+                        name="loyaltyTier"
+                        value={customerUpdateData.loyaltyTier}
+                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, loyaltyTier: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          UpdateErrors.loyaltyTier ? "border-red-500" : "border-gray-300"
+                        }`}
+                      >
+                        <option value="Standard">Standard</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Platinum">Platinum</option>
+                      </select>
+                      {UpdateErrors.loyaltyTier && <p className="text-red-500 text-sm mt-1">{UpdateErrors.loyaltyTier}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
+                      <select
+                        name="isActive"
+                        value={customerUpdateData.isActive ? "true" : "false"}
+                        onChange={(e) =>
+                        setCustomerUpdateData({
+                          ...customerUpdateData,
+                          isActive: e.target.value === "true", // ép kiểu boolean
+                        })
+                      }
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                          UpdateErrors.isActive ? "border-red-500" : "border-gray-300"
+                        }`}
+                      >
+                        <option value="false">Không hoạt động</option>
+                        <option value="true">Hoạt động</option>
+                      </select>
+                      {UpdateErrors.isActive && <p className="text-red-500 text-sm mt-1">{UpdateErrors.isActive}</p>}
+                    </div>
+                  </div>
+
+                  {/* Nút hành động */}
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowUpdateModal(false)}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Cập nhật
+                    </button>
+                  </div>
+                </form>
+          </div>
+        </div>
+
       )}
     </div>
   );
-}
 
+}
