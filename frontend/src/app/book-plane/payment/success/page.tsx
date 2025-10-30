@@ -189,11 +189,8 @@ export default function PaymentSuccessPage() {
                         passengerId: passenger.passengerId
                     };
 
-                    // Backend đã tự động:
-                    // 1. Tìm ghế trống đầu tiên (order by seatNumber ASC)
-                    // 2. Đánh dấu ghế đã được đặt (isAvailable = false)
-                    // 3. Set seatNumber vào bookingFlight
-                    // 4. Tạo seatAllocation
+                    // GỌI API TẠO BOOKING FLIGHT
+                    await bookingFlightsService.create(bookingFlightData);
 
                 } catch (error) {
                     // Tiếp tục với passenger tiếp theo
@@ -212,6 +209,8 @@ export default function PaymentSuccessPage() {
                             baggageAllowance: 0,
                             passengerId: passenger.passengerId
                         };
+                        // GỌI API TẠO BOOKING FLIGHT cho chuyến về
+                        await bookingFlightsService.create(bookingFlightData);
                     } catch (error) {
                     }
                 }
