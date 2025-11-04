@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { BookingProvider } from "./BookingContext";
+import { NotificationProvider, NotificationContainer } from "@/components/Notification";
 
 export const metadata: Metadata = {
   title: "Đặt vé máy bay - FlyGo",
@@ -11,5 +12,12 @@ export default function BookPlaneLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <BookingProvider>{children}</BookingProvider>;
+  return (
+    <BookingProvider>
+      <NotificationProvider>
+        {children}
+        <NotificationContainer />
+      </NotificationProvider>
+    </BookingProvider>
+  );
 }

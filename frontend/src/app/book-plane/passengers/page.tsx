@@ -7,6 +7,7 @@ import { useBooking } from '../BookingContext';
 import { useSearch } from '../SearchContext';
 import { requestApi } from '@/lib/api';
 import { getCookie } from '@/utils/cookies';
+import { useNotification } from '@/components/Notification';
 
 interface Passenger {
   id: number;
@@ -25,10 +26,23 @@ interface Passenger {
   rememberDetails: boolean;
 }
 
+interface ValidationErrors {
+  [passengerId: number]: {
+    lastName?: string;
+    firstName?: string;
+    dateOfBirth?: string;
+    phoneNumber?: string;
+    email?: string;
+    idNumber?: string;
+    skyjoyMemberCode?: string;
+  };
+}
+
 export default function PassengersPage() {
   const router = useRouter();
   const { state, grandTotal } = useBooking();
   const { searchData } = useSearch();
+  const { showNotification } = useNotification();
 
   // Lấy số lượng người từ searchData
   const totalAdults = searchData.passengers?.adults || 0;
@@ -59,7 +73,147 @@ export default function PassengersPage() {
 
   const [surveyChecked, setSurveyChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const { setBookingId } = useBooking();
+
+  // Hàm validate email
+  const validateEmail = (email: string): string | null => {
+    if (!email.trim()) {
+      return 'Email là bắt buộc';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Email không hợp lệ';
+    }
+    return null;
+  };
+
+  // Hàm validate số điện thoại VN
+  const validatePhoneNumber = (phone: string): string | null => {
+    if (!phone.trim()) {
+      return 'Số điện thoại là bắt buộc';
+    }
+    // Số điện thoại VN: 10 số, bắt đầu bằng 0
+    const phoneRegex = /^0[0-9]{9}$/;
+    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
+      return 'Số điện thoại phải có 10 số và bắt đầu bằng 0';
+    }
+    return null;
+  };
+
+  // Hàm validate tên (chỉ chữ cái và khoảng trắng)
+  const validateName = (name: string, fieldName: string): string | null => {
+    if (!name.trim()) {
+      return `${fieldName} là bắt buộc`;
+    }
+    const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/;
+    if (!nameRegex.test(name)) {
+      return `${fieldName} chỉ được chứa chữ cái và khoảng trắng`;
+    }
+    if (name.trim().length < 2) {
+      return `${fieldName} phải có ít nhất 2 ký tự`;
+    }
+    return null;
+  };
+
+  // Hàm validate ngày sinh (phải >= 18 tuổi, <= 100 tuổi)
+  const validateDateOfBirth = (dateStr: string): string | null => {
+    if (!dateStr) {
+      return 'Ngày sinh là bắt buộc';
+    }
+
+    try {
+      const dob = new Date(dateStr);
+      const today = new Date();
+
+      // Kiểm tra ngày hợp lệ
+      if (isNaN(dob.getTime())) {
+        return 'Ngày sinh không hợp lệ';
+      }
+
+      // Kiểm tra không được trong tương lai
+      if (dob > today) {
+        return 'Ngày sinh không được trong tương lai';
+      }
+
+      // Tính tuổi
+      let age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+
+      // Kiểm tra tuổi
+      if (age < 18) {
+        return 'Người lớn phải từ 18 tuổi trở lên';
+      }
+      if (age > 100) {
+        return 'Ngày sinh không hợp lệ (quá 100 tuổi)';
+      }
+
+      return null;
+    } catch (error) {
+      return 'Ngày sinh không hợp lệ';
+    }
+  };
+
+  // Hàm validate CCCD/Passport (nếu có nhập)
+  const validateIdNumber = (idNumber: string): string | null => {
+    if (!idNumber.trim()) {
+      return null; // Không bắt buộc
+    }
+
+    // CCCD: 12 số
+    const cccdRegex = /^[0-9]{12}$/;
+    // Passport: 8-9 ký tự chữ và số
+    const passportRegex = /^[A-Z0-9]{8,9}$/i;
+
+    if (!cccdRegex.test(idNumber) && !passportRegex.test(idNumber)) {
+      return 'CCCD phải có 12 số hoặc Passport phải có 8-9 ký tự';
+    }
+    return null;
+  };
+
+  // Hàm validate mã SkyJoy (nếu có nhập)
+  const validateSkyjoyCode = (code: string): string | null => {
+    if (!code.trim()) {
+      return null; // Không bắt buộc
+    }
+
+    const skyjoyRegex = /^SJ[0-9]{10}$/;
+    if (!skyjoyRegex.test(code)) {
+      return 'Mã SkyJoy phải có định dạng SJxxxxxxxxxx (10 số)';
+    }
+    return null;
+  };
+
+  // Hàm validate tất cả thông tin của một hành khách
+  const validatePassenger = (passenger: Passenger): { [key: string]: string } => {
+    const errors: { [key: string]: string } = {};
+
+    const lastNameError = validateName(passenger.lastName, 'Họ');
+    if (lastNameError) errors.lastName = lastNameError;
+
+    const firstNameError = validateName(passenger.firstName, 'Tên đệm & tên');
+    if (firstNameError) errors.firstName = firstNameError;
+
+    const dobError = validateDateOfBirth(passenger.dateOfBirth);
+    if (dobError) errors.dateOfBirth = dobError;
+
+    const phoneError = validatePhoneNumber(passenger.phoneNumber);
+    if (phoneError) errors.phoneNumber = phoneError;
+
+    const emailError = validateEmail(passenger.email);
+    if (emailError) errors.email = emailError;
+
+    const idError = validateIdNumber(passenger.idNumber);
+    if (idError) errors.idNumber = idError;
+
+    const skyjoyError = validateSkyjoyCode(passenger.skyjoyMemberCode);
+    if (skyjoyError) errors.skyjoyMemberCode = skyjoyError;
+
+    return errors;
+  };
 
   const updatePassenger = (passengerId: number, field: keyof Passenger, value: any) => {
     setPassengers(prev =>
@@ -81,25 +235,54 @@ export default function PassengersPage() {
         return;
       }
 
-      // Kiểm tra validation
-      const isFormValid = passengers.every(p =>
-        p.lastName.trim() &&
-        p.firstName.trim() &&
-        p.email.trim() &&
-        p.phoneNumber.trim()
-      );
+      // Validate tất cả hành khách
+      const newErrors: ValidationErrors = {};
+      let hasErrors = false;
 
-      if (!isFormValid) {
-        alert('Vui lòng điền đầy đủ thông tin cho tất cả hành khách');
+      passengers.forEach(passenger => {
+        const errors = validatePassenger(passenger);
+        if (Object.keys(errors).length > 0) {
+          newErrors[passenger.id] = errors;
+          hasErrors = true;
+        }
+      });
+
+      // Nếu có lỗi, hiển thị và không submit
+      if (hasErrors) {
+        setValidationErrors(newErrors);
+
+        // Tạo danh sách lỗi chi tiết
+        const errorDetails: string[] = [];
+        Object.entries(newErrors).forEach(([passengerId, errors]) => {
+          const passengerIndex = passengers.findIndex(p => p.id === parseInt(passengerId));
+          const passengerLabel = `Người lớn ${passengerIndex + 1}`;
+
+          Object.entries(errors).forEach(([field, errorMsg]) => {
+            if (errorMsg) {
+              errorDetails.push(`${passengerLabel}: ${errorMsg}`);
+            }
+          });
+        });
+
+        // Scroll đến hành khách đầu tiên có lỗi
+        const firstErrorPassengerId = Object.keys(newErrors)[0];
+        const element = document.getElementById(`passenger-${firstErrorPassengerId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        showNotification('error', 'Vui lòng sửa các lỗi sau:', errorDetails, 3000);
         return;
       }
 
+      // Clear errors nếu không có lỗi
+      setValidationErrors({});
       setIsSubmitting(true);
 
       // Lấy userId từ token
       const token = getCookie("access_token");
       if (!token) {
-        alert('Vui lòng đăng nhập để đặt vé');
+        showNotification('error', 'Vui lòng đăng nhập để đặt vé');
         router.push('/login');
         return;
       }
@@ -108,7 +291,7 @@ export default function PassengersPage() {
       const userId = payload.userId;
 
       if (!userId) {
-        alert('Không tìm thấy thông tin người dùng');
+        showNotification('error', 'Không tìm thấy thông tin người dùng');
         return;
       }
 
@@ -125,7 +308,7 @@ export default function PassengersPage() {
       const bookingResponse = await requestApi('bookings', 'POST', bookingData);
 
       if (!bookingResponse.success) {
-        alert('Tạo đặt chỗ thất bại: ' + bookingResponse.message);
+        showNotification('error', `Tạo đặt chỗ thất bại: ${bookingResponse.message}`);
         return;
       }
 
@@ -177,11 +360,31 @@ export default function PassengersPage() {
         }
       }
 
+      // Hiển thị thông báo thành công
+      showNotification('success', 'Đặt chỗ thành công! Đang chuyển đến trang chọn ghế...');
+
       // Chuyển sang trang choose-seat
-      router.push('/book-plane/choose-seat');
+      setTimeout(() => {
+        router.push('/book-plane/choose-seat');
+      }, 1000);
     } catch (error: any) {
       console.error('Error creating booking:', error);
-      alert('Đã xảy ra lỗi: ' + (error.message || 'Unknown error'));
+
+      // Xử lý các loại lỗi khác nhau
+      let errorMessage = 'Đã xảy ra lỗi không xác định';
+
+      if (error.response) {
+        // Lỗi từ API response
+        errorMessage = error.response.data?.message || 'Lỗi từ máy chủ';
+      } else if (error.request) {
+        // Request được gửi nhưng không nhận được response
+        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet';
+      } else if (error.message) {
+        // Lỗi khác
+        errorMessage = error.message;
+      }
+
+      showNotification('error', `Đã xảy ra lỗi: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -295,7 +498,7 @@ export default function PassengersPage() {
           {/* Passenger Forms */}
           <div className="space-y-8">
             {passengers.map((passenger, index) => (
-              <div key={passenger.id} className="bg-white rounded-xl p-8 shadow-xl border border-gray-100">
+              <div key={passenger.id} id={`passenger-${passenger.id}`} className="bg-white rounded-xl p-8 shadow-xl border border-gray-100">
                 {/* Passenger Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
@@ -348,12 +551,22 @@ export default function PassengersPage() {
                         type="text"
                         value={passenger.lastName}
                         onChange={(e) => updatePassenger(passenger.id, 'lastName', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3  text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[passenger.id]?.lastName
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                          }`}
                         placeholder="Nhập họ"
                       />
-                      <p className="text-sm text-gray-500 mt-1">
-                        ① Hướng dẫn nhập họ, tên đệm và tên.
-                      </p>
+                      {validationErrors[passenger.id]?.lastName && (
+                        <p className="text-sm text-red-600 mt-1 font-medium">
+                          {validationErrors[passenger.id].lastName}
+                        </p>
+                      )}
+                      {!validationErrors[passenger.id]?.lastName && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          ① Hướng dẫn nhập họ, tên đệm và tên.
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -364,9 +577,17 @@ export default function PassengersPage() {
                         type="date"
                         value={passenger.dateOfBirth}
                         onChange={(e) => updatePassenger(passenger.id, 'dateOfBirth', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[passenger.id]?.dateOfBirth
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                          }`}
                         max={new Date().toISOString().split('T')[0]}
                       />
+                      {validationErrors[passenger.id]?.dateOfBirth && (
+                        <p className="text-sm text-red-600 mt-1 font-medium">
+                          {validationErrors[passenger.id].dateOfBirth}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -381,10 +602,18 @@ export default function PassengersPage() {
                           type="tel"
                           value={passenger.phoneNumber}
                           onChange={(e) => updatePassenger(passenger.id, 'phoneNumber', e.target.value)}
-                          className="flex-1 border-2 border-gray-300 rounded-r-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          className={`flex-1 border-2 rounded-r-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[passenger.id]?.phoneNumber
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                            : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                            }`}
                           placeholder="Nhập số điện thoại"
                         />
                       </div>
+                      {validationErrors[passenger.id]?.phoneNumber && (
+                        <p className="text-sm text-red-600 mt-1 font-medium">
+                          {validationErrors[passenger.id].phoneNumber}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -395,9 +624,17 @@ export default function PassengersPage() {
                         type="text"
                         value={passenger.idNumber}
                         onChange={(e) => updatePassenger(passenger.id, 'idNumber', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[passenger.id]?.idNumber
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                          }`}
                         placeholder="Nhập CCCD hoặc số hộ chiếu"
                       />
+                      {validationErrors[passenger.id]?.idNumber && (
+                        <p className="text-sm text-red-600 mt-1 font-medium">
+                          {validationErrors[passenger.id].idNumber}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -421,15 +658,23 @@ export default function PassengersPage() {
                         type="text"
                         value={passenger.skyjoyMemberCode}
                         onChange={(e) => updatePassenger(passenger.id, 'skyjoyMemberCode', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[passenger.id]?.skyjoyMemberCode
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                          }`}
                         placeholder="SJxxxxxxxxxx"
                       />
+                      {validationErrors[passenger.id]?.skyjoyMemberCode && (
+                        <p className="text-sm text-red-600 mt-1 font-medium">
+                          {validationErrors[passenger.id].skyjoyMemberCode}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   {/* Right Column */}
                   <div className="space-y-6">
-                    <div >
+                    <div>
                       <label className="block text-base font-bold text-black mb-2">
                         Tên đệm & tên <span className="text-red-500">*</span>
                       </label>
@@ -437,9 +682,17 @@ export default function PassengersPage() {
                         type="text"
                         value={passenger.firstName}
                         onChange={(e) => updatePassenger(passenger.id, 'firstName', e.target.value)}
-                        className="mb-6 w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all "
+                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[passenger.id]?.firstName
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                          }`}
                         placeholder="Nhập tên đệm và tên"
                       />
+                      {validationErrors[passenger.id]?.firstName && (
+                        <p className="text-sm text-red-600 mt-1 font-medium">
+                          {validationErrors[passenger.id].firstName}
+                        </p>
+                      )}
                     </div>
 
                     <div >
@@ -463,9 +716,17 @@ export default function PassengersPage() {
                         type="email"
                         value={passenger.email}
                         onChange={(e) => updatePassenger(passenger.id, 'email', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[passenger.id]?.email
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                          }`}
                         placeholder="Nhập email"
                       />
+                      {validationErrors[passenger.id]?.email && (
+                        <p className="text-sm text-red-600 mt-1 font-medium">
+                          {validationErrors[passenger.id].email}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

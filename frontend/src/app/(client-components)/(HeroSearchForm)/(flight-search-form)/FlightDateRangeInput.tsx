@@ -11,6 +11,7 @@ import ClearDataButton from "../ClearDataButton";
 import ButtonSubmit from "../ButtonSubmit";
 import { vi } from "date-fns/locale";
 import { useSearch } from "../../../book-plane/SearchContext";
+import { useNotification } from "@/components/Notification";
 
 export interface FlightDateRangeInputProps {
   className?: string;
@@ -18,6 +19,7 @@ export interface FlightDateRangeInputProps {
   hasButtonSubmit?: boolean;
   selectsRange?: boolean;
   onSubmit?: () => void;
+  isSearching?: boolean;
 }
 
 const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
@@ -26,9 +28,13 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
   hasButtonSubmit = true,
   selectsRange = true,
   onSubmit,
+  isSearching = false,
 }) => {
   const { searchData, updateDepartureDate, updateReturnDate } = useSearch();
+  const { showNotification } = useNotification();
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+  
   const [startDate, setStartDate] = useState<Date | null>(
     searchData.departureDate || today
   );
@@ -58,6 +64,48 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
 
   const onChangeRangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates;
+    
+    console.log('📅 FlightDateRangeInput - Date được chọn:', {
+      start: start?.toISOString(),
+      end: end?.toISOString(),
+      startLocal: start?.toLocaleDateString('vi-VN'),
+      endLocal: end?.toLocaleDateString('vi-VN')
+    });
+    
+    // Validate ngày đi phải lớn hơn hoặc bằng ngày hiện tại
+    if (start) {
+      const selectedDate = new Date(start);
+      selectedDate.setHours(0, 0, 0, 0);
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < todayDate) {
+        showNotification(
+          'warning',
+          'Ngày đi phải lớn hơn hoặc bằng ngày hiện tại',
+          ['Vui lòng chọn ngày từ hôm nay trở đi']
+        );
+        return;
+      }
+    }
+    
+    // Validate ngày về phải lớn hơn hoặc bằng ngày đi
+    if (start && end) {
+      const startDateCopy = new Date(start);
+      const endDateCopy = new Date(end);
+      startDateCopy.setHours(0, 0, 0, 0);
+      endDateCopy.setHours(0, 0, 0, 0);
+      
+      if (endDateCopy < startDateCopy) {
+        showNotification(
+          'warning',
+          'Ngày về phải lớn hơn hoặc bằng ngày đi',
+          ['Vui lòng chọn ngày về sau ngày đi']
+        );
+        return;
+      }
+    }
+    
     setStartDate(start);
     setEndDate(end);
 
@@ -131,23 +179,33 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
                       <button
                         onClick={onSubmit}
                         type="button"
-                        className="h-14 md:h-16 w-full md:w-16 rounded-full bg-primary-6000 hover:bg-primary-700 flex items-center justify-center text-neutral-50 focus:outline-none"
+                        disabled={isSearching}
+                        className="h-14 md:h-16 w-full md:w-16 rounded-full bg-primary-6000 hover:bg-primary-700 flex items-center justify-center text-neutral-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <span className="mr-3 md:hidden">Search</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                          />
-                        </svg>
+                        {isSearching ? (
+                          <svg className="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <>
+                            <span className="mr-3 md:hidden">Search</span>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-6 w-6"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                              />
+                            </svg>
+                          </>
+                        )}
                       </button>
                     ) : (
                       <ButtonSubmit href={"/book-plane/select-flight" as any} />
@@ -193,6 +251,22 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
                       <DatePicker
                         selected={startDate}
                         onChange={(date) => {
+                          // Validate ngày đi phải lớn hơn hoặc bằng ngày hiện tại
+                          if (date) {
+                            const selectedDate = new Date(date);
+                            selectedDate.setHours(0, 0, 0, 0);
+                            const todayDate = new Date();
+                            todayDate.setHours(0, 0, 0, 0);
+                            
+                            if (selectedDate < todayDate) {
+                              showNotification(
+                                'warning',
+                                'Ngày đi phải lớn hơn hoặc bằng ngày hiện tại',
+                                ['Vui lòng chọn ngày từ hôm nay trở đi']
+                              );
+                              return;
+                            }
+                          }
                           setStartDate(date);
                           updateDepartureDate(date);
                         }}

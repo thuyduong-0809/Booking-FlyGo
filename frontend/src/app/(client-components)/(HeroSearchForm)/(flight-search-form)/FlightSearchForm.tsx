@@ -11,6 +11,8 @@ import FlightDateRangeInput from "./FlightDateRangeInput";
 import { GuestsObject } from "../../type";
 import { airportsService, Airport } from "../../../../services/airports.service";
 import { useSearch } from "../../../book-plane/SearchContext";
+import { useNotification } from "@/components/Notification";
+import { flightsService } from "../../../../services/flights.service";
 
 export interface FlightSearchFormProps {
   variant?: "default" | "heroRed";
@@ -22,6 +24,7 @@ export type TypeDropOffLocationType = "roundTrip" | "oneWay" | "";
 const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) => {
   const router = useRouter();
   const { searchData, updateDepartureAirport, updateArrivalAirport, updateTripType, updatePassengers } = useSearch();
+  const { showNotification } = useNotification();
 
   const [dropOffLocationType, setDropOffLocationType] =
     useState<TypeDropOffLocationType>("roundTrip");
@@ -31,6 +34,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
   const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(0);
   const [promoCode, setPromoCode] = useState("");
   const [findCheapest, setFindCheapest] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const isHeroRed = variant === "heroRed";
 
 
@@ -104,46 +108,185 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
   const totalGuests =
     guestChildrenInputValue + guestAdultsInputValue + guestInfantsInputValue;
 
-  const handleSearch = () => {
-    // Validate dữ liệu trước khi tìm kiếm
+  const handleSearch = async () => {
+    // Validation
     if (!searchData.departureAirport) {
-      alert("Vui lòng chọn điểm khởi hành");
+      showNotification(
+        'warning',
+        'Vui lòng chọn điểm khởi hành',
+        ['Bạn cần chọn sân bay khởi hành để tiếp tục']
+      );
       return;
     }
 
     if (!searchData.arrivalAirport) {
-      alert("Vui lòng chọn điểm đến");
+      showNotification(
+        'warning',
+        'Vui lòng chọn điểm đến',
+        ['Bạn cần chọn sân bay đến để tiếp tục']
+      );
       return;
     }
 
     if (!searchData.departureDate) {
-      alert("Vui lòng chọn ngày đi");
+      showNotification(
+        'warning',
+        'Vui lòng chọn ngày đi',
+        ['Bạn cần chọn ngày khởi hành để tiếp tục']
+      );
       return;
     }
 
-    if (dropOffLocationType === "roundTrip" && !searchData.returnDate) {
-      alert("Vui lòng chọn ngày về cho chuyến khứ hồi");
+    // Validate ngày đi phải lớn hơn hoặc bằng ngày hiện tại
+    const departureDate = new Date(searchData.departureDate);
+    departureDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (departureDate < today) {
+      showNotification(
+        'error',
+        'Ngày đi không hợp lệ',
+        ['Ngày đi phải lớn hơn hoặc bằng ngày hiện tại']
+      );
       return;
     }
 
-    // Log để debug
-    console.log("🔍 Searching flights with data:", {
-      departureAirport: searchData.departureAirport,
-      arrivalAirport: searchData.arrivalAirport,
-      departureDate: searchData.departureDate,
-      returnDate: searchData.returnDate,
-      tripType: dropOffLocationType,
-      passengers: searchData.passengers,
-    });
-
-    // Cập nhật loại chuyến bay vào context
-    updateTripType(dropOffLocationType as 'roundTrip' | 'oneWay');
-
-    // Điều hướng dựa trên loại chuyến bay được chọn
     if (dropOffLocationType === "roundTrip") {
-      router.push("/book-plane/select-flight-recovery");
-    } else if (dropOffLocationType === "oneWay") {
-      router.push("/book-plane/select-flight");
+      if (!searchData.returnDate) {
+        showNotification(
+          'warning',
+          'Vui lòng chọn ngày về',
+          ['Chuyến khứ hồi yêu cầu cả ngày đi và ngày về']
+        );
+        return;
+      }
+
+      // Validate ngày về phải lớn hơn hoặc bằng ngày hiện tại
+      const returnDate = new Date(searchData.returnDate);
+      returnDate.setHours(0, 0, 0, 0);
+
+      if (returnDate < today) {
+        showNotification(
+          'error',
+          'Ngày về không hợp lệ',
+          ['Ngày về phải lớn hơn hoặc bằng ngày hiện tại']
+        );
+        return;
+      }
+    }
+
+    // Kiểm tra chuyến bay có tồn tại không trước khi điều hướng
+    setIsSearching(true);
+    try {
+      const formatDate = (date: Date) => {
+        // Sử dụng local date thay vì ISO để tránh timezone issue
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const formatted = `${year}-${month}-${day}`;
+
+        console.log('📅 formatDate:', {
+          input: date.toISOString(),
+          inputLocal: date.toLocaleDateString('vi-VN'),
+          output: formatted
+        });
+
+        return formatted;
+      };
+
+      // Log để debug
+      console.log("🔍 Searching flights with data:", {
+        departureAirport: searchData.departureAirport,
+        arrivalAirport: searchData.arrivalAirport,
+        departureDate: searchData.departureDate,
+        returnDate: searchData.returnDate,
+        tripType: dropOffLocationType,
+        passengers: searchData.passengers,
+      });
+
+      // Tìm kiếm chuyến đi
+      const searchParams = {
+        departureAirportCode: searchData.departureAirport?.airportCode,
+        arrivalAirportCode: searchData.arrivalAirport?.airportCode,
+        departureDate: formatDate(searchData.departureDate)
+      };
+
+      console.log('🔍 DEBUG FlightSearchForm - Params gửi lên:', {
+        ...searchParams,
+        departureAirport: searchData.departureAirport,
+        arrivalAirport: searchData.arrivalAirport,
+        rawDate: searchData.departureDate
+      });
+
+      const departureSearchResult = await flightsService.searchFlights(searchParams);
+
+      console.log('📥 DEBUG FlightSearchForm - Response nhận về:', {
+        success: departureSearchResult.success,
+        dataLength: departureSearchResult.data?.length || 0,
+        firstFlight: departureSearchResult.data?.[0]
+      });
+
+      // Kiểm tra chuyến đi
+      if (!departureSearchResult.success || !departureSearchResult.data || departureSearchResult.data.length === 0) {
+        showNotification(
+          'error',
+          'Không tìm thấy chuyến bay',
+          [
+            `Không có chuyến bay từ ${searchData.departureAirport?.city} đến ${searchData.arrivalAirport?.city}`,
+            `Ngày: ${searchData.departureDate?.toLocaleDateString('vi-VN')}`,
+            'Vui lòng chọn điểm khác hoặc thử ngày khác'
+          ]
+        );
+        setIsSearching(false);
+        return;
+      }
+
+      console.log(`✅ Tìm thấy ${departureSearchResult.data.length} chuyến bay đi`);
+
+      // Nếu là khứ hồi, kiểm tra cả chuyến về
+      if (dropOffLocationType === "roundTrip" && searchData.returnDate) {
+        const returnSearchResult = await flightsService.searchFlights({
+          departureAirportCode: searchData.arrivalAirport?.airportCode,
+          arrivalAirportCode: searchData.departureAirport?.airportCode,
+          departureDate: formatDate(searchData.returnDate)
+        });
+
+        if (!returnSearchResult.success || !returnSearchResult.data || returnSearchResult.data.length === 0) {
+          showNotification(
+            'error',
+            'Không tìm thấy chuyến bay về',
+            [
+              `Không có chuyến bay từ ${searchData.arrivalAirport?.city} về ${searchData.departureAirport?.city}`,
+              `Ngày: ${searchData.returnDate?.toLocaleDateString('vi-VN')}`,
+              'Vui lòng chọn ngày khác hoặc chọn chuyến một chiều'
+            ]
+          );
+          setIsSearching(false);
+          return;
+        }
+
+        console.log(`✅ Tìm thấy ${returnSearchResult.data.length} chuyến bay về`);
+      }
+
+      // Nếu tất cả đều OK, cập nhật loại chuyến bay và điều hướng
+      updateTripType(dropOffLocationType as 'roundTrip' | 'oneWay');
+
+      console.log('🎉 Có chuyến bay! Đang chuyển hướng...');
+
+      if (dropOffLocationType === "roundTrip") {
+        router.push("/book-plane/select-flight-recovery");
+      } else if (dropOffLocationType === "oneWay") {
+        router.push("/book-plane/select-flight");
+      }
+    } catch (error: any) {
+      showNotification(
+        'error',
+        'Lỗi khi tìm kiếm chuyến bay',
+        [error.message || 'Không thể kết nối đến server. Vui lòng thử lại sau']
+      );
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -415,6 +558,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
                 className={`${heroFieldClass} items-center`}
                 hasButtonSubmit={false}
                 onSubmit={handleSearch}
+                isSearching={isSearching}
               />
               {renderGuest("hero")}
               <div className={`${heroFieldClass} flex flex-col gap-2 px-5 py-4`}>
@@ -443,9 +587,16 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
 
             <button
               type="submit"
-              className="mt-2 h-14 rounded-2xl bg-[#ffc400] text-lg font-semibold text-[#8a4800] shadow-[0_26px_52px_-32px_rgba(0,0,0,0.55)] transition duration-200 hover:bg-[#ffd23c] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ffc400]/70"
+              disabled={isSearching}
+              className="mt-2 h-14 rounded-2xl bg-[#ffc400] text-lg font-semibold text-[#8a4800] shadow-[0_26px_52px_-32px_rgba(0,0,0,0.55)] transition duration-200 hover:bg-[#ffd23c] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ffc400]/70 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Tìm chuyến bay
+              {isSearching && (
+                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              {isSearching ? 'Đang tìm...' : 'Tìm chuyến bay'}
             </button>
           </div>
         </form>
@@ -480,6 +631,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
             className="flex-1"
             hasButtonSubmit={true}
             onSubmit={handleSearch}
+            isSearching={isSearching}
           />
         </div>
       </form>

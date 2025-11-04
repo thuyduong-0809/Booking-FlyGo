@@ -716,10 +716,19 @@ export default function SelectFlightPage() {
     setError('');
 
     try {
-      // Format date
+      // Format date - Sử dụng local date để tránh timezone issue
       const formatDate = (date: Date) => {
-        const formatted = date.toISOString().split('T')[0];
-        console.log('📅 Formatting date:', date, '->', formatted);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const formatted = `${year}-${month}-${day}`;
+        
+        console.log('📅 select-flight formatDate:', {
+          input: date.toISOString(),
+          inputLocal: date.toLocaleDateString('vi-VN'),
+          output: formatted
+        });
+        
         return formatted;
       };
 
