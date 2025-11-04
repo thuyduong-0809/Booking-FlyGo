@@ -4,7 +4,7 @@ import MenuBar from "@/shared/MenuBar";
 import LangDropdown from "./LangDropdown";
 import NotifyDropdown from "./NotifyDropdown";
 import AvatarDropdown from "./AvatarDropdown";
-import HeroSearchForm2MobileFactory from "../(HeroSearchForm2Mobile)/HeroSearchForm2MobileFactory";
+// import HeroSearchForm2MobileFactory from "../(HeroSearchForm2Mobile)/HeroSearchForm2MobileFactory";
 import Link from "next/link";
 import { Route } from "@/routers/types";
 import Navigation from "@/shared/Navigation/Navigation";
@@ -26,9 +26,10 @@ const MainNav2: FC<MainNav2Props> = ({ className = "" }) => {
         </div>
         
 
-        <div className="self-center lg:hidden flex-[3] max-w-lg !mx-auto md:px-3">
+        {/* Mobile Search - Ẩn theo yêu cầu */}
+        {/* <div className="self-center lg:hidden flex-[3] max-w-lg !mx-auto md:px-3">
           <HeroSearchForm2MobileFactory />
-        </div>
+        </div> */}
 
 
         <div className="hidden md:flex flex-shrink-0 justify-end flex-1 lg:flex-none text-neutral-700 dark:text-neutral-100">

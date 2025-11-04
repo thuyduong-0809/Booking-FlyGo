@@ -284,8 +284,7 @@ const SearchModal: FC<SearchModalProps> = ({ className = "" }) => {
                     <>
                         <Popover.Button
                             as="button"
-                            className={`flex w-full h-full items-center justify-between bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-all px-3.5 focus:outline-none ${open ? "ring-2 ring-red-500" : ""
-                                }`}
+                            className={`flex w-full h-full items-center justify-between bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-all px-3.5 focus:outline-none ${open ? "ring-2 ring-red-500" : ""}`}
                         >
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5 text-neutral-600 dark:text-neutral-400 flex-shrink-0">
@@ -388,120 +387,164 @@ const SearchModal: FC<SearchModalProps> = ({ className = "" }) => {
 
     return (
         <div
-            className={`fixed top-20 left-0 right-0 z-[9990] bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 dark:bg-gradient-to-r dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900 shadow-lg animate-slideDown ${className}`}
-            style={{ borderBottom: '1px solid #e5e7eb' }}
+            className={`fixed top-16 sm:top-20 left-0 right-0 z-[9990] bg-white dark:bg-neutral-900 shadow-lg border-b border-neutral-200 dark:border-neutral-700 animate-slideDown ${className}`}
         >
             <div className="container mx-auto px-4">
-                <div className="py-4">
+                <div className="py-2">
                     {/* Radio buttons row */}
-                    <div className="flex items-center gap-6 mb-3">
+                    <div className="flex items-center gap-3 mb-2">
                         <label className="flex items-center gap-2 cursor-pointer group">
-                            <div className="relative">
-                                <input
-                                    type="radio"
-                                    name="tripType"
-                                    checked={dropOffLocationType === "roundTrip"}
-                                    onChange={() => setDropOffLocationType("roundTrip")}
-                                    className="peer sr-only"
-                                />
-                                <div className="w-5 h-5 rounded-full border-2 border-neutral-400 peer-checked:border-red-600 peer-checked:border-[6px] transition-all"></div>
+                            <input
+                                type="radio"
+                                name="tripType"
+                                checked={dropOffLocationType === "roundTrip"}
+                                onChange={() => setDropOffLocationType("roundTrip")}
+                                className="sr-only"
+                            />
+                            <div className="relative flex items-center justify-center w-5 h-5">
+                                <div className={`w-5 h-5 rounded-full border-2 transition-all ${dropOffLocationType === "roundTrip"
+                                    ? "border-red-600 bg-red-600"
+                                    : "border-neutral-400 bg-transparent"
+                                    }`}></div>
+                                <svg
+                                    className={`absolute w-3 h-3 text-white transition-opacity ${dropOffLocationType === "roundTrip" ? "opacity-100" : "opacity-0"
+                                        }`}
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
                             </div>
-                            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-neutral-100">
+                            <span className={`text-sm font-medium transition-colors ${dropOffLocationType === "roundTrip"
+                                ? "text-red-600 dark:text-red-400"
+                                : "text-neutral-700 dark:text-neutral-300"
+                                } group-hover:text-neutral-900 dark:group-hover:text-neutral-100`}>
                                 Khứ hồi
                             </span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer group">
-                            <div className="relative">
-                                <input
-                                    type="radio"
-                                    name="tripType"
-                                    checked={dropOffLocationType === "oneWay"}
-                                    onChange={() => setDropOffLocationType("oneWay")}
-                                    className="peer sr-only"
-                                />
-                                <div className="w-5 h-5 rounded-full border-2 border-neutral-400 peer-checked:border-red-600 peer-checked:border-[6px] transition-all"></div>
+                            <input
+                                type="radio"
+                                name="tripType"
+                                checked={dropOffLocationType === "oneWay"}
+                                onChange={() => setDropOffLocationType("oneWay")}
+                                className="sr-only"
+                            />
+                            <div className="relative flex items-center justify-center w-5 h-5">
+                                <div className={`w-5 h-5 rounded-full border-2 transition-all ${dropOffLocationType === "oneWay"
+                                    ? "border-red-600 bg-red-600"
+                                    : "border-neutral-400 bg-transparent"
+                                    }`}></div>
+                                <svg
+                                    className={`absolute w-3 h-3 text-white transition-opacity ${dropOffLocationType === "oneWay" ? "opacity-100" : "opacity-0"
+                                        }`}
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
                             </div>
-                            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-neutral-100">
+                            <span className={`text-sm font-medium transition-colors ${dropOffLocationType === "oneWay"
+                                ? "text-red-600 dark:text-red-400"
+                                : "text-neutral-700 dark:text-neutral-300"
+                                } group-hover:text-neutral-900 dark:group-hover:text-neutral-100`}>
                                 Một chiều
                             </span>
                         </label>
                     </div>
 
-                    {/* Search fields row */}
-                    <div className="flex items-center gap-2.5">
-                        {/* Departure input */}
-                        <div className="flex-1 min-w-0 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-all h-[60px] flex items-center px-4 overflow-visible">
-                            <LocationInput
-                                placeHolder="Điểm khởi hành"
-                                desc="CHỌN THÀNH PHỐ XUẤT PHÁT"
-                                className="bg-transparent px-0 py-0 h-full flex items-center w-full search-modal-popup"
-                                divHideVerticalLineClass="hidden"
-                                airports={airports}
-                                onLocationSelect={handleDepartureSelect}
-                                selectedAirport={searchData.departureAirport}
-                            />
-                        </div>
-
-                        {/* Swap button */}
-                        <button
-                            type="button"
-                            className="w-[44px] h-[60px] flex-shrink-0 rounded-full bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all flex items-center justify-center group"
-                            onClick={() => {
-                                const temp = searchData.departureAirport;
-                                updateDepartureAirport(searchData.arrivalAirport);
-                                updateArrivalAirport(temp);
-                            }}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={2.5}
-                                stroke="currentColor"
-                                className="w-5 h-5 text-red-600 group-hover:rotate-180 transition-transform duration-300"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"
+                    {/* Search fields - Responsive Layout */}
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-2.5">
+                        {/* Location inputs group */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 lg:flex-1">
+                            {/* Departure input */}
+                            <div className="flex-1 min-w-0 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-all h-[60px] flex items-center px-4">
+                                <LocationInput
+                                    placeHolder="Điểm khởi hành"
+                                    desc="CHỌN THÀNH PHỐ XUẤT PHÁT"
+                                    className="bg-transparent px-0 py-0 h-full flex items-center w-full search-modal-popup"
+                                    divHideVerticalLineClass="hidden"
+                                    airports={airports}
+                                    onLocationSelect={handleDepartureSelect}
+                                    selectedAirport={searchData.departureAirport}
                                 />
-                            </svg>
-                        </button>
+                            </div>
 
-                        {/* Arrival input */}
-                        <div className="flex-1 min-w-0 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-all h-[60px] flex items-center px-4 overflow-visible">
-                            <LocationInput
-                                placeHolder="Điểm đến"
-                                desc="CHỌN THÀNH PHỐ BẠN MUỐN TỚI"
-                                className="bg-transparent px-0 py-0 h-full flex items-center w-full search-modal-popup"
-                                divHideVerticalLineClass="hidden"
-                                airports={airports}
-                                onLocationSelect={handleArrivalSelect}
-                                selectedAirport={searchData.arrivalAirport}
-                            />
+                            {/* Swap button */}
+                            <button
+                                type="button"
+                                className="w-full sm:w-[44px] h-[44px] sm:h-[60px] flex-shrink-0 rounded-xl sm:rounded-full bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all flex items-center justify-center group order-last sm:order-none"
+                                onClick={() => {
+                                    const temp = searchData.departureAirport;
+                                    updateDepartureAirport(searchData.arrivalAirport);
+                                    updateArrivalAirport(temp);
+                                }}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={2.5}
+                                    stroke="currentColor"
+                                    className="w-5 h-5 text-red-600 sm:group-hover:rotate-180 transition-transform duration-300"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"
+                                    />
+                                </svg>
+                                <span className="ml-2 text-sm font-medium text-red-600 sm:hidden">Đổi điểm</span>
+                            </button>
+
+                            {/* Arrival input */}
+                            <div className="flex-1 min-w-0 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-all h-[60px] flex items-center px-4">
+                                <LocationInput
+                                    placeHolder="Điểm đến"
+                                    desc="CHỌN THÀNH PHỐ BẠN MUỐN TỚI"
+                                    className="bg-transparent px-0 py-0 h-full flex items-center w-full search-modal-popup"
+                                    divHideVerticalLineClass="hidden"
+                                    airports={airports}
+                                    onLocationSelect={handleArrivalSelect}
+                                    selectedAirport={searchData.arrivalAirport}
+                                />
+                            </div>
                         </div>
 
-                        {/* Date input */}
-                        <div className="flex-1 min-w-0 h-[60px]">
-                            <FlightDateRangeInput
-                                selectsRange={dropOffLocationType !== "oneWay"}
-                                className="bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-all h-full"
-                                fieldClassName="px-4 py-0 h-full flex items-center"
-                                hasButtonSubmit={false}
-                                onSubmit={handleSearch}
-                            />
-                        </div>
+                        {/* Date and Guest inputs group */}
+                        <div className="flex flex-col sm:flex-row items-stretch gap-2 lg:flex-1">
+                            {/* Date input */}
+                            <div className="flex-1 min-w-0 h-[60px]">
+                                <FlightDateRangeInput
+                                    selectsRange={dropOffLocationType !== "oneWay"}
+                                    className="bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-all h-full"
+                                    fieldClassName="px-4 py-0 h-full flex items-center"
+                                    hasButtonSubmit={false}
+                                    onSubmit={handleSearch}
+                                />
+                            </div>
 
-                        {/* Guest selector */}
-                        <div className="flex-1 min-w-0 h-[60px]">
-                            {renderGuest()}
+                            {/* Guest selector */}
+                            <div className="flex-1 min-w-0 h-[60px]">
+                                {renderGuest()}
+                            </div>
                         </div>
 
                         {/* Search button */}
                         <button
                             onClick={handleSearch}
                             disabled={isSearching}
-                            className="px-8 h-[60px] bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 text-neutral-900 font-bold text-sm rounded-xl transition-all flex-shrink-0 whitespace-nowrap shadow-sm hover:shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full lg:w-auto px-8 h-[60px] bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 text-neutral-900 font-bold text-sm rounded-xl transition-all flex-shrink-0 whitespace-nowrap shadow-sm hover:shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSearching && (
                                 <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
