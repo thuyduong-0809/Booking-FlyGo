@@ -24,31 +24,19 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
   const router = useRouter();
   const [approve, setApprove] = useState(false);
   const query = useSearchParams();
-  // useEffect(() => {
-  //   console.log("Master store thay đổi:", masterStore);
-  //   if(masterStore.is_login ){
-  //     router.push("/");
-  //   }
-  // }, [masterStore]);
 
-
-  var oneTime = false;
   useEffect(() => {
-    if (!oneTime) {
-      const action = query.get("action");
-      if (action == "logout") {
-        dispatch(logout());
-        dispatch(updateLocalStorage());
-        setApprove(true);
-      } else if (!masterStore.isAuth) {
-        setApprove(true)
-      } else {
-        router.push("/")
-      }
-
-      oneTime = true;
+    const action = query.get("action");
+    if (action == "logout") {
+      dispatch(logout());
+      dispatch(updateLocalStorage());
+      setApprove(true);
+    } else if (!masterStore.isAuth) {
+      setApprove(true);
+    } else {
+      router.push("/");
     }
-  }, []);
+  }, [query, masterStore.isAuth, dispatch, router]);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('pendingEmail');
@@ -94,17 +82,21 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
   };
 
   if (!approve) {
-
-
-  } else {
     return (
-      <div className={`nc-PageLogin`}>
-        <div className="container mb-24 lg:mb-32">
-          <h2 className="my-20 flex items-center text-3xl md:text-5xl font-semibold justify-center">
-            Đăng nhập
-          </h2>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-6000"></div>
+      </div>
+    );
+  }
 
-          <div className="max-w-md mx-auto space-y-6">
+  return (
+    <div className={`nc-PageLogin`}>
+      <div className="container mb-24 lg:mb-32">
+        <h2 className="my-20 flex items-center text-3xl md:text-5xl font-semibold justify-center">
+          Đăng nhập
+        </h2>
+
+        <div className="max-w-md mx-auto space-y-6">
             {/* <div className="grid gap-3">
             {loginSocials.map((item, index) => (
               <a
@@ -176,11 +168,10 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
                 Tạo tài khoản
               </Link>
             </span>
-          </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 };
 
 export default PageLogin;

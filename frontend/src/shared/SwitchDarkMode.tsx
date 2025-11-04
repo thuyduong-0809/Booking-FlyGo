@@ -10,10 +10,21 @@ export interface SwitchDarkModeProps {
 const SwitchDarkMode: React.FC<SwitchDarkModeProps> = ({ className = "" }) => {
   const { _toogleDarkMode, isDarkMode, toDark, toLight } = useThemeMode();
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("🌙 Dark mode button clicked! Current mode:", isDarkMode ? "dark" : "light");
+    console.log("🔄 Toggling dark mode...");
+    _toogleDarkMode();
+    console.log("✅ Toggle complete! New mode:", !isDarkMode ? "dark" : "light");
+  };
+
   return (
     <button
-      onClick={_toogleDarkMode}
-      className={`self-center text-2xl md:text-3xl w-12 h-12 rounded-full text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none flex items-center justify-center ${className}`}
+      onClick={handleClick}
+      type="button"
+      className={`self-center text-2xl md:text-3xl w-12 h-12 rounded-full text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none flex items-center justify-center relative z-[9999] cursor-pointer ${className}`}
+      style={{ pointerEvents: 'auto' }}
     >
       <span className="sr-only">Enable dark mode</span>
       {isDarkMode ? (

@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
 import { useAppSelector } from "stores/hookStore";
+import SearchModal from "@/app/(client-components)/(HeroSearchForm)/SearchModal";
 
 const DEMO_CATS: TaxonomyType[] = [
   {
@@ -181,6 +182,9 @@ function PageHome() {
     <main className="nc-PageHome relative overflow-hidden">
       {/* GLASSMOPHIN */}
       <BgGlassmorphism />
+
+      {/* SEARCH MODAL - Hiển thị khi scroll */}
+      <SearchModal />
 
       <div className="container relative space-y-24 mb-24 lg:space-y-28 lg:mb-28">
         {/* SECTION HERO */}
