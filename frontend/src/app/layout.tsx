@@ -10,6 +10,7 @@ import FooterNav from "@/components/FooterNav";
 import StoreProvider from "stores/providers";
 import ConditionalLayout from "./ConditionalLayout";
 import { SearchProvider } from "./book-plane/SearchContext";
+import { NotificationProvider, NotificationContainer } from "@/components/Notification";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -28,12 +29,15 @@ export default function RootLayout({
     <html lang="en" className={poppins.className}>
       <body className="bg-white text-base dark:bg-neutral-900 text-neutral-900 dark:text-neutral-200">
         <StoreProvider>
-          <SearchProvider>
-            <ClientCommons />
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-          </SearchProvider>
+          <NotificationProvider>
+            <SearchProvider>
+              <ClientCommons />
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
+            </SearchProvider>
+            <NotificationContainer />
+          </NotificationProvider>
         </StoreProvider>
       </body>
     </html>

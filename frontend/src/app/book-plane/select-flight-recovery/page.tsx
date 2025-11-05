@@ -80,27 +80,60 @@ const DateNavigation = ({ selectedDate, setSelectedDate, searchData, type }: {
   searchData: any,
   type: 'departure' | 'return'
 }) => {
-  // Khởi tạo visibleDates dựa trên ngày từ searchData
+  function getDateContext(dateObj: Date | undefined, fallbackMonth = 9, fallbackDate = 14) {
+    const d = dateObj ? new Date(dateObj) : new Date(2025, fallbackMonth, fallbackDate);
+    return {
+      year: d.getFullYear(),
+      month: d.getMonth(),
+      date: d.getDate(),
+    };
+  }
+  const getMaxDayOfMonth = (year: number, month: number) => (new Date(year, month + 1, 0).getDate());
   const getInitialDates = () => {
-    const baseDate = type === 'departure'
-      ? (searchData.departureDate ? searchData.departureDate.getDate() : 14)
-      : (searchData.returnDate ? searchData.returnDate.getDate() : 14);
-    return [baseDate - 1, baseDate, baseDate + 1, baseDate + 2];
+    const { year, month, date: baseDate } = type === 'departure'
+      ? getDateContext(searchData.departureDate)
+      : getDateContext(searchData.returnDate);
+    const maxDay = getMaxDayOfMonth(year, month);
+    const arr = [baseDate - 1, baseDate, baseDate + 1, baseDate + 2].filter(d => d >= 1 && d <= maxDay);
+    return arr.length > 0 ? arr : [baseDate];
   };
-
+  // State giữ tháng/năm hiện tại của thanh ngày
+  const [currYear, setCurrYear] = useState(type === 'departure'
+    ? getDateContext(searchData.departureDate).year
+    : getDateContext(searchData.returnDate).year);
+  const [currMonth, setCurrMonth] = useState(type === 'departure'
+    ? getDateContext(searchData.departureDate).month
+    : getDateContext(searchData.returnDate).month);
   const [visibleDates, setVisibleDates] = useState(getInitialDates());
   const currentIndex = visibleDates.indexOf(selectedDate);
+  const maxDay = getMaxDayOfMonth(currYear, currMonth);
 
   const goToPrevious = () => {
     if (currentIndex > 0) {
       setSelectedDate(visibleDates[currentIndex - 1]);
     } else {
-      // Load previous 4 dates
-      const prevStartDate = visibleDates[0] - 4;
-      if (prevStartDate >= 1) { // Đảm bảo không âm
-        const newDates = [prevStartDate, prevStartDate + 1, prevStartDate + 2, prevStartDate + 3];
+      let prevMonth = currMonth;
+      let prevYear = currYear;
+      if (visibleDates[0] <= 1) {
+        if (prevMonth === 0) {
+          prevMonth = 11;
+          prevYear -= 1;
+        } else {
+          prevMonth -= 1;
+        }
+        const maxDayPrev = getMaxDayOfMonth(prevYear, prevMonth);
+        const newDates = [maxDayPrev - 3, maxDayPrev - 2, maxDayPrev - 1, maxDayPrev].filter(d => d >= 1 && d <= maxDayPrev);
         setVisibleDates(newDates);
-        setSelectedDate(newDates[3]); // Chọn ngày cuối của nhóm mới
+        setCurrMonth(prevMonth);
+        setCurrYear(prevYear);
+        setSelectedDate(newDates[newDates.length - 1]);
+      } else {
+        const prevStartDate = visibleDates[0] - 4;
+        const newDates = [prevStartDate, prevStartDate + 1, prevStartDate + 2, prevStartDate + 3].filter(d => d >= 1 && d <= maxDay);
+        if (newDates.length > 0) {
+          setVisibleDates(newDates);
+          setSelectedDate(newDates[newDates.length - 1]);
+        }
       }
     }
   };
@@ -109,14 +142,71 @@ const DateNavigation = ({ selectedDate, setSelectedDate, searchData, type }: {
     if (currentIndex < visibleDates.length - 1) {
       setSelectedDate(visibleDates[currentIndex + 1]);
     } else {
-      // Load next 4 dates starting from the next date
-      const nextStartDate = visibleDates[visibleDates.length - 1] + 1;
-      const newDates = [nextStartDate, nextStartDate + 1, nextStartDate + 2, nextStartDate + 3];
-      setVisibleDates(newDates);
-      setSelectedDate(newDates[0]);
+      let nextMonth = currMonth;
+      let nextYear = currYear;
+      if (visibleDates[visibleDates.length - 1] >= maxDay) {
+        if (nextMonth === 11) {
+          nextMonth = 0;
+          nextYear += 1;
+        } else {
+          nextMonth += 1;
+        }
+        const maxDayNext = getMaxDayOfMonth(nextYear, nextMonth);
+        const newDates = [1, 2, 3, 4].filter(d => d >= 1 && d <= maxDayNext);
+        setVisibleDates(newDates);
+        setCurrMonth(nextMonth);
+        setCurrYear(nextYear);
+        setSelectedDate(newDates[0]);
+      } else {
+        const nextStartDate = visibleDates[visibleDates.length - 1] + 1;
+        const newDates = [nextStartDate, nextStartDate + 1, nextStartDate + 2, nextStartDate + 3].filter(d => d >= 1 && d <= maxDay);
+        if (newDates.length > 0) {
+          setVisibleDates(newDates);
+          setSelectedDate(newDates[0]);
+        }
+      }
     }
   };
 
+  React.useEffect(() => {
+    if (selectedDate > maxDay) {
+      let newMonth = currMonth + 1;
+      let newYear = currYear;
+      if (newMonth > 11) {
+        newMonth = 0;
+        newYear += 1;
+      }
+      const maxDayNext = getMaxDayOfMonth(newYear, newMonth);
+      const newDates = [1, 2, 3, 4].filter(d => d >= 1 && d <= maxDayNext);
+      setVisibleDates(newDates);
+      setCurrMonth(newMonth);
+      setCurrYear(newYear);
+      setSelectedDate(1);
+    }
+    if (selectedDate < 1) {
+      let newMonth = currMonth - 1;
+      let newYear = currYear;
+      if (newMonth < 0) {
+        newMonth = 11;
+        newYear -= 1;
+      }
+      const maxPrev = getMaxDayOfMonth(newYear, newMonth);
+      const newDates = [maxPrev - 3, maxPrev - 2, maxPrev - 1, maxPrev].filter(d => d >= 1 && d <= maxPrev);
+      setVisibleDates(newDates);
+      setCurrMonth(newMonth);
+      setCurrYear(newYear);
+      setSelectedDate(maxPrev);
+    }
+  }, [selectedDate, currMonth, currYear, maxDay]);
+
+  // Cập nhật lại tháng/năm khi đổi searchData
+  React.useEffect(() => {
+    const ctx = type === 'departure'
+      ? getDateContext(searchData.departureDate)
+      : getDateContext(searchData.returnDate);
+    setCurrMonth(ctx.month);
+    setCurrYear(ctx.year);
+  }, [type, searchData.departureDate, searchData.returnDate]);
 
   return (
     <div className="bg-white rounded-2xl p-6 mb-6 shadow-xl border border-gray-100">
@@ -153,10 +243,7 @@ const DateNavigation = ({ selectedDate, setSelectedDate, searchData, type }: {
                   })()}
                 </div>
                 <div className={`text-sm font-bold ${date === selectedDate ? 'text-black' : 'text-gray-700'}`}>
-                  {type === 'departure'
-                    ? (searchData.departureDate ? searchData.departureDate.getMonth() + 1 : 10)
-                    : (searchData.returnDate ? searchData.returnDate.getMonth() + 1 : 10)
-                  }
+                  {currMonth + 1}
                 </div>
               </div>
             </div>
@@ -682,9 +769,20 @@ export default function SelectFlightRecoveryPage() {
     setError('');
 
     try {
-      // Format date
+      // Format date - Sử dụng local date để tránh timezone issue
       const formatDate = (date: Date) => {
-        return date.toISOString().split('T')[0];
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const formatted = `${year}-${month}-${day}`;
+        
+        console.log('📅 select-flight-recovery formatDate:', {
+          input: date.toISOString(),
+          inputLocal: date.toLocaleDateString('vi-VN'),
+          output: formatted
+        });
+        
+        return formatted;
       };
 
       // Tìm kiếm chuyến đi

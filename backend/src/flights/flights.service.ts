@@ -244,10 +244,15 @@ export class FlightsService {
         const response = { ...common_response };
 
         try {
-            console.log('🔍 Searching flights with params:', {
+            console.log('🔍 Backend SearchFlights - Params nhận được:', {
                 departureAirportCode,
                 arrivalAirportCode,
-                departureDate
+                departureDate,
+                types: {
+                    departureAirportCode: typeof departureAirportCode,
+                    arrivalAirportCode: typeof arrivalAirportCode,
+                    departureDate: typeof departureDate
+                }
             });
 
             // Debug: Kiểm tra có flights nào trong database không
@@ -301,20 +306,20 @@ export class FlightsService {
 
             // Lọc theo departure date
             if (departureDate) {
-                // So sánh theo ngày (bỏ qua giờ)
-                const startOfDay = new Date(departureDate);
-                startOfDay.setHours(0, 0, 0, 0);
+                console.log('📅 Filtering by date:', departureDate);
 
-                const endOfDay = new Date(departureDate);
-                endOfDay.setHours(23, 59, 59, 999);
-
-                console.log('📅 Date range:', {
-                    start: startOfDay.toISOString(),
-                    end: endOfDay.toISOString()
+                // Sử dụng SQL DATE function để so sánh chỉ phần ngày, tránh vấn đề timezone
+                queryBuilder.andWhere('DATE(flight.departureTime) = :departureDate', {
+                    departureDate
                 });
 
-                queryBuilder.andWhere('flight.departureTime >= :startOfDay', { startOfDay });
-                queryBuilder.andWhere('flight.departureTime <= :endOfDay', { endOfDay });
+                // Debug: Check flights on that date
+                const dateCheckQuery = this.flightRepository
+                    .createQueryBuilder('f')
+                    .select(['f.flightNumber', 'f.departureTime'])
+                    .where('DATE(f.departureTime) = :date', { date: departureDate });
+                const flightsOnDate = await dateCheckQuery.getRawMany();
+                console.log(`📊 All flights on ${departureDate}:`, flightsOnDate);
             }
 
             // Sắp xếp theo thời gian khởi hành
@@ -330,16 +335,41 @@ export class FlightsService {
 
             // Debug: Log chi tiết từng flight tìm được
             if (flights.length > 0) {
-                console.log('✅ Flights found:');
+                console.log(`✅ Found ${flights.length} flight(s):`);
                 flights.forEach(flight => {
                     console.log(`  - ${flight.flightNumber}: ${flight.departureAirport?.airportCode} -> ${flight.arrivalAirport?.airportCode} at ${flight.departureTime}`);
                 });
             } else {
                 console.log('❌ No flights match the criteria');
+
+                // Suggest alternative dates
+                if (departureAirportCode && arrivalAirportCode) {
+                    try {
+                        const alternativeQuery = this.flightRepository
+                            .createQueryBuilder('f')
+                            .leftJoin('f.departureAirport', 'dep')
+                            .leftJoin('f.arrivalAirport', 'arr')
+                            .where('dep.airportCode = :depCode', { depCode: departureAirportCode })
+                            .andWhere('arr.airportCode = :arrCode', { arrCode: arrivalAirportCode })
+                            .select('DISTINCT DATE(f.departureTime)', 'date')
+                            .orderBy('DATE(f.departureTime)', 'ASC')
+                            .limit(5);
+
+                        const alternatives = await alternativeQuery.getRawMany();
+                        if (alternatives.length > 0) {
+                            console.log('💡 Gợi ý các ngày có chuyến bay:');
+                            alternatives.forEach(alt => {
+                                console.log(`  - ${alt.date}`);
+                            });
+                        }
+                    } catch (err) {
+                        console.log('⚠️ Could not fetch alternative dates:', err.message);
+                    }
+                }
             }
 
             response.success = true;
-            response.message = 'Flights retrieved successfully';
+            response.message = flights.length > 0 ? 'Flights retrieved successfully' : 'No flights found for the selected criteria';
             response.data = flights;
 
         } catch (error) {

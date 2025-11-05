@@ -9,12 +9,14 @@ export interface HeroSearchFormProps {
   className?: string;
   currentTab?: SearchTab;
   currentPage?: "Flights";
+  variant?: "default" | "heroRed";
 }
 
 const HeroSearchForm: FC<HeroSearchFormProps> = ({
   className = "",
   currentTab = "Flights",
   currentPage,
+  variant = "default",
 }) => {
   const tabs: SearchTab[] = [ "Flights"];
   const [tabActive, setTabActive] = useState<SearchTab>(currentTab);
@@ -24,7 +26,7 @@ const HeroSearchForm: FC<HeroSearchFormProps> = ({
   const renderForm = () => {
     switch (tabActive) {
       case "Flights":
-        return <FlightSearchForm />;
+        return <FlightSearchForm variant={variant} />;
 
       default:
         return null;

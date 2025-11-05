@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 export function middleware(req: NextRequest) {
   const token = req.cookies.get("access_token")?.value;
 
-  // Nếu không có token → về login
+  // Nếu không có token → chỉ redirect về login nếu không phải trang chủ
   if (!token) {
     const { pathname } = req.nextUrl;
     if (pathname !== "/") {
