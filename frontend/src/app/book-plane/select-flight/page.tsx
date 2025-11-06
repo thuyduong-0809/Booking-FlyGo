@@ -200,11 +200,7 @@ const DateNavigation = ({ selectedDate, setSelectedDate, searchData }: {
       <div className="flex items-center justify-center space-x-6">
         <button
           onClick={goToPrevious}
-          disabled={currentIndex === 0 && visibleDates[0] <= 1}
-          className={`p-3 rounded-full transition-all duration-300 ${(currentIndex === 0 && visibleDates[0] <= 1)
-            ? 'text-gray-300 cursor-not-allowed'
-            : 'text-blue-600 hover:bg-blue-50 hover:scale-110 shadow-md'
-            }`}
+          className="p-3 rounded-full transition-all duration-300 text-blue-600 hover:bg-blue-50 hover:scale-110 shadow-md"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
