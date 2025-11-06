@@ -13,7 +13,7 @@ export class BookingsController {
     }
     @Get(':id/detail')
     async getDetail(@Param('id') id: number) {
-    return this.bookingsService.getBookingDetail(id);
+        return this.bookingsService.getBookingDetail(id);
     }
     @Get()
     findAll(@Query('userId') userId?: string) {
@@ -51,5 +51,18 @@ export class BookingsController {
     @Delete(':id')
     delete(@Param('id') id: string) {
         return this.bookingsService.delete(Number(id));
+    }
+
+    // Tra cứu đơn hàng cho khách vãng lai
+    @Get('guest/lookup')
+    async lookupGuestBooking(
+        @Query('email') email: string,
+        @Query('bookingReference') bookingReference?: string
+    ) {
+        // Nếu không có bookingReference, tìm tất cả booking theo email
+        if (!bookingReference) {
+            return this.bookingsService.findBookingsByEmail(email);
+        }
+        return this.bookingsService.lookupGuestBooking(email, bookingReference);
     }
 }

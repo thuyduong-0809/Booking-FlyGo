@@ -10,6 +10,7 @@ import SectionGridCategoryBox from "@/components/SectionGridCategoryBox";
 import SectionBecomeAnAuthor from "@/components/SectionBecomeAnAuthor";
 import SectionVideos from "@/components/SectionVideos";
 import SectionClientSay from "@/components/SectionClientSay";
+import SectionBookingLookup from "@/components/SectionBookingLookup";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
@@ -215,6 +216,9 @@ function PageHome() {
         </div> */}
 
         <SectionGridCategoryBox />
+
+        {/* SECTION - TRA CỨU VÉ MÁY BAY */}
+        <SectionBookingLookup />
 
         {/* <div className="relative py-16">
           <BackgroundSection />

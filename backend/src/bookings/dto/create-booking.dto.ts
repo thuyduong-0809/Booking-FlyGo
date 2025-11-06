@@ -32,6 +32,6 @@ export class CreateBookingDto {
 
   @IsNumber()
   @Type(() => Number)
-  @IsNotEmpty()
-  userId: number;
+  @IsOptional()
+  userId?: number;
 }
