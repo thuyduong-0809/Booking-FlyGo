@@ -21,7 +21,7 @@ export class Booking {
   @Column({ length: 10, unique: true })
   bookingReference: string;
 
-  @Column('decimal', { precision: 12, scale: 2 ,default:0})
+  @Column('decimal', { precision: 12, scale: 2, default: 0 })
   totalAmount: number;
 
   @Column({
@@ -50,7 +50,7 @@ export class Booking {
   @CreateDateColumn()
   bookedAt: Date;
 
-  // Relations
+  // Relations - Mọi booking đều có user (guest hoặc registered)
   @ManyToOne(() => User, (user) => user.bookings, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
@@ -63,7 +63,7 @@ export class Booking {
 
   @OneToMany(() => Payment, (p) => p.booking)
   payments: Payment[];
-  
+
   @OneToMany(() => Review, (review) => review.booking)
   reviews: Review[];
 }

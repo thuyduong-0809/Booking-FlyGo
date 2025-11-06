@@ -1,9 +1,12 @@
+"use client";
+
 import SectionSliderNewCategories from "@/components/SectionSliderNewCategories";
 import React from "react";
 import SectionSubscribe2 from "@/components/SectionSubscribe2";
 import SectionOurFeatures from "@/components/SectionOurFeatures";
 import BackgroundSection from "@/components/BackgroundSection";
 import { TaxonomyType } from "@/data/types";
+import SectionHeroWithCarousel from "@/app/(home)/SectionHeroWithCarousel";
 
 //
 import logo1 from "@/images/logos/nomal/1.png";
@@ -31,7 +34,6 @@ import rightImgPng from "@/images/our-features-2.png";
 
 import SectionGridFeatureProperty from "../SectionGridFeatureProperty";
 import SectionDowloadApp from "../SectionDowloadApp";
-import SectionHero2 from "@/app/(server-components)/SectionHero2";
 import Image from "next/image";
 
 const DEMO_CATS_2: TaxonomyType[] = [
@@ -103,8 +105,10 @@ const DEMO_CATS_2: TaxonomyType[] = [
 function PageHome2() {
   return (
     <main className="nc-PageHome2 relative overflow-hidden">
+      {/* HERO SECTION WITH CAROUSEL BACKGROUND */}
+      <SectionHeroWithCarousel className="mb-16 lg:mb-24" />
+      
       <div className="container relative space-y-24 mb-24 lg:space-y-28 lg:mb-28">
-        <SectionHero2 className="" />
 
         <div className="ncSectionLogos grid grid-cols-3 lg:grid-cols-5 gap-5 sm:gap-16">
           <div className="flex items-end justify-center">

@@ -620,7 +620,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
             placeHolder="Nơi đến"
             desc="Bạn muốn bay đến đâu?"
             className="flex-1"
-            divHideVerticalLineClass=" -inset-x-0.5"
+            divHideVerticalLineClass="-inset-x-0.5"
             airports={airports}
             onLocationSelect={handleArrivalSelect}
             selectedAirport={searchData.arrivalAirport}

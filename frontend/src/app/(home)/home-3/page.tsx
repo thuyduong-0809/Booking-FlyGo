@@ -1,11 +1,13 @@
+"use client";
+
 import React from "react";
 import SectionSubscribe2 from "@/components/SectionSubscribe2";
 import BackgroundSection from "@/components/BackgroundSection";
 import BgGlassmorphism from "@/components/BgGlassmorphism";
 import { TaxonomyType } from "@/data/types";
 import SectionGridCategoryBox from "@/components/SectionGridCategoryBox";
-import SectionHero3 from "@/app/(server-components)/SectionHero3";
 import CardCategory6 from "@/components/CardCategory6";
+import SectionHeroWithCarousel from "@/app/(home)/SectionHeroWithCarousel";
 
 
 const DEMO_CATS_2: TaxonomyType[] = [
@@ -62,10 +64,8 @@ function PageHome3() {
       {/* GLASSMOPHIN */}
       <BgGlassmorphism />
 
-      {/* SECTION HERO */}
-      <div className="container px-1 sm:px-4 mb-24 ">
-        <SectionHero3 className="" />
-      </div>
+      {/* HERO SECTION WITH CAROUSEL BACKGROUND */}
+      <SectionHeroWithCarousel className="mb-16 lg:mb-24" />
 
       <div className="container relative space-y-24 mb-24 ">
         {/* SECTION 1 */}

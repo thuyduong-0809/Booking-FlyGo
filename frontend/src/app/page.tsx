@@ -1,6 +1,5 @@
 "use client"
 import React, { useEffect, useState } from "react";
-import SectionHero from "@/app/(server-components)/SectionHero";
 import BgGlassmorphism from "@/components/BgGlassmorphism";
 import { TaxonomyType } from "@/data/types";
 import SectionSliderNewCategories from "@/components/SectionSliderNewCategories";
@@ -11,11 +10,13 @@ import SectionGridCategoryBox from "@/components/SectionGridCategoryBox";
 import SectionBecomeAnAuthor from "@/components/SectionBecomeAnAuthor";
 import SectionVideos from "@/components/SectionVideos";
 import SectionClientSay from "@/components/SectionClientSay";
+import SectionBookingLookup from "@/components/SectionBookingLookup";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
 import { useAppSelector } from "stores/hookStore";
 import SearchModal from "@/app/(client-components)/(HeroSearchForm)/SearchModal";
+import SectionHeroWithCarousel from "@/app/(home)/SectionHeroWithCarousel";
 
 const DEMO_CATS: TaxonomyType[] = [
   {
@@ -186,9 +187,10 @@ function PageHome() {
       {/* SEARCH MODAL - Hiển thị khi scroll */}
       <SearchModal />
 
+      {/* HERO SECTION WITH CAROUSEL BACKGROUND */}
+      <SectionHeroWithCarousel className="mb-16 lg:mb-24" />
+
       <div className="container relative space-y-24 mb-24 lg:space-y-28 lg:mb-28">
-        {/* SECTION HERO */}
-        <SectionHero className="pt-10 lg:pt-16 lg:pb-16" />
 
         {/* SECTION 1 */}
         <SectionSliderNewCategories categories={DEMO_CATS} />
@@ -214,6 +216,9 @@ function PageHome() {
         </div> */}
 
         <SectionGridCategoryBox />
+
+        {/* SECTION - TRA CỨU VÉ MÁY BAY */}
+        <SectionBookingLookup />
 
         {/* <div className="relative py-16">
           <BackgroundSection />

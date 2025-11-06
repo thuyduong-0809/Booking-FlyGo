@@ -80,6 +80,39 @@ const otherServicesMegaMenu: MegamenuItem[] = [
     id: ncNanoId(),
     image:
       "https://images.pexels.com/photos/1591373/pexels-photo-1591373.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+    title: "Hỗ trợ khách hàng",
+    items: [
+      {
+        id: ncNanoId(),
+        href: "/guest-booking-lookup",
+        name: "🔍 Tra cứu vé máy bay",
+        isNew: true,
+        description: "Tra cứu thông tin đơn hàng chỉ với email hoặc mã đặt chỗ (PNR). Không cần đăng nhập!",
+      },
+      {
+        id: ncNanoId(),
+        href: "#",
+        name: "Liên hệ hỗ trợ",
+        description: "Đội ngũ chăm sóc khách hàng 24/7 sẵn sàng hỗ trợ bạn",
+      },
+      {
+        id: ncNanoId(),
+        href: "#",
+        name: "Câu hỏi thường gặp",
+        description: "Tìm câu trả lời cho các thắc mắc phổ biến",
+      },
+      {
+        id: ncNanoId(),
+        href: "#",
+        name: "Hướng dẫn đặt vé",
+        description: "Hướng dẫn chi tiết từng bước đặt vé máy bay",
+      },
+    ],
+  },
+  {
+    id: ncNanoId(),
+    image:
+      "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
     title: "Thanh toán & Tài chính",
     items: [
       {
@@ -87,7 +120,7 @@ const otherServicesMegaMenu: MegamenuItem[] = [
         href: "#",
         name: "Bay trước, thanh toán sau",
         isNew: true,
-        description: "Sẵn sàng bay vui, vé để Vietjet lo. Cùng tận hưởng sản phẩm mua vé máy bay trả góp với thời hạn cho vay đến 6 tháng và không cần chứng minh thu nhập",
+        description: "Mua vé máy bay trả góp với thời hạn cho vay đến 6 tháng",
       },
       {
         id: ncNanoId(),
@@ -96,19 +129,17 @@ const otherServicesMegaMenu: MegamenuItem[] = [
         isNew: true,
         description: "Tỷ giá hấp dẫn, nhận tiền trong ngày!",
       },
-    ],
-  },
-  {
-    id: ncNanoId(),
-    image:
-      "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
-    title: "Thẻ & Mua sắm",
-    items: [
       {
         id: ncNanoId(),
         href: "#",
-        name: "Đặt trước Hàng miễn thuế",
-        description: "Tận hưởng mua sắm hàng hiệu chỉ với nút đặt hàng và nhận ngay trên chuyến bay của Quý khách.",
+        name: "Bảo hiểm du lịch",
+        description: "Bảo vệ chuyến đi của bạn với các gói bảo hiểm linh hoạt",
+      },
+      {
+        id: ncNanoId(),
+        href: "#",
+        name: "Chính sách hoàn vé",
+        description: "Thông tin chi tiết về hoàn hủy và đổi vé",
       },
     ],
   },

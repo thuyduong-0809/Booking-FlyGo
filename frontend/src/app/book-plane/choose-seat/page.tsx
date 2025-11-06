@@ -498,11 +498,13 @@ export default function ChooseSeatPage() {
                                 {/* Date - Format: "Thứ hai, 29/10/2025" */}
                                 <div className="text-base text-gray-700">
                                     {(() => {
-                                        const date = searchData.returnDate || new Date();
+                                        const dateValue = searchData.returnDate || new Date();
+                                        // Đảm bảo parse date đúng cách, tránh lỗi timezone
+                                        const date = typeof dateValue === 'string' ? new Date(dateValue) : new Date(dateValue);
                                         const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
                                         const dayName = dayNames[date.getDay()];
-                                        const day = date.getDate();
-                                        const month = date.getMonth() + 1;
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
                                         const year = date.getFullYear();
                                         return `${dayName}, ${day}/${month}/${year}`;
                                     })()}

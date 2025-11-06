@@ -171,12 +171,12 @@ const LocationInput: FC<LocationInputProps> = ({
         className={`flex z-10 flex-1 relative ${isHeroStyle ? "px-5 py-4" : isSearchModal ? "" : "[ nc-hero-field-padding ]"} flex-shrink-0 items-center space-x-3 cursor-pointer focus:outline-none text-left ${!isHeroStyle ? className : ""} ${showPopover ? "nc-hero-field-focused" : ""
           }`}
       >
-        <div className={isHeroStyle || isSearchModal ? "text-neutral-400" : "text-neutral-300 dark:text-neutral-400"}>
+        <div className={isHeroStyle ? "text-neutral-500" : isSearchModal ? "text-neutral-400" : "text-neutral-300 dark:text-neutral-400"}>
           <MapPinIcon className={isHeroStyle || isSearchModal ? "w-5 h-5" : "w-5 h-5 lg:w-7 lg:h-7"} />
         </div>
         <div className="flex-grow flex flex-col pr-8">
           <input
-            className={`block w-full bg-transparent border-none focus:ring-0 p-0 focus:outline-none ${isHeroStyle || isSearchModal ? "text-base font-semibold text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-500" : "focus:placeholder-neutral-300 xl:text-lg font-semibold placeholder-neutral-800 dark:placeholder-neutral-200"} truncate`}
+            className={`block w-full bg-transparent border-none focus:ring-0 p-0 focus:outline-none ${isHeroStyle ? "text-base font-semibold text-neutral-900 placeholder:text-neutral-500" : isSearchModal ? "text-base font-semibold text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-500" : "focus:placeholder-neutral-300 xl:text-lg font-semibold placeholder-neutral-800 dark:placeholder-neutral-200"} truncate`}
             placeholder={placeHolder}
             value={value}
             autoFocus={showPopover}
@@ -186,7 +186,7 @@ const LocationInput: FC<LocationInputProps> = ({
             ref={inputRef}
           />
           {(isHeroStyle || isSearchModal) && desc && (
-            <span className="block mt-0.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            <span className={`block mt-0.5 text-xs font-medium uppercase tracking-wide ${isHeroStyle ? "text-neutral-600" : "text-neutral-500 dark:text-neutral-400"}`}>
               <span className="line-clamp-1">{desc}</span>
             </span>
           )}
@@ -202,6 +202,7 @@ const LocationInput: FC<LocationInputProps> = ({
               setValue("");
               onLocationSelect?.(null as any);
             }}
+            variant={isHeroStyle ? "hero" : "default"}
           />
         )}
       </div>

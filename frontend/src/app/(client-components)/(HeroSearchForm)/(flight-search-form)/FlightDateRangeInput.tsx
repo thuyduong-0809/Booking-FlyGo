@@ -34,7 +34,7 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
   const { showNotification } = useNotification();
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
-  
+
   const [startDate, setStartDate] = useState<Date | null>(
     searchData.departureDate || today
   );
@@ -64,21 +64,21 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
 
   const onChangeRangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates;
-    
+
     console.log('📅 FlightDateRangeInput - Date được chọn:', {
       start: start?.toISOString(),
       end: end?.toISOString(),
       startLocal: start?.toLocaleDateString('vi-VN'),
       endLocal: end?.toLocaleDateString('vi-VN')
     });
-    
+
     // Validate ngày đi phải lớn hơn hoặc bằng ngày hiện tại
     if (start) {
       const selectedDate = new Date(start);
       selectedDate.setHours(0, 0, 0, 0);
       const todayDate = new Date();
       todayDate.setHours(0, 0, 0, 0);
-      
+
       if (selectedDate < todayDate) {
         showNotification(
           'warning',
@@ -88,14 +88,14 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
         return;
       }
     }
-    
+
     // Validate ngày về phải lớn hơn hoặc bằng ngày đi
     if (start && end) {
       const startDateCopy = new Date(start);
       const endDateCopy = new Date(end);
       startDateCopy.setHours(0, 0, 0, 0);
       endDateCopy.setHours(0, 0, 0, 0);
-      
+
       if (endDateCopy < startDateCopy) {
         showNotification(
           'warning',
@@ -105,7 +105,7 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
         return;
       }
     }
-    
+
     setStartDate(start);
     setEndDate(end);
 
@@ -123,7 +123,7 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
 
     return (
       <>
-        <div className={isHeroStyle ? "text-neutral-400" : "text-neutral-300 dark:text-neutral-400"}>
+        <div className={isHeroStyle ? "text-neutral-500" : "text-neutral-300 dark:text-neutral-400"}>
           <CalendarIcon className={isHeroStyle ? "w-5 h-5" : "w-5 h-5 lg:w-7 lg:h-7"} />
         </div>
         <div className="flex-grow text-left">
@@ -168,6 +168,7 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
                   {startDate && open && (
                     <ClearDataButton
                       onClick={() => onChangeRangeDate([null, null])}
+                      variant={isHeroStyle ? "hero" : "default"}
                     />
                   )}
                 </Popover.Button>
@@ -257,7 +258,7 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
                             selectedDate.setHours(0, 0, 0, 0);
                             const todayDate = new Date();
                             todayDate.setHours(0, 0, 0, 0);
-                            
+
                             if (selectedDate < todayDate) {
                               showNotification(
                                 'warning',
