@@ -225,7 +225,9 @@ const DateNavigation = ({ selectedDate, setSelectedDate, searchData }: {
                 <div className={`text-sm font-bold ${date === selectedDate ? 'text-black' : 'text-gray-700'}`}>
                   {(() => {
                     const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-                    const dayOfWeek = dayNames[date % 7];
+                    // Tạo Date object với năm, tháng, ngày để tính đúng thứ trong tuần
+                    const dateObj = new Date(currYear, currMonth, date);
+                    const dayOfWeek = dayNames[dateObj.getDay()];
                     return `${dayOfWeek} ${date} tháng`;
                   })()}
                 </div>
@@ -462,10 +464,12 @@ const FlightSummaryCard = ({
   // Function to get full date string for display
   const getFullDateString = (date: number) => {
     const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-    const dayOfWeek = dayNames[date % 7];
-    const month = searchData.departureDate ? searchData.departureDate.getMonth() + 1 : 10;
+    const month = searchData.departureDate ? searchData.departureDate.getMonth() : 9;
     const year = searchData.departureDate ? searchData.departureDate.getFullYear() : 2025;
-    return `${dayOfWeek}, ${date}/${month}/${year}`;
+    // Tạo Date object với năm, tháng, ngày để tính đúng thứ trong tuần
+    const dateObj = new Date(year, month, date);
+    const dayOfWeek = dayNames[dateObj.getDay()];
+    return `${dayOfWeek}, ${String(date).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}`;
   };
 
   // Kiểm tra nếu không có dữ liệu
