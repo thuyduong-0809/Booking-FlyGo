@@ -732,7 +732,7 @@ export default function PassengersPage() {
                 </div>
 
                 {/* Buy for me toggle */}
-                <div className="mt-6 flex items-center space-x-3">
+                {/* <div className="mt-6 flex items-center space-x-3">
                   <input
                     type="checkbox"
                     checked={passenger.buyForMe}
@@ -740,10 +740,10 @@ export default function PassengersPage() {
                     className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
                   />
                   <span className="text-base text-gray-700">Mua vé cho tôi</span>
-                </div>
+                </div> */}
 
                 {/* OTT Communication */}
-                <div className="mt-6">
+                {/* <div className="mt-6">
                   <label className="block text-base font-bold text-black mb-3">
                     Nhận thông tin hành trình qua tin nhắn OTT
                   </label>
@@ -766,10 +766,10 @@ export default function PassengersPage() {
                       </label>
                     ))}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Remember details */}
-                <div className="mt-6 flex items-center space-x-3">
+                {/* <div className="mt-6 flex items-center space-x-3">
                   <input
                     type="checkbox"
                     checked={passenger.rememberDetails}
@@ -779,7 +779,7 @@ export default function PassengersPage() {
                   <span className="text-base text-gray-700">
                     Ghi nhớ các chi tiết hành khách trên cho các lần đặt vé trong tương lai
                   </span>
-                </div>
+                </div> */}
               </div>
             ))}
           </div>

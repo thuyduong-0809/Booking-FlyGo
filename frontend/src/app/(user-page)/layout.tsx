@@ -1,5 +1,8 @@
+"use client";
+
 import React, { FC } from "react";
 import { Nav } from "./(components)/Nav";
+import SectionUserBanner from "./SectionUserBanner";
 
 export interface CommonLayoutProps {
     children?: React.ReactNode;
@@ -8,6 +11,9 @@ export interface CommonLayoutProps {
 const CommonLayout: FC<CommonLayoutProps> = ({ children }) => {
     return (
         <div className="nc-CommonLayoutAccount bg-gray-50 dark:bg-neutral-900 min-h-screen">
+            {/* User Banner Carousel */}
+            <SectionUserBanner height="300px" className="mb-8" />
+            
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col lg:flex-row gap-6">
                     {/* Sidebar Navigation */}
