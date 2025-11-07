@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   UserGroupIcon,
   PlusIcon,
@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 import { CheckIn as DbCheckIn } from '../../types/database';
+import { requestApi } from '@/lib/api';
 
 interface Checkin extends DbCheckIn {
   bookingNumber: string;
@@ -28,185 +29,427 @@ interface Checkin extends DbCheckIn {
 interface CheckinManagementProps { activeSubTab?: string }
 
 export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinManagementProps) {
-  const [checkins, setCheckins] = useState<Checkin[]>([
-    {
-      CheckinID: 1,
-      BookingFlightID: 1,
-      PassengerID: 1,
-      CheckinType: 'Online',
-      CheckedInAt: '2024-01-15T08:00:00Z',
-      BoardingPassURL: '#',
-      BaggageCount: 1,
-      BaggageWeight: 20,
-      BoardingStatus: 'Boarded',
-      bookingNumber: 'FG240115001',
-      passengerName: 'Nguyễn Văn A',
-      flightNumber: 'VN001',
-      route: 'SGN → HAN',
-      seatNumber: '12A',
-      checkinTime: '08:00',
-      status: 'Checked In'
-    },
-    {
-      CheckinID: 2,
-      BookingFlightID: 2,
-      PassengerID: 2,
-      CheckinType: 'Airport',
-      CheckedInAt: '2024-01-15T11:15:00Z',
-      BoardingPassURL: '#',
-      BaggageCount: 1,
-      BaggageWeight: 25,
-      BoardingStatus: 'Boarded',
-      bookingNumber: 'FG240115002',
-      passengerName: 'Trần Thị B',
-      flightNumber: 'VN002',
-      route: 'HAN → DAD',
-      seatNumber: '15B',
-      checkinTime: '11:15',
-      status: 'Boarding'
-    },
-    {
-      CheckinID: 3,
-      BookingFlightID: 3,
-      PassengerID: 3,
-      CheckinType: 'Online',
-      CheckedInAt: '2024-01-15T13:30:00Z',
-      BoardingPassURL: '#',
-      BaggageCount: 1,
-      BaggageWeight: 18,
-      BoardingStatus: 'Boarded',
-      bookingNumber: 'FG240115003',
-      passengerName: 'Lê Văn C',
-      flightNumber: 'VN003',
-      route: 'DAD → SGN',
-      seatNumber: '8C',
-      checkinTime: '13:30',
-      status: 'Boarded'
-    }
-  ]);
+  // const [checkins, setCheckins] = useState<Checkin[]>([
+  //   {
+  //     CheckinID: 1,
+  //     BookingFlightID: 1,
+  //     PassengerID: 1,
+  //     CheckinType: 'Online',
+  //     CheckedInAt: '2024-01-15T08:00:00Z',
+  //     BoardingPassURL: '#',
+  //     BaggageCount: 1,
+  //     BaggageWeight: 20,
+  //     BoardingStatus: 'Boarded',
+  //     bookingNumber: 'FG240115001',
+  //     passengerName: 'Nguyễn Văn A',
+  //     flightNumber: 'VN001',
+  //     route: 'SGN → HAN',
+  //     seatNumber: '12A',
+  //     checkinTime: '08:00',
+  //     status: 'Checked In'
+  //   },
+  //   {
+  //     CheckinID: 2,
+  //     BookingFlightID: 2,
+  //     PassengerID: 2,
+  //     CheckinType: 'Airport',
+  //     CheckedInAt: '2024-01-15T11:15:00Z',
+  //     BoardingPassURL: '#',
+  //     BaggageCount: 1,
+  //     BaggageWeight: 25,
+  //     BoardingStatus: 'Boarded',
+  //     bookingNumber: 'FG240115002',
+  //     passengerName: 'Trần Thị B',
+  //     flightNumber: 'VN002',
+  //     route: 'HAN → DAD',
+  //     seatNumber: '15B',
+  //     checkinTime: '11:15',
+  //     status: 'Boarding'
+  //   },
+  //   {
+  //     CheckinID: 3,
+  //     BookingFlightID: 3,
+  //     PassengerID: 3,
+  //     CheckinType: 'Online',
+  //     CheckedInAt: '2024-01-15T13:30:00Z',
+  //     BoardingPassURL: '#',
+  //     BaggageCount: 1,
+  //     BaggageWeight: 18,
+  //     BoardingStatus: 'Boarded',
+  //     bookingNumber: 'FG240115003',
+  //     passengerName: 'Lê Văn C',
+  //     flightNumber: 'VN003',
+  //     route: 'DAD → SGN',
+  //     seatNumber: '8C',
+  //     checkinTime: '13:30',
+  //     status: 'Boarded'
+  //   }
+  // ]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-
+  const [checkins, setCheckins] = useState([])
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Checked In': return 'text-green-600 bg-green-100';
-      case 'Boarding': return 'text-blue-600 bg-blue-100';
-      case 'Boarded': return 'text-purple-600 bg-purple-100';
-      case 'No Show': return 'text-red-600 bg-red-100';
+      case 'NotBoarded': return 'text-green-600 bg-green-100';
+      case 'Boarded': return 'text-blue-600 bg-blue-100';
+      case 'GateClosed': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'Checked In': return 'Đã check-in';
-      case 'Boarding': return 'Đang lên máy bay';
+      case 'NotBoarded': return 'Đang chờ lên máy bay';
       case 'Boarded': return 'Đã lên máy bay';
-      case 'No Show': return 'Không xuất hiện';
+      case 'GateClosed': return 'Cổng đã đóng"';
       default: return status;
     }
   };
 
-  const filteredCheckins = checkins.filter(checkin => {
-    const matchesSearch = checkin.bookingNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         checkin.passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         checkin.flightNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         checkin.seatNumber.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredCheckins = checkins.filter((checkin:any) => {
+    const passengerName = checkin.passenger.firstName + checkin.passenger.lastName
+    const matchesSearch = checkin.bookingFlight.bookingFlightId ||
+                         passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        checkin.passenger.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         checkin.bookingFlight.seatNumber.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || checkin.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+    const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true); // bật loading trước
+      await Promise.all([
+        loadCheckins()
+      ]);
+      setLoading(false); // tắt loading sau khi load xong
+    };
+
+    fetchData();
+  }, []);
+
+
+      const loadCheckins = async () => {
+      await requestApi("check-ins", "GET").then((res: any) => {
+        // console.log("res",res);
+        if (res.success) {
+           setCheckins(res.data)
+        }
+      }).catch((error: any) => {
+        console.error(error)
+      });
+    }
+
+
+    const [checkInData, setCheckInData] = useState({
+      bookingFlightId: 0, // ID chuyến bay trong booking
+      passengerId: 0, // ID hành khách
+
+      checkInType: "Airport", // hoặc "Online" — kiểu check-in
+      baggageCount: 0, // số kiện hành lý
+      baggageWeight: 0, // tổng trọng lượng (kg)
+
+      boardingStatus: "", // trạng thái: NotBoarded | Boarded | GateClosed
+    });
+
+  const clearData = () =>{
+    setCheckInData({
+      bookingFlightId: 0, 
+      passengerId: 0,
+
+      checkInType: "Airport",
+
+      baggageCount: 0, 
+      baggageWeight: 0,
+
+      boardingStatus: "",
+    })
+    // setBoardingUrl("")
+    
+  }
+
+  const [boardingUrl, setBoardingUrl] = useState<string | null>(null);
+  const [errors, setErrors] = useState<any>({});
+   const validateCheckInInputs = () => {
+  const newErrors: { [key: string]: string } = {};
+
+  if (!checkInData.bookingFlightId) newErrors.bookingFlightId = "Vui lòng nhập mã vé";
+  if (!checkInData.passengerId) newErrors.passengerId = "Vui lòng nhập ID hành khách";
+  if (!checkInData.checkInType) newErrors.checkInType = "Vui lòng chọn hình thức check-in";
+  if (!checkInData.boardingStatus) newErrors.boardingStatus = "Vui lòng chọn trạng thái lên máy bay";
+
+  if (checkInData.baggageCount < 0)
+    newErrors.baggageCount = "Số kiện hành lý không được âm";
+
+  if (checkInData.baggageWeight < 0)
+    newErrors.baggageWeight = "Trọng lượng hành lý không được âm";
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+
+      const addCheckIn = (e: React.FormEvent)=>{
+         e.preventDefault();
+        if(!validateCheckInInputs()) return
+       
+        setLoading(true);
+        requestApi("check-ins","POST",checkInData).then((res:any)=>{
+            if(res.success){
+               alert(`Tạo checkin ${res.data.checkInType} thành công`)
+              setBoardingUrl(`http://localhost:3001${res.data.boardingPassUrl}`); //hiển thị link PDF
+              // window.open(`http://localhost:3001${res.data.boardingPassUrl}`, "_blank");
+               setShowAddModal(false)
+              //  setErrors({})
+               clearData()
+               loadCheckins()
+               setLoading(false)
+               
+            }else if(res.errorCode==='BOOKINGFLIGHT_NOT_EXIST'){
+               setErrors((prev: any) => ({
+                ...prev,
+                bookingFlightId: "Mã vé không tồn tại",
+              }));
+            } else if (res.errorCode === 'PASSENGER_NOT_EXIST') {
+            setErrors((prev: any) => ({
+              ...prev,
+              passengerId: "Hành khách không tồn tại",
+            }));}
+             else{
+              alert('Thêm thất bại')
+            }
+        }).catch((err:any)=>{
+            console.error(err)
+        }).finally(() => {
+        // chỉ tắt loading sau khi mọi thứ hoàn tất
+        setLoading(false);
+      });
+      }
+
+  if (loading) {
+    return <div className='text-gray-800'>Vui lòng đợi...</div>;
+  }
   // Render content based on active sub-tab
   const renderSubContent = () => {
     switch (activeSubTab) {
       case 'checkin-airport':
         return (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Check-in tại sân bay</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Số đặt chỗ</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="FG240115001"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Số chuyến bay</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="FG001"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Tên hành khách</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Nguyễn Văn A"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="12A"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Trọng lượng hành lý (kg)</label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Loại hành lý</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="">Chọn loại hành lý</option>
-                    <option value="carry-on">Hành lý xách tay</option>
-                    <option value="checked">Hành lý ký gửi</option>
-                    <option value="both">Cả hai</option>
-                  </select>
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                  Hủy
-                </button>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  Check-in
-                </button>
-              </div>
-            </div>
+            {/* FORM CHECK-IN */}
+            <form onSubmit={addCheckIn}>
+               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Tạo Check-in</h3>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Hành khách chờ check-in</h3>
-              <div className="space-y-3">
-                {checkins.filter(c => c.CheckinType === 'Airport').map((checkin) => (
-                  <div key={checkin.CheckinID} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  {/* bookingFlightId */}
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">
+                      ID Chuyến bay (bookingFlightId)
+                    </label>
+                    <input
+                      type="number"
+                      value={checkInData.bookingFlightId || ""}
+                      onChange={(e) =>{
+                         setCheckInData({ ...checkInData, bookingFlightId: Number(e.target.value) }),
+                         setErrors((prev: any) => ({ ...prev,bookingFlightId: "" }));
+                      }
+                       
+                      }
+                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
+                        errors.bookingFlightId ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="VD: 12"
+                    />
+                    {errors.bookingFlightId && (
+                      <p className="text-red-500 text-sm mt-1">{errors.bookingFlightId}</p>
+                    )}
+                  </div>
+
+                  {/* passengerId */}
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">
+                      ID Hành khách (passengerId)
+                    </label>
+                    <input
+                      type="number"
+                      value={checkInData.passengerId || ""}
+                      onChange={(e) =>{
+                         setCheckInData({ ...checkInData, passengerId: Number(e.target.value) }),
+                         setErrors((prev: any) => ({ ...prev,passengerId: "" }));
+                      }
+                       
+                      }
+                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
+                        errors.passengerId ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="VD: 12"
+                    />
+                    {errors.passengerId && (
+                      <p className="text-red-500 text-sm mt-1">{errors.passengerId}</p>
+                    )}
+                  </div>
+
+                  {/* checkInType */}
                     <div>
-                      <p className="font-medium text-gray-900">{checkin.passengerName}</p>
-                      <p className="text-sm text-gray-600">{checkin.bookingNumber} - {checkin.flightNumber}</p>
+                      <label className="block text-md font-medium text-gray-700 mb-1">
+                        Hình thức Check-in
+                      </label>
+                      <select
+                        value={checkInData.checkInType}
+                        onChange={(e) => {
+                          setCheckInData({ ...checkInData, checkInType: e.target.value });
+                          setErrors((prev: any) => ({ ...prev, checkInType: "" }));
+                        }}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
+                          errors.checkInType ? "border-red-500" : "border-gray-300"
+                        }`}
+                      >
+                        <option value="">Chọn loại</option>
+                        <option value="Airport">Tại sân bay</option>
+                      </select>
+                      {errors.checkInType && (
+                        <p className="text-red-500 text-sm mt-1">{errors.checkInType}</p>
+                      )}
+                    </div>
+
+                 {/* boardingStatus */}
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">
+                      Trạng thái lên máy bay
+                    </label>
+                    <select
+                      value={checkInData.boardingStatus}
+                      onChange={(e) => {
+                        setCheckInData({ ...checkInData, boardingStatus: e.target.value });
+                        setErrors((prev: any) => ({ ...prev, boardingStatus: "" }));
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
+                        errors.boardingStatus ? "border-red-500" : "border-gray-300"
+                      }`}
+                    >
+                      <option value="">Chọn trạng thái</option>
+                      <option value="NotBoarded">Chưa lên máy bay</option>
+                      <option value="Boarded">Đã lên máy bay</option>
+                      <option value="GateClosed">Đã đóng cửa</option>
+                    </select>
+                    {errors.boardingStatus && (
+                      <p className="text-red-500 text-sm mt-1">{errors.boardingStatus}</p>
+                    )}
+                  </div>
+
+                  {/* baggageCount */}
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">
+                      Số kiện hành lý
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={checkInData.baggageCount || ""}
+                      onChange={(e) => {
+                        setCheckInData({ ...checkInData, baggageCount: Number(e.target.value) });
+                        setErrors((prev: any) => ({ ...prev, baggageCount: "" }));
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
+                        errors.baggageCount ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="VD: 2"
+                    />
+                    {errors.baggageCount && (
+                      <p className="text-red-500 text-sm mt-1">{errors.baggageCount}</p>
+                    )}
+                  </div>
+
+               {/* baggageWeight */}
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">
+                      Tổng trọng lượng hành lý (kg)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.1"
+                      value={checkInData.baggageWeight || ""}
+                      onChange={(e) => {
+                        setCheckInData({ ...checkInData, baggageWeight: Number(e.target.value) });
+                        setErrors((prev: any) => ({ ...prev, baggageWeight: "" }));
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
+                        errors.baggageWeight ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="VD: 23.5"
+                    />
+                    {errors.baggageWeight && (
+                      <p className="text-red-500 text-sm mt-1">{errors.baggageWeight}</p>
+                    )}
+                  </div>
+
+                {boardingUrl && (
+                  <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
+                    <p className="text-green-700 font-medium mb-2">
+                      ✅ Check-in thành công! Boarding Pass của bạn:
+                    </p>
+                    <a
+                      href={boardingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline font-semibold"
+                    >
+                      Xem / Tải Boarding Pass (PDF)
+                    </a>
+                  </div>
+                )}
+                </div>
+
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      clearData()
+                    }
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Check-in
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {/* DANH SÁCH CHECK-IN */}
+            {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Danh sách check-in</h3>
+              <div className="space-y-3">
+                {checkins.map((checkin:any) => (
+                  <div key={checkin.checkInId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">#{checkin.checkInId} - {checkin.passenger.name}</p>
+                      <p className="text-sm text-gray-600">
+                        Flight ID: {checkin.bookingFlight.bookingFlightId} | Type: {checkin.checkInType}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.status)}`}>
-                        {getStatusText(checkin.status)}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.boardingStatus)}`}>
+                        {checkin.boardingStatus}
                       </span>
-                      <p className="text-xs text-gray-500 mt-1">Ghế: {checkin.seatNumber}</p>
+                      <p className="text-xs text-gray-500 mt-1">Hành lý: {checkin.baggageWeight}kg</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
+
         );
 
       case 'checkin-online':
@@ -281,15 +524,15 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Check-in trực tuyến gần đây</h3>
               <div className="space-y-3">
-                {checkins.filter(c => c.CheckinType === 'Online').map((checkin) => (
-                  <div key={checkin.CheckinID} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                {checkins.filter((c:any) => c.checkInType === 'Online').map((checkin:any) => (
+                  <div key={checkin.checkinId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
-                      <p className="font-medium text-gray-900">{checkin.passengerName}</p>
+                      <p className="font-medium text-gray-900">{checkin.passenger.fisrtName} {checkin.passenger.lastName}</p>
                       <p className="text-sm text-gray-600">{checkin.bookingNumber} - {checkin.flightNumber}</p>
                     </div>
                     <div className="text-right">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.status)}`}>
-                        {getStatusText(checkin.status)}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.boardingStatus)}`}>
+                        {getStatusText(checkin.boardingStatus)}
                       </span>
                       <p className="text-xs text-gray-500 mt-1">Ghế: {checkin.seatNumber}</p>
                     </div>
@@ -475,7 +718,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredCheckins.map((checkin) => (
+                    {filteredCheckins.map((checkin:any) => (
                       <tr key={checkin.CheckinID} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {checkin.passengerName}
@@ -568,34 +811,34 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredCheckins.map((checkin) => (
-                      <tr key={checkin.CheckinID} className="hover:bg-gray-50">
+                    {checkins.map((checkin:any) => (
+                      <tr key={checkin.checkInId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                               <UserGroupIcon className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{checkin.bookingNumber}</div>
-                              <div className="text-sm text-gray-500">#{checkin.CheckinID}</div>
+                              <div className="text-sm font-medium text-gray-900">{checkin.bookingFlight.booking.bookingReference}</div>
+                              <div className="text-sm text-gray-500">#{checkin.checkInId}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
-                          {checkin.passengerName}
+                          {checkin.passenger.lastName} {checkin.passenger.firstName}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-mdmd text-gray-900">
-                          {checkin.flightNumber}
+                          {checkin.bookingFlight.flight.flightNumber}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
-                          {checkin.seatNumber}
+                          {checkin.bookingFlight.seatNumber}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-mdmd text-gray-900">
-                          {checkin.CheckinType}
+                          {checkin.checkInType}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.status)}`}>
-                            {getStatusText(checkin.status)}
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.boardingStatus)}`}>
+                            {getStatusText(checkin.boardingStatus)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

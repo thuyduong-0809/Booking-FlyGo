@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as express from 'express';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -21,6 +22,10 @@ async function bootstrap() {
         prefix: '/',
         index: false,
     });
+
+    // Cho phép truy cập file trong thư mục /uploads
+    // app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
+    app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
     const port = process.env.PORT || 3001;
     await app.listen(port);
