@@ -1,18 +1,7 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsUrl, Min } from 'class-validator';
 import { CheckInType, BoardingStatus } from '../entities/check-ins.entity';
 
-export class CreateCheckInDto {
-  @IsNotEmpty()
-  @IsNumber()
-  bookingFlightId: number;
-
-
-
-  @IsNotEmpty()
-  @IsEnum(CheckInType, {
-    message: 'checkInType must be either Online or Airport',
-  })
-  checkInType: CheckInType;
+export class UpdateCheckInDto {
 
   @IsOptional()
   @IsUrl({}, { message: 'boardingPassUrl must be a valid URL' })
