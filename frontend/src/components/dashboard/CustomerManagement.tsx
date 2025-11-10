@@ -546,7 +546,7 @@ const validateCustomerInputs = () => {
                   </td>
                 </tr>
               ))}
-                                    <Dialog
+                  <Dialog
                       open={isDeleteConfirmOpen}
                       onClose={() => setIsDeleteConfirmOpen(false)}
                       className="relative z-50"
