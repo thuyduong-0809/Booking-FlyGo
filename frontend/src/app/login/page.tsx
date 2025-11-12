@@ -59,15 +59,7 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
         dispatch(loginSuccess({ ...res }));
         dispatch(updateLocalStorage());
         document.cookie = `access_token=${res.data.accessToken}; path=/; max-age=3600; secure; samesite=strict`;
-        // if(res.data.user.role === "SystemAdmin"){
-        //   router.push("/dashboard")
-        // }
-        // console.log("Login success:", res);
-        // if(res.user.role === "SystemAdmin" || res.user.role === "Staff"){
-        //   showNotification("error", "Bạn không có quyền truy cập trang này");
-        //   dispatch(updateLocalStorage());
-        //   return;
-        // }
+
         showNotification("success", "Login thành công");
         router.push("/");
       } else {
