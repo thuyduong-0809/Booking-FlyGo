@@ -195,15 +195,16 @@ export default function BookingManagement({ activeSubTab = 'bookings' }: Booking
     },
   ],
 });
+const [hasSelected, setHasSelected] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
     const handleViewDetail = async (bookingId:number)=>{
-      
       await requestApi(`bookings/${String(bookingId)}/detail`, "GET").then((res: any) => {
         if (res.success) {
             setSelectedBooking(res.data)
             setIsModalOpen(true);
+            setHasSelected(true);  
         } else {
-            // setSelectedBooking()
+            setIsModalOpen(false)
         }
       }).catch((error: any) => {
         console.error(error)
@@ -495,32 +496,35 @@ const handleSearch = () => {
           </div>
       </div>
 
-      {/* MODAL CHI TIẾT */}
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
+           {/* MODAL CHI TIẾT */}
+    {isModalOpen && hasSelected && selectedBooking.bookingId !== 0 && (
+   <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="bg-white text-gray-900 rounded-xl shadow-xl max-w-lg w-full p-6 md:p-8 overflow-y-auto max-h-[90vh]">
-            <div className="flex justify-between items-center mb-4">
-              <Dialog.Title className="text-lg font-semibold text-gray-900">
+          <Dialog.Panel className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 md:p-8 overflow-y-auto max-h-[90vh]">
+           
+
+            {selectedBooking && (
+              <>
+               <div className="flex justify-between items-center mb-4">
+              
+              <Dialog.Title className="text-lg font-semibold text-gray-800">
                 Chi tiết đặt chỗ {selectedBooking?.bookingReference}
               </Dialog.Title>
               <button onClick={() => setIsModalOpen(false)}>
                 <XMarkIcon className="h-6 w-6 text-gray-800" />
               </button>
             </div>
-
-            {selectedBooking && (
-              <>
-                <p><strong>Người đặt vé:</strong> {selectedBooking.customer.name}</p>
-                <p><strong>Email:</strong> {selectedBooking.customer.email}</p>
-                <p><strong>Tổng tiền:</strong> ₫{selectedBooking.totalAmount.toLocaleString()}</p>
-                <p><strong>Trạng thái:</strong> {selectedBooking.bookingStatus}</p>
+                <p  className='text-gray-800'><strong>Người đặt vé:</strong> {selectedBooking.customer.name}</p>
+                <p className='text-gray-800'><strong >Email:</strong> {selectedBooking.customer.email}</p>
+                <p className='text-gray-800'><strong className='text-gray-800'>Tổng tiền:</strong> ₫{selectedBooking.totalAmount.toLocaleString()}</p>
+                <p className='text-gray-800'><strong >Trạng thái:</strong> {selectedBooking.bookingStatus}</p>
                 <hr className="my-4" />
 
                 <h4 className="font-semibold text-gray-800 mb-2">Chuyến bay</h4>
                 <ul className="space-y-2">
                   {selectedBooking.flights.map((f:any, idx:any) => (
-                    <li key={idx} className="border p-2 rounded-md">
+                    <li key={idx} className="border p-2 rounded-md text-gray-800 ">
                       ✈️ {f.flightNumber} - {f.route}<br />
                       Ghế: {f.seatNumber} ({f.travelClass}) | Hành lý: {f.baggage}kg<br />
                       Giờ đi: {new Date(f.departureTime).toLocaleString()} <br />
@@ -533,7 +537,7 @@ const handleSearch = () => {
                 <>
                   <hr className="my-4" />
                   <h4 className="font-semibold text-gray-800 mb-2">Hành khách</h4>
-                  <ul className="space-y-1">
+                  <ul className="space-y-1 text-gray-800">
                     {selectedBooking.flights.flatMap((flight) =>
                       flight.seatAllocations.map((sa, i) => (
                         <li key={`${flight.flightNumber}-${i}`}>
@@ -550,6 +554,7 @@ const handleSearch = () => {
           </Dialog.Panel>
         </div>
       </Dialog>
+    )}
           </div>
         );
 
@@ -906,11 +911,17 @@ const handleSearch = () => {
               </div>
             </div>
       {/* MODAL CHI TIẾT */}
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
+    {isModalOpen && hasSelected && selectedBooking.bookingId !== 0 && (
+   <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 md:p-8 overflow-y-auto max-h-[90vh]">
-            <div className="flex justify-between items-center mb-4">
+           
+
+            {selectedBooking && (
+              <>
+               <div className="flex justify-between items-center mb-4">
+              
               <Dialog.Title className="text-lg font-semibold text-gray-800">
                 Chi tiết đặt chỗ {selectedBooking?.bookingReference}
               </Dialog.Title>
@@ -918,9 +929,6 @@ const handleSearch = () => {
                 <XMarkIcon className="h-6 w-6 text-gray-800" />
               </button>
             </div>
-
-            {selectedBooking && (
-              <>
                 <p  className='text-gray-800'><strong>Người đặt vé:</strong> {selectedBooking.customer.name}</p>
                 <p className='text-gray-800'><strong >Email:</strong> {selectedBooking.customer.email}</p>
                 <p className='text-gray-800'><strong className='text-gray-800'>Tổng tiền:</strong> ₫{selectedBooking.totalAmount.toLocaleString()}</p>
@@ -960,6 +968,8 @@ const handleSearch = () => {
           </Dialog.Panel>
         </div>
       </Dialog>
+    )}
+     
           </div>
         );
     }

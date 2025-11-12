@@ -39,10 +39,10 @@ export class CheckIn {
   @Column({ nullable: true })
   boardingPassUrl: string;
 
-  @Column({ default: 0 })
+  @Column({ default: 1 })
   baggageCount: number;
 
-  @Column('decimal', { precision: 5, scale: 2, default: 0 })
+  @Column('decimal', { precision: 5, scale: 2, default: 7 })
   baggageWeight: number;
 
   @Column({
