@@ -85,7 +85,7 @@ const otherServicesMegaMenu: MegamenuItem[] = [
       {
         id: ncNanoId(),
         href: "/guest-booking-lookup",
-        name: "🔍 Tra cứu vé máy bay",
+        name: "Tra cứu vé máy bay",
         isNew: true,
         description: "Tra cứu thông tin đơn hàng chỉ với email hoặc mã đặt chỗ (PNR). Không cần đăng nhập!",
       },
@@ -165,7 +165,7 @@ const flightServicesMegaMenu: MegamenuItem[] = [
         name: "Dịch vụ đặc biệt",
         description: "Vận chuyển thú cưng, trẻ em đi một mình, hỗ trợ thủ tục tại sân bay và hơn thế nữa!",
       },
-      
+
     ],
   },
   {
@@ -187,7 +187,7 @@ const flightServicesMegaMenu: MegamenuItem[] = [
         isNew: true,
         description: "Nhanh tay săn vé bay Vietjet giá tốt nhất! Tìm kiếm các chặng bay hot nhất!",
       },
-      
+
     ],
   },
 ];

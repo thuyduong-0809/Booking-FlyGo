@@ -28,7 +28,7 @@ const widgetMenus: WidgetFooterMenu[] = [
     id: "2",
     title: "Hỗ trợ khách hàng",
     menus: [
-      { href: "/guest-booking-lookup", label: "🔍 Tra cứu vé máy bay" },
+      { href: "/guest-booking-lookup", label: "Tra cứu vé máy bay" },
       { href: "/faq", label: "Câu hỏi thường gặp" },
       { href: "/huong-dan-dat-ve", label: "Hướng dẫn đặt vé" },
       { href: "/chinh-sach-hoan-ve", label: "Chính sách hoàn vé" },

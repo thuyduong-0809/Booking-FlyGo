@@ -10,11 +10,19 @@
 }
 
 .react-datepicker__current-month {
-  @apply text-sm font-semibold text-gray-900 dark:text-gray-100;
+  @apply text-sm font-semibold text-gray-900 dark:text-white;
+}
+
+.react-datepicker__navigation {
+  @apply text-gray-700 dark:text-gray-200;
+  
+  &-icon {
+    @apply text-gray-700 dark:text-gray-200;
+  }
 }
 
 .react-datepicker__day-names {
-  @apply mt-6 grid grid-cols-7 text-center text-xs leading-6 text-gray-500 dark:text-gray-400;
+  @apply mt-6 grid grid-cols-7 text-center text-xs leading-6 text-gray-500 dark:text-gray-200 font-medium;
 }
 
 .react-datepicker__month {
@@ -28,14 +36,19 @@
 .react-datepicker__day {
   @apply w-full flex items-center justify-center cursor-pointer empty:opacity-0 empty:cursor-auto empty:hover:bg-transparent text-sm;
   @apply empty:bg-transparent #{!important};
+  @apply text-gray-900 dark:text-gray-100;
 
   span {
-    @apply rounded-full hover:bg-gray-100 dark:hover:bg-gray-700/60;
+    @apply rounded-full hover:bg-gray-100 dark:hover:bg-gray-600/70 dark:text-gray-100;
   }
 
   &--in-range,
   &--in-selecting-range {
-    @apply bg-gray-100 dark:bg-gray-700/50 rounded-none;
+    @apply bg-gray-100 dark:bg-primary-500/40 rounded-none dark:text-white;
+    
+    span {
+      @apply dark:text-white;
+    }
   }
 
   &--range-start,
@@ -53,7 +66,7 @@
   &--selecting-range-start,
   &--selecting-range-end {
     span {
-      @apply bg-primary-500 dark:bg-primary-500 text-white rounded-full hover:bg-primary-500 dark:hover:bg-primary-500;
+      @apply bg-primary-500 dark:bg-primary-400 dark:text-white text-white rounded-full hover:bg-primary-600 dark:hover:bg-primary-300 font-semibold shadow-md dark:shadow-primary-400/40;
     }
   }
 
@@ -62,8 +75,19 @@
   }
 }
 
+// Đảm bảo các ngày trong range có background rõ ràng trong dark mode
+.dark .react-datepicker__day--in-range:not(.react-datepicker__day--range-start):not(.react-datepicker__day--range-end):not(.react-datepicker__day--selected) {
+  background-color: rgba(99, 102, 241, 0.4) !important;
+  color: white !important;
+  
+  span {
+    color: white !important;
+    background-color: transparent !important;
+  }
+}
+
 .react-datepicker__day_span {
-  @apply flex h-[46px] w-[46px] items-center justify-center rounded-full;
+  @apply flex h-[46px] w-[46px] items-center justify-center rounded-full text-gray-900 dark:text-gray-100;
 }
 
 /* addListingDatePickerExclude */

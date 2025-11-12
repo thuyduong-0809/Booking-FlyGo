@@ -74,7 +74,7 @@ const SectionHeroWithCarousel: React.FC<SectionHeroWithCarouselProps> = ({
 
   return (
     <div
-      className={`nc-SectionHeroWithCarousel relative ${className}`}
+      className={`nc-SectionHeroWithCarousel relative md:-mt-[80px] lg:mt-0 ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -101,7 +101,7 @@ const SectionHeroWithCarousel: React.FC<SectionHeroWithCarouselProps> = ({
       </div>
 
       {/* Content Overlay */}
-      <div className="relative z-10 container mx-auto px-4 py-16 lg:py-20">
+      <div className="relative z-10 container mx-auto px-4 pt-4 sm:pt-6 md:pt-24 pb-8 sm:pb-12 md:pb-16 lg:py-20">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_500px] xl:grid-cols-[minmax(0,1fr)_550px] items-center">
           {/* Left Content - Text */}
           <div className="space-y-6 text-white">
