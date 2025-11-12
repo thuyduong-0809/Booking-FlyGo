@@ -9,7 +9,6 @@ import Link from "next/link";
 import { Route } from "@/routers/types";
 import Navigation from "@/shared/Navigation/Navigation";
 import SwitchDarkMode from "@/shared/SwitchDarkMode";
-import SearchDropdown from "@/app/(client-components)/(Header)/SearchDropdown";
 
 export interface MainNav2Props {
   className?: string;
@@ -35,7 +34,6 @@ const MainNav2: FC<MainNav2Props> = ({ className = "" }) => {
         <div className="hidden md:flex flex-shrink-0 justify-end flex-1 lg:flex-none text-neutral-700 dark:text-neutral-100">
           <div className="hidden lg:flex space-x-1">
              <SwitchDarkMode />
-            <SearchDropdown className="flex items-center" />
             <LangDropdown />
 
             <NotifyDropdown />
