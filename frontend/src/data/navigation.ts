@@ -195,7 +195,7 @@ const flightServicesMegaMenu: MegamenuItem[] = [
 export const NAVIGATION_DEMO: NavItemType[] = [
   {
     id: ncNanoId(),
-    href: "/",
+    href: "/my-bookings",
     name: "Chuyến bay của tôi",
     isNew: true,
   },

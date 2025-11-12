@@ -416,13 +416,6 @@ export default function PassengersPage() {
   // Hàm tạo booking và passenger khi submit
   const handleSubmit = async () => {
     try {
-      // Kiểm tra xem đã có booking chưa
-      if (state.bookingId) {
-        // Đã có booking, chỉ chuyển trang
-        router.push('/book-plane/choose-seat');
-        return;
-      }
-
       // Validate tất cả hành khách
       const newErrors: ValidationErrors = {};
       let hasErrors = false;
@@ -490,6 +483,13 @@ export default function PassengersPage() {
 
       // Clear errors nếu không có lỗi
       setValidationErrors({});
+
+      // Nếu booking đã tồn tại (quay lại chỉnh sửa), bỏ qua bước tạo mới nhưng vẫn đảm bảo dữ liệu hợp lệ
+      if (state.bookingId) {
+        router.push('/book-plane/choose-seat');
+        return;
+      }
+
       setIsSubmitting(true);
 
       // Lấy userId từ token (nếu có) - Backend sẽ tự động tạo user guest nếu không có userId

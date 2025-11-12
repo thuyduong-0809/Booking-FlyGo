@@ -7,9 +7,13 @@ import { Flight } from 'src/flights/entities/flights.entity';
 import { FlightsController } from 'src/flights/flights.controller';
 import { FlightsService } from 'src/flights/flights.service';
 import { Terminal } from 'src/terminals/entities/terminals.entity';
+import { FlightSeatsModule } from 'src/flight-seats/flight-seats.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Flight,Airline,Airport,Aircraft,Terminal])],
+    imports: [
+        TypeOrmModule.forFeature([Flight,Airline,Airport,Aircraft,Terminal]),
+        FlightSeatsModule,
+    ],
     providers: [FlightsService],
     controllers: [FlightsController],
 })

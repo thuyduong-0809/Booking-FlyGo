@@ -9,6 +9,7 @@ import { requestApi } from "@/lib/api";
 import { loginSuccess, logout, updateLocalStorage } from "stores/features/masterSlice";
 import { useAppDispatch, useAppSelector } from "stores/hookStore";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useNotification } from "@/components/Notification";
 
 
 export interface PageLoginProps { }
@@ -18,12 +19,12 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const dispatch = useAppDispatch();
   const masterStore = useAppSelector((state) => state.master);
   const router = useRouter();
   const [approve, setApprove] = useState(false);
   const query = useSearchParams();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const action = query.get("action");
@@ -49,7 +50,6 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const res = await requestApi("auth/login", "POST", { email, password });
@@ -64,20 +64,20 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
         // }
         // console.log("Login success:", res);
         // if(res.user.role === "SystemAdmin" || res.user.role === "Staff"){
-        //   alert("Bạn không có quyền truy cập trang này")
+        //   showNotification("error", "Bạn không có quyền truy cập trang này");
         //   dispatch(updateLocalStorage());
         //   return;
         // }
-        alert("Login thành công 🎉");
+        showNotification("success", "Login thành công 🎉");
         router.push("/");
       } else {
-        setError("Email hoặc mật khẩu không đúng")
+        showNotification("error", "Email hoặc mật khẩu không đúng");
+        setLoading(false);
       }
 
     } catch (err) {
-      setError("Email hoặc mật khẩu không đúng")
-      console.error("Login failed:", err);
-      setLoading(false)
+      showNotification("error", "Email hoặc mật khẩu không đúng");
+      setLoading(false);
     }
   };
 
@@ -156,10 +156,6 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
               {loading ? "Đang đăng nhập..." : "Tiếp tục"}
             </ButtonPrimary>
           </form>
-
-          {error && (
-            <p className="text-red-500 dark:text-red-400 text-center text-sm mt-2">{error}</p>
-          )}
 
           {/* ==== */}
           <span className="block text-center text-neutral-600 dark:text-gray-300 text-sm">

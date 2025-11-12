@@ -7,7 +7,7 @@ const NotificationItem: React.FC<{
     id: string;
     type: NotificationType;
     message: string;
-    details?: string[];
+    details?: string | string[];
     duration: number;
     onClose: (id: string) => void;
 }> = ({ id, type, message, details, duration, onClose }) => {
@@ -126,40 +126,46 @@ const NotificationItem: React.FC<{
 
     const styles = getStyles();
 
+    const detailList = Array.isArray(details)
+        ? details
+        : typeof details === 'string' && details.trim().length > 0
+            ? [details]
+            : [];
+
     return (
         <div
             className={`
         ${styles.container}
-        w-full sm:min-w-[350px] sm:max-w-md
-        rounded-xl
+        w-full sm:min-w-[420px] sm:max-w-lg
+        rounded-2xl
         p-0
-        mb-3
+        mb-4
         transition-all duration-300
-        backdrop-blur-sm
+        backdrop-blur-lg
         ${isExiting ? 'animate-slide-out-right opacity-0' : 'animate-slide-in-right'}
-        hover:shadow-2xl hover:scale-[1.02]
+        hover:shadow-2xl hover:scale-[1.03]
         overflow-hidden
         relative
       `}
         >
             {/* Content */}
-            <div className="p-4 flex items-start gap-3">
-                <div className={`${styles.icon} flex-shrink-0 mt-0.5`}>
+            <div className="p-5 flex items-start gap-4">
+                <div className={`${styles.icon} flex-shrink-0 mt-1`}>
                     {getIcon()}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <h4 className={`text-sm font-bold mb-1 ${styles.title}`}>
+                    <h4 className={`text-lg font-extrabold mb-2 tracking-wide ${styles.title}`}>
                         {getTitle()}
                     </h4>
-                    <p className="text-sm text-gray-700 leading-relaxed break-words">
+                    <p className="text-base text-gray-700 leading-relaxed break-words">
                         {message}
                     </p>
-                    {details && details.length > 0 && (
-                        <ul className="mt-2 space-y-1 text-sm text-gray-600">
-                            {details.map((detail, index) => (
+                    {detailList.length > 0 && (
+                        <ul className="mt-3 space-y-2 text-base text-gray-600">
+                            {detailList.map((detail, index) => (
                                 <li key={index} className="flex items-start gap-2">
-                                    <span className="text-gray-400 mt-0.5">•</span>
+                                    <span className="text-gray-400 mt-1 text-lg leading-none">•</span>
                                     <span className="flex-1">{detail}</span>
                                 </li>
                             ))}
@@ -169,17 +175,17 @@ const NotificationItem: React.FC<{
 
                 <button
                     onClick={() => onClose(id)}
-                    className="flex-shrink-0 ml-2 p-1 rounded-lg hover:bg-gray-100 transition-colors group"
+                    className="flex-shrink-0 ml-2 p-2 rounded-xl hover:bg-gray-100 transition-colors group"
                     aria-label="Đóng thông báo"
                 >
-                    <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
             {/* Progress Bar */}
-            <div className="h-1 bg-gray-100">
+            <div className="h-1.5 bg-gray-100">
                 <div
                     className={`h-full ${styles.progress} transition-all duration-100 ease-linear shadow-sm`}
                     style={{ width: `${progress}%` }}
@@ -193,7 +199,7 @@ export const NotificationContainer: React.FC = () => {
     const { notifications, removeNotification } = useNotification();
 
     return (
-        <div className="fixed top-4 right-4 left-4 sm:left-auto z-[9999] flex flex-col items-end pointer-events-none max-w-md sm:max-w-md mx-auto sm:mx-0">
+        <div className="fixed top-6 right-6 left-6 sm:left-auto z-[9999] flex flex-col items-end pointer-events-none max-w-2xl sm:max-w-2xl mx-auto sm:mx-0">
             <div className="pointer-events-auto w-full">
                 {notifications.map(notification => (
                     <NotificationItem

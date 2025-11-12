@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Aircraft } from 'src/aircrafts/entities/aircrafts.entity';
 import { Airline } from 'src/airlines/entities/airlines.entity';
@@ -9,15 +9,18 @@ import { Flight } from 'src/flights/entities/flights.entity';
 import { Terminal } from 'src/terminals/entities/terminals.entity';
 import { common_response } from 'src/untils/common';
 import { Repository } from 'typeorm';
+import { FlightSeatsService } from 'src/flight-seats/flight-seats.service';
 
 @Injectable()
 export class FlightsService {
-    constructor(@InjectRepository(Flight) private flightRepository: Repository<Flight>,
+    constructor(
+        @InjectRepository(Flight) private flightRepository: Repository<Flight>,
         @InjectRepository(Airline) private airlineRepository: Repository<Airline>,
         @InjectRepository(Airport) private airportRepository: Repository<Airport>,
         @InjectRepository(Aircraft) private aircraftRepository: Repository<Aircraft>,
-        @InjectRepository(Terminal) private terminalRepository: Repository<Terminal>
-
+        @InjectRepository(Terminal) private terminalRepository: Repository<Terminal>,
+        @Inject(forwardRef(() => FlightSeatsService))
+        private flightSeatsService: FlightSeatsService,
     ) { }
 
     async findAll(): Promise<any> {
@@ -118,10 +121,28 @@ export class FlightsService {
                 arrivalTerminal: terminalArrival,
                 aircraft: aircraft
             });
+            // Bước 1: Lưu chuyến bay vào bảng Flights
             await this.flightRepository.save(newFlight);
+            console.log(`✅ Flight ${newFlight.flightNumber} created successfully (FlightId: ${newFlight.flightId})`);
+
+            // Bước 2: Tự động tạo FlightSeats cho tất cả ghế của aircraft
+            // Flow: Truy vấn Seats → Sao chép sang FlightSeats → isAvailable = TRUE
+            const flightSeatsResult = await this.flightSeatsService.createFlightSeatsForFlight(newFlight.flightId);
+            if (!flightSeatsResult.success) {
+                // Log warning nhưng không fail việc tạo flight (để admin có thể fix sau)
+                console.warn(`⚠️ Warning: Failed to create flight seats for flight ${newFlight.flightNumber}:`, flightSeatsResult.message);
+                console.warn('   Flight was created but FlightSeats need to be created manually.');
+            } else {
+                console.log(`✅ FlightSeats created: ${flightSeatsResult.data?.count || 0} seats for flight ${newFlight.flightNumber}`);
+            }
+
             response.success = true;
             response.message = 'Flight created successfully';
-            response.data = newFlight;
+            response.data = {
+                ...newFlight,
+                flightSeatsCreated: flightSeatsResult.success,
+                flightSeatsCount: flightSeatsResult.data?.count || 0,
+            };
             return response;
         } catch (error) {
             response.success = false;

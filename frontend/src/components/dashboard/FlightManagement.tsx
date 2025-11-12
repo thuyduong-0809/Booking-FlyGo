@@ -520,9 +520,12 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
     requestApi("flights", "POST", formattedData).then((res: any) => {
       console.log("API response:", res);
       if (res.success) {
-        alert("Thêm chuyến bay mới thành công")
+        // Backend đã tự động tạo FlightSeats cho tất cả ghế của aircraft
+        alert("Thêm chuyến bay mới thành công!\n\nHệ thống đã tự động tạo trạng thái ghế (FlightSeats) cho tất cả ghế của máy bay này.")
         clearFlightData()
         setShowAddModal(false)
+        // Reload danh sách flights để hiển thị flight mới
+        loadFlights()
       } else if (res.errorCode === 'FLIGHT_EXISTS') {
         // alert("chuyến bay đã tồn tại")
         setErrors((prev: any) => ({
@@ -530,8 +533,11 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
           flightNumber: "Mã chuyến bay đã tồn tại. Vui lòng nhập mã khác.",
         }));
       } else {
-        // alert("Thêm chuyến bay thất bại")
+        alert("Thêm chuyến bay thất bại: " + (res.message || "Lỗi không xác định"))
       }
+    }).catch((error: any) => {
+      console.error("Error creating flight:", error);
+      alert("Lỗi khi tạo chuyến bay: " + (error.message || "Lỗi không xác định"))
     })
 
     // onSubmit(formattedData); // Gọi API từ cha (hoặc bạn có thể dùng requestApi ở đây)
