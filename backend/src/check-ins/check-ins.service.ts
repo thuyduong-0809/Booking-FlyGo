@@ -144,6 +144,7 @@ export class CheckInsService {
         ...createCheckInDto,
         bookingFlight,
         passenger:seatAllcation.passenger,
+        
       });
       await this.checkinRepository.save(newCheckin);
 
