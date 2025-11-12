@@ -21,7 +21,7 @@ const Header: FC<HeaderProps> = ({ navType = "MainNav1", className = "" }) => {
 
   return (
     <div
-      className={`nc-Header sticky top-0 w-full left-0 right-0 z-[9999] nc-header-bg ${className}`}
+      className={`nc-Header hidden md:sticky md:block top-0 w-full left-0 right-0 z-[9999] nc-header-bg ${className}`}
       style={{ pointerEvents: 'auto' }}
     >
       {renderNav()}

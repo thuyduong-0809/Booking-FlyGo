@@ -387,7 +387,7 @@ const SearchModal: FC<SearchModalProps> = ({ className = "" }) => {
 
     return (
         <div
-            className={`fixed top-16 sm:top-20 left-0 right-0 z-[9990] bg-white dark:bg-neutral-900 shadow-lg border-b border-neutral-200 dark:border-neutral-700 animate-slideDown ${className}`}
+            className={`hidden lg:block fixed top-16 sm:top-20 left-0 right-0 z-[9990] bg-white dark:bg-neutral-900 shadow-lg border-b border-neutral-200 dark:border-neutral-700 animate-slideDown ${className}`}
         >
             <div className="container mx-auto px-4">
                 <div className="py-2">

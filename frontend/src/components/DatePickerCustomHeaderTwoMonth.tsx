@@ -13,7 +13,7 @@ const DatePickerCustomHeaderTwoMonth = ({
       <button
         aria-label="Previous Month"
         className={
-          "react-datepicker__navigation react-datepicker__navigation--previous absolute -top-1 left-0 flex items-center justify-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+          "react-datepicker__navigation react-datepicker__navigation--previous absolute -top-1 left-0 flex items-center justify-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 text-gray-700 transition-colors"
         }
         style={customHeaderCount === 1 ? { visibility: "hidden" } : {}}
         onClick={decreaseMonth}
@@ -31,7 +31,7 @@ const DatePickerCustomHeaderTwoMonth = ({
       </span>
       <button
         aria-label="Next Month"
-        className="react-datepicker__navigation react-datepicker__navigation--next absolute -top-1 -right-0 flex items-center justify-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+        className="react-datepicker__navigation react-datepicker__navigation--next absolute -top-1 -right-0 flex items-center justify-center p-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 text-gray-700 rounded-full transition-colors"
         style={customHeaderCount === 0 ? { visibility: "hidden" } : {}}
         type="button"
         onClick={increaseMonth}

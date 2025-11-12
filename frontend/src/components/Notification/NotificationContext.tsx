@@ -8,13 +8,13 @@ export interface Notification {
     id: string;
     type: NotificationType;
     message: string;
-    details?: string[];
+    details?: string | string[];
     duration?: number;
 }
 
 interface NotificationContextType {
     notifications: Notification[];
-    showNotification: (type: NotificationType, message: string, details?: string[], duration?: number) => void;
+    showNotification: (type: NotificationType, message: string, details?: string | string[], duration?: number) => void;
     removeNotification: (id: string) => void;
 }
 
@@ -23,7 +23,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
 
-    const showNotification = useCallback((type: NotificationType, message: string, details?: string[], duration: number = 3000) => {
+    const showNotification = useCallback((type: NotificationType, message: string, details?: string | string[], duration: number = 3000) => {
         const id = `notification-${Date.now()}-${Math.random()}`;
         const newNotification: Notification = { id, type, message, details, duration };
 

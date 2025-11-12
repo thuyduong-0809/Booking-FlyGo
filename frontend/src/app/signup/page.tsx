@@ -71,16 +71,16 @@ const PageSignUp: FC<PageSignUpProps> = ({ }) => {
   };
 
   return (
-    <div className={`nc-PageSignUp`}>
-      <div className="container mb-24 lg:mb-32">
-        <h2 className="my-20 flex items-center text-3xl md:text-5xl font-semibold justify-center">
+    <div className={`nc-PageSignUp dark:bg-slate-900 min-h-screen`}>
+      <div className="container mb-16 lg:mb-20">
+        <h2 className="my-12 flex items-center text-3xl md:text-5xl font-semibold justify-center text-neutral-900 dark:text-white">
           Đăng ký
         </h2>
-        <div className="max-w-md mx-auto space-y-6">
+        <div className="max-w-lg mx-auto space-y-5 p-8 rounded-3xl border border-neutral-200 shadow-lg dark:bg-slate-800/50 dark:backdrop-blur-sm dark:border-slate-700/50 dark:shadow-2xl">
           <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-4">
               <label className="block">
-                <span>Họ</span>
+                <span className="text-neutral-800 dark:text-gray-200 font-medium text-sm mb-2 block">Họ</span>
                 <Input
                   type="text"
                   value={firstName}
@@ -91,7 +91,7 @@ const PageSignUp: FC<PageSignUpProps> = ({ }) => {
                 />
               </label>
               <label className="block">
-                <span>Tên</span>
+                <span className="text-neutral-800 dark:text-gray-200 font-medium text-sm mb-2 block">Tên</span>
                 <Input
                   type="text"
                   value={lastName}
@@ -103,7 +103,7 @@ const PageSignUp: FC<PageSignUpProps> = ({ }) => {
               </label>
             </div>
             <label className="block">
-              <span>Email</span>
+              <span className="text-neutral-800 dark:text-gray-200 font-medium text-sm mb-2 block">Email</span>
               <Input
                 type="email"
                 value={email}
@@ -113,7 +113,7 @@ const PageSignUp: FC<PageSignUpProps> = ({ }) => {
               />
             </label>
             <label className="block">
-              <span>Mật khẩu</span>
+              <span className="text-neutral-800 dark:text-gray-200 font-medium text-sm mb-2 block">Mật khẩu</span>
               <Input
                 type="password"
                 value={password}
@@ -122,7 +122,7 @@ const PageSignUp: FC<PageSignUpProps> = ({ }) => {
               />
             </label>
             <label className="block">
-              <span>Xác nhận mật khẩu</span>
+              <span className="text-neutral-800 dark:text-gray-200 font-medium text-sm mb-2 block">Xác nhận mật khẩu</span>
               <Input
                 type="password"
                 value={confirmPassword}
@@ -130,15 +130,15 @@ const PageSignUp: FC<PageSignUpProps> = ({ }) => {
                 className="mt-1"
               />
             </label>
-            {error && <p className="text-red-500">{error}</p>}
+            {error && <p className="text-red-500 dark:text-red-400 text-center text-sm">{error}</p>}
             {/* {successRegister && <p className="text-black-600 text-center">{successRegister}</p>} */}
             <ButtonPrimary type="submit" disabled={loading}>
               {loading ? "Đang xử lý..." : "Tiếp tục"}
             </ButtonPrimary>
           </form>
-          <span className="block text-center">
+          <span className="block text-center text-neutral-600 dark:text-gray-300 text-sm">
             Bạn đã có tài khoản?{" "}
-            <Link href="/login" className="font-semibold underline">
+            <Link href="/login" className="font-semibold text-primary-600 underline dark:text-blue-400 hover:text-primary-700 dark:hover:text-blue-300 transition-colors">
               Đăng nhập
             </Link>
           </span>

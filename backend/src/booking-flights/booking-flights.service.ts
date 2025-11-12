@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Aircraft } from 'src/aircrafts/entities/aircrafts.entity';
 import { CreateBookingFlightDto } from 'src/booking-flights/dto/create-bookingFlight.dto';
@@ -8,6 +8,8 @@ import { Flight } from 'src/flights/entities/flights.entity';
 import { Passenger } from 'src/passengers/entities/passengers.entity';
 import { SeatAllocation } from 'src/seat-allocations/entities/seat-allocations.entity';
 import { Seat } from 'src/seats/entities/seats.entity';
+import { FlightSeat } from 'src/flight-seats/entities/flight-seats.entity';
+import { FlightSeatsService } from 'src/flight-seats/flight-seats.service';
 import { common_response } from 'src/untils/common';
 import { Repository } from 'typeorm';
 
@@ -28,8 +30,13 @@ export class BookingFlightsService {
     private seatRepository: Repository<Seat>,
 
     @InjectRepository(SeatAllocation)
-    private seatAllocationRepository: Repository<SeatAllocation>
+    private seatAllocationRepository: Repository<SeatAllocation>,
 
+    @InjectRepository(FlightSeat)
+    private flightSeatRepository: Repository<FlightSeat>,
+
+    @Inject(forwardRef(() => FlightSeatsService))
+    private flightSeatsService: FlightSeatsService,
 
   ) { }
 
@@ -62,6 +69,7 @@ export class BookingFlightsService {
         const seatRepo = manager.getRepository(Seat);
         const seatAllocationRepo = manager.getRepository(SeatAllocation);
         const passengerRepo = manager.getRepository(Passenger);
+        const flightSeatRepo = manager.getRepository(FlightSeat);
 
         const { bookingId, flightId, travelClass, baggageAllowance, seatNumber, passengerId } = createBookingFlightDto;
 
@@ -117,41 +125,79 @@ export class BookingFlightsService {
 
           // nếu seatNumber chưa có → chọn tự động
           let seat: Seat | null = null;
-          if (seatNumber) {
-            seat = await seatRepo.findOne({ where: { seatNumber, aircraft: { aircraftId: flight.aircraft.aircraftId } } });
-            if (!seat) throw new Error(`Seat ${seatNumber} not found`);
-            if (!seat.isAvailable) throw new Error(`Seat ${seatNumber} is already taken`);
-          } else {
-            // chọn ghế trống đầu tiên trong cùng hạng (bắt đầu từ ghế thấp nhất: 01A, 02A...)
-            console.log(`🎫 Đang tìm ghế trống cho ${travelClass} trong aircraft ${flight.aircraft.aircraftId}`);
+          let flightSeat: FlightSeat | null = null;
 
+          if (seatNumber) {
+            // Tìm ghế theo seatNumber và aircraft
             seat = await seatRepo.findOne({
               where: {
-                isAvailable: true,
-                travelClass,
-                aircraft: { aircraftId: flight.aircraft.aircraftId },
+                seatNumber,
+                aircraft: { aircraftId: flight.aircraft.aircraftId }
+              }
+            });
+            if (!seat) throw new Error(`Seat ${seatNumber} not found`);
+
+            // Kiểm tra FlightSeat cho chuyến bay này
+            flightSeat = await flightSeatRepo.findOne({
+              where: {
+                flight: { flightId: flight.flightId },
+                seat: { seatId: seat.seatId },
               },
-              order: { seatNumber: 'ASC' }, // Sắp xếp tăng dần: 01A, 02A, 03A...
             });
 
-            if (!seat) throw new Error(`No available seats left in ${travelClass}`);
+            if (!flightSeat) throw new Error(`Flight seat not found for seat ${seatNumber}`);
+            if (!flightSeat.isAvailable) throw new Error(`Seat ${seatNumber} is already taken for this flight`);
+          } else {
+            // chọn ghế trống đầu tiên trong cùng hạng (bắt đầu từ ghế thấp nhất: 01A, 02A...)
+            console.log(`🎫 Đang tìm ghế trống cho ${travelClass} trong flight ${flight.flightId}`);
 
-            console.log(`✅ Đã chọn ghế: ${seat.seatNumber}`);
+            // Tìm FlightSeat available cho flight này, cùng travelClass
+            // Sử dụng lock để tránh race condition khi nhiều người đặt cùng lúc
+            flightSeat = await flightSeatRepo.findOne({
+              where: {
+                flight: { flightId: flight.flightId },
+                seat: {
+                  travelClass,
+                  aircraft: { aircraftId: flight.aircraft.aircraftId },
+                },
+                isAvailable: true,
+              },
+              relations: ['seat'],
+              order: { seat: { seatNumber: 'ASC' } }, // Sắp xếp tăng dần: 01A, 02A, 03A...
+              lock: { mode: 'pessimistic_write' }, // Lock để đảm bảo không bị double booking
+            });
+
+            if (!flightSeat) throw new Error(`No available seats left in ${travelClass} for this flight`);
+
+            // Kiểm tra lại isAvailable sau khi lock (double check)
+            if (!flightSeat.isAvailable) {
+              throw new Error(`Seat ${flightSeat.seat.seatNumber} was just taken by another booking`);
+            }
+
+            seat = flightSeat.seat;
+            console.log(`✅ Đã chọn ghế: ${seat.seatNumber} (FlightSeatId: ${flightSeat.flightSeatId})`);
           }
 
-          // tạo seat allocation
+          // Bước 1: Tạo SeatAllocation (liên kết passenger với ghế)
           const newSeatAllocation = seatAllocationRepo.create({
             seat,
             bookingFlight: newBookingFlight,
             passenger,
           });
           await seatAllocationRepo.save(newSeatAllocation);
+          console.log(`✅ SeatAllocation created: Passenger ${passenger.passengerId} → Seat ${seat.seatNumber}`);
 
-          // cập nhật trạng thái ghế & bookingFlight
-          seat.isAvailable = false;
+          // Bước 2: Cập nhật trạng thái ghế trong FlightSeat
+          // QUAN TRỌNG: Cập nhật FlightSeat.isAvailable = false (chỉ cho chuyến bay này)
+          // KHÔNG cập nhật Seat.isAvailable (vì Seat là sơ đồ cố định của máy bay)
+          flightSeat.isAvailable = false;
           newBookingFlight.seatNumber = seat.seatNumber;
-          await seatRepo.save(seat);
+
+          // Lưu trong cùng transaction để đảm bảo atomicity
+          await flightSeatRepo.save(flightSeat);
           await bookingFlightRepo.save(newBookingFlight);
+
+          console.log(`✅ FlightSeat updated: Seat ${seat.seatNumber} is now UNAVAILABLE for flight ${flight.flightNumber} (FlightSeatId: ${flightSeat.flightSeatId})`);
 
           // giảm availableSeats trong flight
           switch (travelClass) {
@@ -227,19 +273,27 @@ export class BookingFlightsService {
       booking.totalAmount = Number(booking.totalAmount) - Number(bookingFlight.fare);
       if (booking.totalAmount < 0) booking.totalAmount = 0;
 
-      // Cập nhật ghế thành available = true
+      // Cập nhật FlightSeat thành available = true (không cập nhật Seat.isAvailable nữa)
       if (bookingFlight.seatNumber) {
         const seat = await this.seatRepository.findOne({
           where: {
             seatNumber: bookingFlight.seatNumber,
             aircraft: { aircraftId: flight.aircraft.aircraftId },
           },
-          relations: ['aircraft'],
         });
 
         if (seat) {
-          seat.isAvailable = true;
-          await this.seatRepository.save(seat);
+          const flightSeat = await this.flightSeatRepository.findOne({
+            where: {
+              flight: { flightId: flight.flightId },
+              seat: { seatId: seat.seatId },
+            },
+          });
+
+          if (flightSeat) {
+            flightSeat.isAvailable = true;
+            await this.flightSeatRepository.save(flightSeat);
+          }
         }
       }
       //Lưu thay đổi

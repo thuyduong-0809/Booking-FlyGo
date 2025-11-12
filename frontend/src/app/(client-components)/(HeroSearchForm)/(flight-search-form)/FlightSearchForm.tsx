@@ -298,7 +298,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
             <>
               <Popover.Button
                 as="button"
-                className={`flex w-full items-center justify-between rounded-2xl bg-white px-5 py-4 shadow-[0_20px_45px_-32px_rgba(0,0,0,0.35)] transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ffbc00] ${open ? "ring-2 ring-[#ffbc00]/70" : "ring-1 ring-white/60"
+                className={`flex w-full items-center justify-between rounded-2xl bg-white px-5 py-4 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.2)] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#ffbc00] ${open ? "border-2 border-[#ffbc00]" : "border-2 border-white/80 hover:border-white"
                   }`}
               >
                 <div className="flex flex-col text-left">
@@ -517,7 +517,7 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
 
   const renderForm = () => {
     if (isHeroRed) {
-      const heroFieldClass = "w-full rounded-2xl bg-white text-neutral-900 shadow-[0_24px_48px_-28px_rgba(0,0,0,0.45)] ring-1 ring-white/60";
+      const heroFieldClass = "w-full rounded-2xl bg-white text-neutral-900 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)] border-2 border-white/80 hover:border-white hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.2)] transition-all duration-200";
 
       return (
         <form
@@ -525,10 +525,10 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
             event.preventDefault();
             handleSearch();
           }}
-          className="relative rounded-[32px] bg-gradient-to-br from-[#d70018] via-[#e31638] to-[#ff6d36] text-white shadow-[0_44px_88px_-48px_rgba(215,0,24,0.8)]"
+          className="relative rounded-3xl sm:rounded-[32px] bg-gradient-to-br from-[#d70018] via-[#e31638] to-[#ff6d36] text-white shadow-[0_20px_50px_-12px_rgba(215,0,24,0.5)]"
           style={{ overflow: 'visible' }}
         >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_68%)] opacity-75 rounded-[32px]" style={{ overflow: 'hidden' }} />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.3),_transparent_70%)] opacity-80 rounded-3xl sm:rounded-[32px]" style={{ overflow: 'hidden' }} />
           <div className="relative flex flex-col gap-6 p-6 sm:p-8 pointer-events-auto">
 
 

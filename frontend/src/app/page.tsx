@@ -10,13 +10,13 @@ import SectionGridCategoryBox from "@/components/SectionGridCategoryBox";
 import SectionBecomeAnAuthor from "@/components/SectionBecomeAnAuthor";
 import SectionVideos from "@/components/SectionVideos";
 import SectionClientSay from "@/components/SectionClientSay";
-import SectionBookingLookup from "@/components/SectionBookingLookup";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
 import { useAppSelector } from "stores/hookStore";
 import SearchModal from "@/app/(client-components)/(HeroSearchForm)/SearchModal";
 import SectionHeroWithCarousel from "@/app/(home)/SectionHeroWithCarousel";
+import SectionPromotionalBanners from "@/app/(server-components)/SectionPromotionalBanners";
 
 const DEMO_CATS: TaxonomyType[] = [
   {
@@ -158,7 +158,7 @@ function PageHome() {
   const masterStore = useAppSelector((state) => state.master);
 
   // useEffect(() => {
-  
+
 
   //   if (!access_token) {
   //     router.push("/login"); // nếu chưa login thì quay lại trang login
@@ -173,11 +173,11 @@ function PageHome() {
   // }, [router]);
 
   useEffect(() => {
-    if(masterStore.isAdmin){
+    if (masterStore.isAdmin) {
       router.push("/dashboard");
     }
-  },[masterStore.isAdmin])
-    
+  }, [masterStore.isAdmin])
+
 
   return (
     <main className="nc-PageHome relative overflow-hidden">
@@ -189,6 +189,9 @@ function PageHome() {
 
       {/* HERO SECTION WITH CAROUSEL BACKGROUND */}
       <SectionHeroWithCarousel className="mb-16 lg:mb-24" />
+
+      {/* PROMOTIONAL BANNERS SECTION */}
+      <SectionPromotionalBanners className="mb-16 lg:mb-24" />
 
       <div className="container relative space-y-24 mb-24 lg:space-y-28 lg:mb-28">
 
@@ -218,7 +221,7 @@ function PageHome() {
         <SectionGridCategoryBox />
 
         {/* SECTION - TRA CỨU VÉ MÁY BAY */}
-        <SectionBookingLookup />
+
 
         {/* <div className="relative py-16">
           <BackgroundSection />

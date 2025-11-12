@@ -22,11 +22,12 @@ import { SeatsModule } from "src/seats/seats.module";
 import { TerminalsModule } from "src/terminals/terminals.module";
 import { UserRolesModule } from "src/user-roles/user-roles.module";
 import { UsersModule } from "src/users/users.module";
+import { FlightSeatsModule } from "src/flight-seats/flight-seats.module";
 
 
 
 @Module({
-  imports: [ TypeOrmModule.forRoot(dataSourceOptions), UsersModule,ConfigModule.forRoot(), AuthModule, UserRolesModule, AirlinesModule, AirportsModule, TerminalsModule, AircraftsModule, FlightsModule, BookingsModule, BookingFlightsModule, PassengersModule, SeatsModule, SeatAllocationsModule, PaymentsModule, CheckInsModule, FareHistoryModule, NotificationsModule, ReviewsModule],
+  imports: [ TypeOrmModule.forRoot(dataSourceOptions), UsersModule,ConfigModule.forRoot(), AuthModule, UserRolesModule, AirlinesModule, AirportsModule, TerminalsModule, AircraftsModule, FlightsModule, BookingsModule, BookingFlightsModule, PassengersModule, SeatsModule, SeatAllocationsModule, PaymentsModule, CheckInsModule, FareHistoryModule, NotificationsModule, ReviewsModule, FlightSeatsModule],
   controllers: [AppController],
   providers: [AppService],
 })

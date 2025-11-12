@@ -3,6 +3,7 @@ import { Airline } from 'src/airlines/entities/airlines.entity';
 import { Airport } from 'src/airports/entities/airports.entity';
 import { BookingFlight } from 'src/booking-flights/entities/booking-flights.entity';
 import { FareHistory } from 'src/fare-history/entities/fare-history.entity';
+import { FlightSeat } from 'src/flight-seats/entities/flight-seats.entity';
 import { Review } from 'src/reviews/entities/reviews.entity';
 import { Terminal } from 'src/terminals/entities/terminals.entity';
 import {
@@ -99,4 +100,7 @@ export class Flight {
 
   @OneToMany(() => Review, (review) => review.flight)
   reviews: Review[];
+
+  @OneToMany(() => FlightSeat, (flightSeat) => flightSeat.flight)
+  flightSeats: FlightSeat[];
 }

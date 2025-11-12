@@ -18,7 +18,7 @@ const HeroSearchForm: FC<HeroSearchFormProps> = ({
   currentPage,
   variant = "default",
 }) => {
-  const tabs: SearchTab[] = [ "Flights"];
+  const tabs: SearchTab[] = ["Flights"];
   const [tabActive, setTabActive] = useState<SearchTab>(currentTab);
 
 
@@ -37,7 +37,7 @@ const HeroSearchForm: FC<HeroSearchFormProps> = ({
     <div
       className={`nc-HeroSearchForm w-full max-w-6xl py-5 lg:py-0 ${className}`}
     >
-    
+
       {renderForm()}
     </div>
   );
