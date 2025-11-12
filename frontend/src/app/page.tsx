@@ -16,6 +16,7 @@ import secureLocalStorage from "react-secure-storage";
 import { useAppSelector } from "stores/hookStore";
 import SearchModal from "@/app/(client-components)/(HeroSearchForm)/SearchModal";
 import SectionHeroWithCarousel from "@/app/(home)/SectionHeroWithCarousel";
+import SectionPromotionalBanners from "@/app/(server-components)/SectionPromotionalBanners";
 
 const DEMO_CATS: TaxonomyType[] = [
   {
@@ -188,6 +189,9 @@ function PageHome() {
 
       {/* HERO SECTION WITH CAROUSEL BACKGROUND */}
       <SectionHeroWithCarousel className="mb-16 lg:mb-24" />
+
+      {/* PROMOTIONAL BANNERS SECTION */}
+      <SectionPromotionalBanners className="mb-16 lg:mb-24" />
 
       <div className="container relative space-y-24 mb-24 lg:space-y-28 lg:mb-28">
 

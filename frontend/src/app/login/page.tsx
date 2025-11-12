@@ -68,7 +68,7 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
         //   dispatch(updateLocalStorage());
         //   return;
         // }
-        showNotification("success", "Login thành công 🎉");
+        showNotification("success", "Login thành công");
         router.push("/");
       } else {
         showNotification("error", "Email hoặc mật khẩu không đúng");
