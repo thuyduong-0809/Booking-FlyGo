@@ -129,7 +129,14 @@ const MyBookingsPage = () => {
             const flights = booking.bookingFlights || [];
             return flights.some((bf) => {
                 if (!bf?.flight?.departureTime) return false;
-                const departureDate = new Date(bf.flight.departureTime).toISOString().split('T')[0];
+
+                // Sử dụng local date để tránh vấn đề timezone
+                const departureDateObj = new Date(bf.flight.departureTime);
+                const year = departureDateObj.getFullYear();
+                const month = String(departureDateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(departureDateObj.getDate()).padStart(2, '0');
+                const departureDate = `${year}-${month}-${day}`;
+
                 return departureDate === normalizedDate;
             });
         });
