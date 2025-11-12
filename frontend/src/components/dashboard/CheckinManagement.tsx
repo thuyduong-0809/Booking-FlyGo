@@ -245,7 +245,7 @@ const validateCheckInOnlineInputs = () => {
         requestApi("check-ins","POST",checkInData).then((res:any)=>{
             if(res.success){
                alert(`Tạo check-in tại sân bay thành công`)
-                setBoardingUrl(`http://localhost:3001${res.data.boardingPassUrl}`); //hiển thị link PDF
+                setBoardingUrl(`https://flight-backend.congcucuatoi.com${res.data.boardingPassUrl}`); //hiển thị link PDF
                setShowAddModal(false)
                clearData()
                loadCheckins()
@@ -289,7 +289,7 @@ const validateCheckInOnlineInputs = () => {
         requestApi("check-ins/online","POST",checkInOnlineData).then((res:any)=>{
             if(res.success){
                alert('Tạo check-in trực tuyến thành công')
-                setBoardingUrlOnline(`http://localhost:3001${res.data.boardingPassUrl}`); //hiển thị link PDF
+                setBoardingUrlOnline(`https://flight-backend.congcucuatoi.com${res.data.boardingPassUrl}`); //hiển thị link PDF
               // window.open(`http://localhost:3001${res.data.boardingPassUrl}`, "_blank");
                setShowAddModal(false)
               //  setErrors({})
