@@ -9,7 +9,6 @@ import {
   Column,
   ManyToOne,
   OneToMany,
-  CreateDateColumn,
   JoinColumn,
 } from 'typeorm';
 
@@ -47,7 +46,10 @@ export class Booking {
   @Column({ type: 'text', nullable: true })
   specialRequests: string;
 
-  @CreateDateColumn()
+  @Column({
+    type: 'datetime',
+    nullable: false
+  })
   bookedAt: Date;
 
   // Relations - Mọi booking đều có user (guest hoặc registered)

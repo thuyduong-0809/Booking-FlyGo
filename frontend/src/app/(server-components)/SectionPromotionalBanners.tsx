@@ -65,13 +65,13 @@ const PROMOTIONAL_BANNERS = [
         alt: "Giảm giá 20% vé máy bay hôm nay - FlyGo",
         link: "#",
         tabTitle: "Bảo hiểm",
-        mainText: "CHỌN MUA VÉ VIETJET, ĐÃ BAO GỒM BẢO HIỂM SKY CARE(*)",
+        mainText: "CHỌN MUA VÉ FlyGo, ĐÃ BAO GỒM BẢO HIỂM SKY CARE(*)",
         buttonText: "Xem ngay",
         buttonColor: "bg-yellow-400 hover:bg-yellow-500",
         description: {
-            title: "An tâm trọn vẹn bay cùng Vietjet",
+            title: "An tâm trọn vẹn bay cùng FlyGo",
             points: [
-                "Các chương trình bảo hiểm hấp dẫn đến từ các đối tác bảo hiểm uy tín của Vietjet",
+                "Các chương trình bảo hiểm hấp dẫn đến từ các đối tác bảo hiểm uy tín của FlyGo",
                 "Thủ tục mua và bồi thường đơn giản, nhanh chóng",
             ],
         },
@@ -156,7 +156,7 @@ const SectionPromotionalBanners: FC<SectionPromotionalBannersProps> = ({
     return (
         <div
             ref={sectionRef}
-            className={`nc-SectionPromotionalBanners relative overflow-hidden bg-gradient-to-b from-sky-100 via-blue-50 to-neutral-50 dark:from-neutral-950 dark:via-neutral-950 dark:to-neutral-950 ${className}`}
+            className={`nc-SectionPromotionalBanners relative overflow-hidden bg-gradient-to-b from-sky-100 via-blue-50 to-neutral-50 dark:from-neutral-800 dark:to-neutral-900 ${className}`}
         >
             {/* Flight Deals Speech Bubbles Section - Full Width */}
             <div
@@ -186,7 +186,7 @@ const SectionPromotionalBanners: FC<SectionPromotionalBannersProps> = ({
                     {/* Content Container - Centered with max-width */}
                     <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
                         {/* Flight Deals Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 xl:gap-6 ">
                             {FLIGHT_DEALS.map((deal, index) => {
                                 const delay = index * 80;
                                 return (

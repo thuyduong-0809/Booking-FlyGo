@@ -198,30 +198,30 @@ export class BookingsService {
             } else {
                 // Nếu không có userId (khách vãng lai), tạo hoặc tìm user guest
                 const email = createBookingDto.contactEmail;
-                
+
                 // Check xem email đã tồn tại chưa
                 user = await this.userRepository.findOneBy({ email });
-                
+
                 if (!user) {
                     // Tạo user guest mới
                     const randomPassword = randomBytes(16).toString('hex');
                     const passwordHash = await bcrypt.hash(randomPassword, 10);
-                    
+
                     // Lấy firstName và lastName từ contactEmail (hoặc từ passenger đầu tiên)
                     const [firstName] = email.split('@');
-                    
+
                     const newUser = this.userRepository.create({
                         email,
                         passwordHash,
                         firstName,
                         lastName: 'Guest',
                         phone: createBookingDto.contactPhone || null,
-                        roleId: 3, // Giả sử roleId = 3 là "Customer" hoặc "Guest"
+                        roleId: 1, // Mặc định roleId = 1 cho khách hàng
                         loyaltyPoints: 0,
                         loyaltyTier: 'Standard',
                         isActive: true,
                     });
-                    
+
                     user = await this.userRepository.save(newUser);
                 }
             }
@@ -233,17 +233,37 @@ export class BookingsService {
                 return response;
             }
 
+            // Tạo booking với bookedAt được set bằng thời gian hiện tại của server (ngày + giờ)
+            // Sử dụng new Date() để đảm bảo luôn có ngày giờ hiện tại khi tạo booking
+            const bookingReference = this.generateBookingReference();
+
+            // Tạo booking object
             const newBooking = this.bookingRepository.create({
                 ...createBookingDto,
                 user: user,
-                bookingReference: this.generateBookingReference()
+                bookingReference: bookingReference,
+                bookedAt: new Date() // Set thủ công với thời gian hiện tại (cả ngày và giờ)
             });
+
+            // Lưu booking vào database
             await this.bookingRepository.save(newBooking);
+
+            // Reload booking từ database để đảm bảo bookedAt đã được lưu đúng
+            const savedBooking = await this.bookingRepository.findOne({
+                where: { bookingId: newBooking.bookingId },
+                relations: ['user']
+            });
+
+            // Đảm bảo bookedAt có giá trị
+            if (savedBooking) {
+                savedBooking.bookedAt = savedBooking.bookedAt || new Date();
+            }
+
             response.success = true;
             response.message = createBookingDto.userId
                 ? 'Booking created successfully'
                 : 'Booking created successfully (Guest user auto-created)';
-            response.data = newBooking;
+            response.data = savedBooking || newBooking;
         } catch (error) {
             if (error.code === 'ER_DUP_ENTRY' || error.code === 'SQLITE_CONSTRAINT') {
                 response.success = false;
@@ -389,7 +409,7 @@ export class BookingsService {
                 paymentStatus: booking.paymentStatus,
                 contactEmail: booking.contactEmail,
                 contactPhone: booking.contactPhone,
-                
+
                 flights: booking.bookingFlights.map((bf) => ({
                     flightNumber: bf.flight.flightNumber,
                     route: `${bf.flight.departureAirport.airportCode} → ${bf.flight.arrivalAirport.airportCode}`,
@@ -464,7 +484,7 @@ export class BookingsService {
                 paymentStatus: booking.paymentStatus,
                 contactEmail: booking.contactEmail,
                 contactPhone: booking.contactPhone,
-                
+
                 customer: {
                     name: (user.lastName === 'Guest' || user.roleId === 3)
                         ? `Khách vãng lai`

@@ -32,7 +32,7 @@ const widgetMenus: WidgetFooterMenu[] = [
       { href: "/faq", label: "Câu hỏi thường gặp" },
       { href: "/huong-dan-dat-ve", label: "Hướng dẫn đặt vé" },
       { href: "/chinh-sach-hoan-ve", label: "Chính sách hoàn vé" },
-      { href: "/ho-tro", label: "Liên hệ hỗ trợ" },
+      { href: "/support", label: "Liên hệ hỗ trợ" },
       { href: "/khuyen-mai", label: "Khuyến mãi" },
     ],
   },

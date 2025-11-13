@@ -60,7 +60,6 @@ export class FlightSeatsService {
             });
 
             if (existingFlightSeats.length > 0) {
-                console.log(`⚠️ Flight ${flight.flightNumber} already has ${existingFlightSeats.length} FlightSeats. Skipping creation.`);
                 response.success = true;
                 response.message = `Flight already has ${existingFlightSeats.length} flight seats`;
                 response.data = { count: existingFlightSeats.length, skipped: true };
@@ -80,8 +79,6 @@ export class FlightSeatsService {
             // Bước 5: Lưu tất cả FlightSeats vào database
             await this.flightSeatRepository.save(flightSeats);
 
-            console.log(`✅ Created ${flightSeats.length} FlightSeats for flight ${flight.flightNumber} (Aircraft: ${flight.aircraft.aircraftCode || flight.aircraft.aircraftId})`);
-
             response.success = true;
             response.message = `Created ${flightSeats.length} flight seats successfully`;
             response.data = {
@@ -91,7 +88,6 @@ export class FlightSeatsService {
             };
             return response;
         } catch (error) {
-            console.error(`❌ Error creating flight seats for flight ${flightId}:`, error);
             response.success = false;
             response.message = error.message || 'Error creating flight seats';
             return response;

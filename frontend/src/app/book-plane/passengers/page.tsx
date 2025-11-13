@@ -569,7 +569,7 @@ export default function PassengersPage() {
 
       // Hiển thị thông báo thành công
       const bookingRef = bookingResponse.data?.bookingReference;
-      
+
       if (!userId && bookingRef) {
         // Khách vãng lai - hiển thị mã đặt chỗ và hướng dẫn tra cứu
         showNotification(
@@ -577,7 +577,7 @@ export default function PassengersPage() {
           `Đặt vé thành công! Mã đặt chỗ của bạn: ${bookingRef}`,
           `Vui lòng lưu mã đặt chỗ và email để tra cứu đơn hàng. Bạn có thể tra cứu tại: /guest-booking-lookup`
         );
-        
+
         console.log('🎫 Thông tin đặt vé (Khách vãng lai):');
         console.log('   📧 Email:', passengers[0].email);
         console.log('   🔑 Mã đặt chỗ (PNR):', bookingRef);
@@ -1292,7 +1292,7 @@ export default function PassengersPage() {
               <a href="#" className="text-blue-600 underline hover:text-blue-800">
                 Chính sách Quyền riêng tư
               </a>{' '}
-              của Vietjet.
+              của FlyGo.
             </p>
           </div>
         </div>

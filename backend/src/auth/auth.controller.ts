@@ -11,12 +11,12 @@ import { LocalAuthGuard } from 'src/auth/guards/local-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(private readonly authService: AuthService) { }
 
     @Post('register')
     @UsePipes(ValidationPipe)
-        async register(@Body() registerLocalDto: RegisterLocalDto) {
-            //  console.log('BODY:', registerLocalDto);
+    async register(@Body() registerLocalDto: RegisterLocalDto) {
+        //  console.log('BODY:', registerLocalDto);
         return this.authService.registerPending(registerLocalDto);
     }
 
@@ -32,7 +32,7 @@ export class AuthController {
         return this.authService.verifyOtpAndRegister(verifyOtpDto);
     }
 
-   // login dùng local strategy
+    // login dùng local strategy
     @UseGuards(LocalAuthGuard)
     @Post('login')
     async login(@Req() req) {
@@ -40,40 +40,40 @@ export class AuthController {
         return this.authService.login(req.user);
     }
 
-//    @Get('google')
-//    @UseGuards(AuthGuard('google'))
-//    async googleAuth() {
+    //    @Get('google')
+    //    @UseGuards(AuthGuard('google'))
+    //    async googleAuth() {
 
-//     }
+    //     }
 
     // @Get('google/callback')
     // @UseGuards(GoogleOAuthGuard)
     // async googleAuthRedirect(@Req() req, @Res() res) {
     // const tokens = await this.authService.login(req.user);
 
-  
+
     // const redirectUrl = `http://localhost:3000/auth/callback?accessToken=${tokens.data.accessToken}&refreshToken=${tokens.data.refreshToken}`;
     // return res.redirect(redirectUrl);
     // }
 
 
-   
-   // test bảo vệ route bằng JWT
-//    @UseGuards(JwtAuthGuard)
-//    @Get('profile')
-//     getProfile(@Req() req) {
-    
-//         return req.user;
-//     }
-        
-    
+
+    // test bảo vệ route bằng JWT
+    //    @UseGuards(JwtAuthGuard)
+    //    @Get('profile')
+    //     getProfile(@Req() req) {
+
+    //         return req.user;
+    //     }
+
+
 
 
 
     // @Post('refresh')
     // async refresh(@Body() body: { accountId: number; refreshToken: string }) {
     // return this.authService.refreshTokens(body.accountId, body.refreshToken);
-// }
+    // }
 
 
 
