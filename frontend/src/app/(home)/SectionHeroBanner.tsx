@@ -7,7 +7,7 @@ const BANNER_SLIDES = [
   {
     id: 1,
     image: "https://images.pexels.com/photos/2026324/pexels-photo-2026324.jpeg?auto=compress&cs=tinysrgb&w=1920",
-    title: "12h rồi VIETJET thôi!",
+    title: "12h rồi FlyGo thôi!",
     subtitle: "Áp dụng tất cả đường bay nội địa & quốc tế - Vé chỉ từ 0Đ",
   },
   {
@@ -41,14 +41,14 @@ export interface SectionHeroBannerProps {
   height?: string;
 }
 
-const SectionHeroBanner: React.FC<SectionHeroBannerProps> = ({ 
+const SectionHeroBanner: React.FC<SectionHeroBannerProps> = ({
   className = "",
   height = "500px"
 }) => {
   return (
     <div className={`nc-SectionHeroBanner ${className}`}>
-      <HeroBannerCarousel 
-        slides={BANNER_SLIDES} 
+      <HeroBannerCarousel
+        slides={BANNER_SLIDES}
         autoPlayInterval={5000}
         showArrows={true}
         height={height}

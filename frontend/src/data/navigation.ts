@@ -178,14 +178,14 @@ const flightServicesMegaMenu: MegamenuItem[] = [
         id: ncNanoId(),
         href: "#",
         name: "Bảo hiểm",
-        description: "Thật yên tâm và thoải mái với các chương trình bảo hiểm uy tín đến từ các đối tác bảo hiểm tin cậy của Vietjet",
+        description: "Thật yên tâm và thoải mái với các chương trình bảo hiểm uy tín đến từ các đối tác bảo hiểm tin cậy của FlyGo",
       },
       {
         id: ncNanoId(),
         href: "#",
         name: "Săn vé giá rẻ",
         isNew: true,
-        description: "Nhanh tay săn vé bay Vietjet giá tốt nhất! Tìm kiếm các chặng bay hot nhất!",
+        description: "Nhanh tay săn vé bay FlyGo giá tốt nhất! Tìm kiếm các chặng bay hot nhất!",
       },
 
     ],

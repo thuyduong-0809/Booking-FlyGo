@@ -67,7 +67,7 @@ export default function ChooseSeatPage() {
             },
             {
                 id: 'insurance',
-                name: 'Bảo hiểm du lịch Vietjet Travel Safe',
+                name: 'Bảo hiểm du lịch FlyGo Travel Safe',
                 description: 'Giấy chứng nhận bảo hiểm sẽ được cấp cùng vé máy bay, và không thể cấp lại sau chuyến bay.',
                 price: 160000,
                 isSelected: false,

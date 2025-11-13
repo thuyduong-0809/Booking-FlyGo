@@ -216,7 +216,7 @@ export class BookingsService {
                         firstName,
                         lastName: 'Guest',
                         phone: createBookingDto.contactPhone || null,
-                        roleId: 3, // Giả sử roleId = 3 là "Customer" hoặc "Guest"
+                        roleId: 1, // Mặc định roleId = 1 cho khách hàng
                         loyaltyPoints: 0,
                         loyaltyTier: 'Standard',
                         isActive: true,

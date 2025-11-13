@@ -607,11 +607,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                         <option key={airline.airlineId} value={airline.airlineId}>{airline.airlineName}</option>
                       )
                     })}
-                    {/* <option value="1">Vietnam Airlines</option>
-                      <option value="2">VietJet Air</option>
-                      <option value="3">Bamboo Airways</option>
-                      <option value="4">Pacific Airlines</option>
-                      <option value="5">Vietravel Airlines</option> */}
+
                   </select>
                   {errors.airlineId && (
                     <p className="text-red-500 text-sm mt-1">{errors.airlineId}</p>
