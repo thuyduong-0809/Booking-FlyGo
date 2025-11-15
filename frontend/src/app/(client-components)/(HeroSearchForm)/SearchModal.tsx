@@ -171,6 +171,16 @@ const SearchModal: FC<SearchModalProps> = ({ className = "" }) => {
                 );
                 return;
             }
+
+            // Validate ngày về phải lớn hơn hoặc bằng ngày đi (cho phép cùng ngày)
+            if (returnDate < departureDate) {
+                showNotification(
+                    'error',
+                    'Ngày về không hợp lệ',
+                    ['Ngày về phải lớn hơn hoặc bằng ngày đi']
+                );
+                return;
+            }
         }
 
         // Kiểm tra chuyến bay có tồn tại không trước khi điều hướng

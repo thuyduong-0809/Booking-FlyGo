@@ -261,7 +261,7 @@ export class FlightsService {
         }
     }
 
-    async searchFlights(departureAirportCode?: string, arrivalAirportCode?: string, departureDate?: string): Promise<any> {
+    async searchFlights(departureAirportCode?: string, arrivalAirportCode?: string, departureDate?: string, minDepartureTime?: string): Promise<any> {
         const response = { ...common_response };
 
         try {
@@ -269,10 +269,12 @@ export class FlightsService {
                 departureAirportCode,
                 arrivalAirportCode,
                 departureDate,
+                minDepartureTime,
                 types: {
                     departureAirportCode: typeof departureAirportCode,
                     arrivalAirportCode: typeof arrivalAirportCode,
-                    departureDate: typeof departureDate
+                    departureDate: typeof departureDate,
+                    minDepartureTime: typeof minDepartureTime
                 }
             });
 
@@ -341,6 +343,23 @@ export class FlightsService {
                     .where('DATE(f.departureTime) = :date', { date: departureDate });
                 const flightsOnDate = await dateCheckQuery.getRawMany();
                 console.log(`📊 All flights on ${departureDate}:`, flightsOnDate);
+            }
+
+            // Lọc theo thời gian khởi hành tối thiểu (dùng để filter chuyến về sau thời gian đến của chuyến đi)
+            if (minDepartureTime) {
+                console.log('⏰ Filtering by min departure time:', minDepartureTime);
+                
+                // Parse minDepartureTime thành Date để so sánh chính xác
+                const minTime = new Date(minDepartureTime);
+                if (!isNaN(minTime.getTime())) {
+                    // Sử dụng thời gian chính xác (bao gồm cả giờ, phút, giây)
+                    queryBuilder.andWhere('flight.departureTime > :minDepartureTime', {
+                        minDepartureTime: minTime
+                    });
+                    console.log('✅ Applied min departure time filter:', minTime.toISOString());
+                } else {
+                    console.warn('⚠️ Invalid minDepartureTime format:', minDepartureTime);
+                }
             }
 
             // Sắp xếp theo thời gian khởi hành

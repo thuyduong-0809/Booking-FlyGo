@@ -7,6 +7,7 @@ import { useSearch } from "../SearchContext";
 import { flightsService, Flight } from "../../../services/flights.service";
 import { requestApi } from "@/lib/api";
 import { getCookie } from "@/utils/cookies";
+import { useNotification } from "@/components/Notification";
 
 interface FareOption {
   name: string;
@@ -284,7 +285,7 @@ const FareHeaders = () => (
 
 // Component: Flight Details
 const FlightDetails = ({ flight }: { flight: FlightItem }) => (
-  <div className="bg-gradient-to-br from-yellow-200 via-indigo-50 to-purple-50 rounded-xl p-4 shadow-lg border border-blue-200 hover:shadow-xl transition-all duration-300">
+  <div className="bg-gradient-to-br from-yellow-200 via-indigo-50 to-purple-50 rounded-xl p-4 shadow-lg border border-blue-200 hover:shadow-xl transition-all duration-300 h-full flex flex-col justify-center">
     <div className="text-center">
       <div className="text-xl font-bold text-blue-800 mb-1">{flight.code}</div>
       <div className="text-base text-gray-700 font-semibold mb-1">{flight.departTime} - {flight.arriveTime}</div>
@@ -317,49 +318,71 @@ const FareCell = ({
 }) => {
   const isDisabled = fare.soldOut;
 
-  return (
-    <button
-      disabled={isDisabled}
-      onClick={() => {
-        if (isDisabled) return;
-        onSelect();
-        onToggleExpand();
-      }}
-      className={`rounded-xl p-4 text-center shadow-lg border transition-all duration-200 relative transform hover:scale-105 ${isDisabled
-        ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
-        : isSelected
-          ? "bg-gradient-to-br from-white to-blue-50 text-black border-blue-500 shadow-xl scale-105"
-          : "bg-gradient-to-br from-white to-gray-50 text-black hover:from-blue-50 hover:to-blue-100 hover:shadow-lg border-gray-200 hover:border-blue-300"
-        }`}
-    >
-      {isDisabled ? (
-        <div className="flex flex-col items-center">
-          <svg className="w-6 h-6 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          <div className="text-sm font-semibold">Hết chỗ</div>
-        </div>
-      ) : (
-        <div>
-          <div className="text-lg font-bold mb-1">{formatVnd(fare.price)}</div>
-          <div className="text-sm text-gray-600 mb-2">1 người</div>
-          <div className="inline-flex items-center px-2 py-1 bg-gray-100 rounded-full">
-            <svg className="w-3 h-3 text-gray-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-            <span className="text-xs text-gray-600">Chi tiết</span>
-          </div>
-        </div>
-      )}
+  const handleSelect = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isDisabled) return;
+    onSelect();
+  };
 
-      {isSelected && !isDisabled && (
-        <div className="absolute -right-3 -top-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full p-2 shadow-lg">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-        </div>
-      )}
-    </button>
+  const handleToggleDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isDisabled) return;
+    onToggleExpand();
+  };
+
+  return (
+    <div className="relative h-full">
+      <button
+        disabled={isDisabled}
+        onClick={handleSelect}
+        className={`w-full h-full rounded-xl p-4 text-center shadow-lg border transition-all duration-200 relative transform hover:scale-105 flex flex-col justify-between ${isDisabled
+          ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+          : isSelected
+            ? "bg-gradient-to-br from-white to-blue-50 text-black border-blue-500 shadow-xl scale-105"
+            : "bg-gradient-to-br from-white to-gray-50 text-black hover:from-blue-50 hover:to-blue-100 hover:shadow-lg border-gray-200 hover:border-blue-300"
+          }`}
+      >
+        {isDisabled ? (
+          <div className="flex flex-col items-center">
+            <svg className="w-6 h-6 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <div className="text-sm font-semibold">Hết chỗ</div>
+          </div>
+        ) : (
+          <div className="flex flex-col h-full">
+            <div className="flex-grow">
+              <div className="text-lg font-bold mb-1">{formatVnd(fare.price)}</div>
+              <div className="text-sm text-gray-600 mb-2">1 người</div>
+            </div>
+            <div className="mt-auto">
+              <button
+                onClick={handleToggleDetails}
+                className="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-sm font-medium"
+              >
+                <svg
+                  className={`w-4 h-4 text-gray-600 mr-2 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                <span className="text-sm text-gray-700 font-semibold">Chi tiết</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isSelected && !isDisabled && (
+          <div className="absolute -right-3 -top-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full p-2 shadow-lg">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+          </div>
+        )}
+      </button>
+    </div>
   );
 };
 
@@ -583,11 +606,24 @@ const FlightSummaryCard = ({
 export default function SelectFlightRecoveryPage() {
   const { state, setSelectedDeparture, setSelectedReturn, grandTotal } = useBooking();
   const { searchData } = useSearch();
+  const { showNotification } = useNotification();
 
   // Debug: Log searchData để kiểm tra dữ liệu
-  console.log('SearchData in select-flight-recovery:', searchData);
-  console.log('Departure Date:', searchData.departureDate);
-  console.log('Return Date:', searchData.returnDate);
+  console.log('🔍 SearchData in select-flight-recovery:', {
+    departureAirport: {
+      code: searchData.departureAirport?.airportCode,
+      city: searchData.departureAirport?.city,
+      name: searchData.departureAirport?.airportName
+    },
+    arrivalAirport: {
+      code: searchData.arrivalAirport?.airportCode,
+      city: searchData.arrivalAirport?.city,
+      name: searchData.arrivalAirport?.airportName
+    },
+    departureDate: searchData.departureDate,
+    returnDate: searchData.returnDate,
+    tripType: searchData.tripType
+  });
 
   const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
   const [selectedReturnFlight, setSelectedReturnFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
@@ -654,16 +690,34 @@ export default function SelectFlightRecoveryPage() {
 
   // Fetch flights khi component mount hoặc searchData thay đổi
   useEffect(() => {
+    console.log('🔄 useEffect triggered for searchFlights:', {
+      hasDepartureAirport: !!searchData.departureAirport,
+      hasArrivalAirport: !!searchData.arrivalAirport,
+      hasDepartureDate: !!searchData.departureDate,
+      departureAirportCode: searchData.departureAirport?.airportCode,
+      arrivalAirportCode: searchData.arrivalAirport?.airportCode,
+      departureDate: searchData.departureDate
+    });
+
     if (searchData.departureAirport && searchData.arrivalAirport && searchData.departureDate) {
       // Luôn gọi searchFlights khi có đủ thông tin
+      console.log('✅ Calling searchFlights()');
       searchFlights();
     }
     // Nếu không có searchData, sử dụng dữ liệu mẫu
     else if (!searchData.departureAirport && departureFlights.length === 0) {
+      console.log('⚠️ No searchData, using sample data');
       setDepartureFlights(recoveryFlights);
       setReturnFlights(recoveryReturnFlights);
+    } else {
+      console.log('⚠️ Missing required searchData:', {
+        departureAirport: !!searchData.departureAirport,
+        arrivalAirport: !!searchData.arrivalAirport,
+        departureDate: !!searchData.departureDate
+      });
     }
-  }, [searchData.departureAirport?.airportCode, searchData.arrivalAirport?.airportCode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchData.departureAirport?.airportCode, searchData.arrivalAirport?.airportCode, searchData.departureDate]);
 
   // Hàm chuyển đổi flight từ API sang FlightItem
   const convertFlightToFlightItem = (flight: Flight): FlightItem => {
@@ -775,31 +829,72 @@ export default function SelectFlightRecoveryPage() {
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         const formatted = `${year}-${month}-${day}`;
-        
+
         console.log('📅 select-flight-recovery formatDate:', {
           input: date.toISOString(),
           inputLocal: date.toLocaleDateString('vi-VN'),
           output: formatted
         });
-        
+
         return formatted;
       };
 
+      // Debug: Log thông tin tìm kiếm chuyến đi
+      console.log('🔍 Searching DEPARTURE flights:', {
+        departureAirport: searchData.departureAirport?.airportCode,
+        arrivalAirport: searchData.arrivalAirport?.airportCode,
+        departureDate: searchData.departureDate,
+        formattedDate: searchData.departureDate ? formatDate(searchData.departureDate) : 'N/A'
+      });
+
       // Tìm kiếm chuyến đi
-      const departureSearchResult = await flightsService.searchFlights({
+      const departureSearchParams = {
         departureAirportCode: searchData.departureAirport?.airportCode,
         arrivalAirportCode: searchData.arrivalAirport?.airportCode,
         departureDate: formatDate(searchData.departureDate!)
+      };
+
+      console.log('📤 Calling searchFlights API for DEPARTURE:', departureSearchParams);
+
+      const departureSearchResult = await flightsService.searchFlights(departureSearchParams);
+
+      console.log('📥 DEPARTURE search result:', {
+        success: departureSearchResult.success,
+        message: departureSearchResult.message,
+        dataLength: departureSearchResult.data?.length || 0,
+        flights: departureSearchResult.data?.map((f: any) => ({
+          code: f.flightNumber,
+          departure: f.departureTime,
+          arrival: f.arrivalTime
+        }))
       });
 
       if (departureSearchResult.success && departureSearchResult.data) {
         const departureItems = departureSearchResult.data.map(flight => convertFlightToFlightItem(flight));
+        console.log(`✅ Set ${departureItems.length} departure flights:`, departureItems.map(item => ({
+          id: item.id,
+          code: item.code,
+          departTime: item.departTime,
+          arriveTime: item.arriveTime,
+          flightData: {
+            departureAirport: item.flightData?.departureAirport?.airportCode,
+            arrivalAirport: item.flightData?.arrivalAirport?.airportCode,
+            departureTime: item.flightData?.departureTime,
+            arrivalTime: item.flightData?.arrivalTime
+          }
+        })));
         setDepartureFlights(departureItems);
       } else {
+        console.warn('⚠️ No departure flights found or search failed:', {
+          success: departureSearchResult.success,
+          message: departureSearchResult.message,
+          data: departureSearchResult.data
+        });
         setDepartureFlights([]);
       }
 
       // Tìm kiếm chuyến về (nếu có returnDate)
+      // Lưu ý: Chưa filter theo thời gian chuyến đi ở đây, sẽ filter sau khi chọn chuyến đi
       if (searchData.returnDate) {
         const returnSearchResult = await flightsService.searchFlights({
           departureAirportCode: searchData.arrivalAirport?.airportCode,
@@ -826,11 +921,189 @@ export default function SelectFlightRecoveryPage() {
 
   const [expandedFlight, setExpandedFlight] = useState<{ flightId: string, fareIndex: number, type: 'departure' | 'return' } | null>(null);
 
-  const departureFlight = departureFlights.find(f => f.id === selectedDepartureFlight?.flightId);
+  // Tìm chuyến đi đã chọn từ danh sách
+  const departureFlight = useMemo(() => {
+    if (!selectedDepartureFlight) return undefined;
+    return departureFlights.find(f => f.id === selectedDepartureFlight.flightId);
+  }, [departureFlights, selectedDepartureFlight]);
+
   const returnFlight = returnFlights.find(f => f.id === selectedReturnFlight?.flightId);
 
   const departureFare = departureFlight?.fares[selectedDepartureFlight?.fareIndex || 0];
   const returnFare = returnFlight?.fares[selectedReturnFlight?.fareIndex || 0];
+
+  // Lọc chuyến về: chỉ hiển thị các chuyến có thời gian khởi hành sau thời gian đến của chuyến đi
+  const filteredReturnFlights = useMemo(() => {
+    // Nếu chưa chọn chuyến đi hoặc chưa có dữ liệu chuyến đi, KHÔNG hiển thị chuyến về nào
+    if (!selectedDepartureFlight || !departureFlight?.flightData) {
+      console.log('ℹ️ No departure flight selected, hiding all return flights', {
+        selectedDepartureFlight: !!selectedDepartureFlight,
+        departureFlight: !!departureFlight,
+        hasFlightData: !!departureFlight?.flightData
+      });
+      return []; // Trả về mảng rỗng thay vì tất cả chuyến về
+    }
+
+    // Lấy thời gian đến của chuyến đi
+    const arrivalTimeString = departureFlight.flightData.arrivalTime;
+    if (!arrivalTimeString) {
+      console.warn('⚠️ Departure flight has no arrivalTime');
+      return returnFlights;
+    }
+
+    const departureArrivalTime = new Date(arrivalTimeString);
+
+    // Kiểm tra nếu Date không hợp lệ
+    if (isNaN(departureArrivalTime.getTime())) {
+      console.error('❌ Invalid departure arrival time:', arrivalTimeString);
+      return returnFlights;
+    }
+
+    const departureArrivalTimeMs = departureArrivalTime.getTime();
+
+    // Debug: Log để kiểm tra
+    console.log('🔍 Filtering return flights:', {
+      selectedDepartureFlightId: selectedDepartureFlight.flightId,
+      departureFlightCode: departureFlight.code,
+      arrivalTimeString,
+      departureArrivalTime: departureArrivalTime.toISOString(),
+      departureArrivalTimeLocal: departureArrivalTime.toLocaleString('vi-VN'),
+      departureArrivalTimeMs,
+      totalReturnFlights: returnFlights.length
+    });
+
+    // Lọc các chuyến về có departureTime > arrivalTime của chuyến đi
+    const filtered = returnFlights.filter(flight => {
+      if (!flight.flightData) {
+        console.log('⚠️ Flight has no flightData:', flight.code);
+        return false;
+      }
+
+      const departureTimeString = flight.flightData.departureTime;
+      if (!departureTimeString) {
+        console.warn('⚠️ Return flight has no departureTime:', flight.code);
+        return false;
+      }
+
+      const returnDepartureTime = new Date(departureTimeString);
+
+      // Kiểm tra nếu Date không hợp lệ
+      if (isNaN(returnDepartureTime.getTime())) {
+        console.error('❌ Invalid return departure time:', departureTimeString, 'for flight:', flight.code);
+        return false;
+      }
+
+      const returnDepartureTimeMs = returnDepartureTime.getTime();
+
+      // Chỉ hiển thị chuyến về có thời gian khởi hành SAU thời gian đến của chuyến đi
+      const isValid = returnDepartureTimeMs > departureArrivalTimeMs;
+      const differenceMs = returnDepartureTimeMs - departureArrivalTimeMs;
+      const differenceHours = differenceMs / (1000 * 60 * 60);
+
+      // Debug log cho từng chuyến
+      if (!isValid) {
+        console.log('❌ Filtered out return flight:', {
+          flightCode: flight.code,
+          departureTimeString,
+          returnDepartureTime: returnDepartureTime.toISOString(),
+          returnDepartureTimeLocal: returnDepartureTime.toLocaleString('vi-VN'),
+          returnDepartureTimeMs,
+          departureArrivalTime: departureArrivalTime.toISOString(),
+          departureArrivalTimeLocal: departureArrivalTime.toLocaleString('vi-VN'),
+          departureArrivalTimeMs,
+          isValid,
+          differenceMs,
+          differenceHours: differenceHours.toFixed(2)
+        });
+      } else {
+        console.log('✅ Valid return flight:', {
+          flightCode: flight.code,
+          departureTimeString,
+          returnDepartureTime: returnDepartureTime.toISOString(),
+          returnDepartureTimeLocal: returnDepartureTime.toLocaleString('vi-VN'),
+          differenceHours: differenceHours.toFixed(2)
+        });
+      }
+
+      return isValid;
+    });
+
+    console.log('✅ Filtered return flights result:', {
+      before: returnFlights.length,
+      after: filtered.length,
+      filteredOut: returnFlights.length - filtered.length,
+      selectedDepartureFlightId: selectedDepartureFlight.flightId,
+      departureFlightCode: departureFlight.code
+    });
+
+    return filtered;
+  }, [returnFlights, selectedDepartureFlight, departureFlight]);
+
+  // Tự động tìm lại chuyến về với filter thời gian khi chọn chuyến đi
+  useEffect(() => {
+    const searchReturnFlightsWithFilter = async () => {
+      // Chỉ tìm lại nếu đã chọn chuyến đi và có returnDate
+      if (!selectedDepartureFlight || !departureFlight?.flightData || !searchData.returnDate) {
+        return;
+      }
+
+      const arrivalTime = departureFlight.flightData.arrivalTime;
+      if (!arrivalTime) {
+        return;
+      }
+
+      console.log('🔄 Re-searching return flights with minDepartureTime:', arrivalTime);
+
+      try {
+        const formatDate = (date: Date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        // Tìm lại chuyến về với filter thời gian từ backend
+        const returnSearchResult = await flightsService.searchFlights({
+          departureAirportCode: searchData.arrivalAirport?.airportCode,
+          arrivalAirportCode: searchData.departureAirport?.airportCode,
+          departureDate: formatDate(searchData.returnDate),
+          minDepartureTime: arrivalTime // Gửi thời gian đến của chuyến đi để backend filter
+        });
+
+        if (returnSearchResult.success && returnSearchResult.data) {
+          const returnItems = returnSearchResult.data.map(flight => convertFlightToFlightItem(flight));
+          setReturnFlights(returnItems);
+          console.log(`✅ Re-searched return flights: ${returnItems.length} flights found after ${arrivalTime}`);
+        } else {
+          setReturnFlights([]);
+          console.log('⚠️ No return flights found after filtering');
+        }
+      } catch (err: any) {
+        console.error('❌ Error re-searching return flights:', err);
+      }
+    };
+
+    searchReturnFlightsWithFilter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDepartureFlight, departureFlight?.flightData?.arrivalTime, searchData.returnDate, searchData.arrivalAirport?.airportCode, searchData.departureAirport?.airportCode]);
+
+  // Reset chuyến về đã chọn nếu nó không còn hợp lệ sau khi chọn chuyến đi mới
+  useEffect(() => {
+    if (selectedReturnFlight && filteredReturnFlights.length > 0) {
+      const isStillValid = filteredReturnFlights.some(
+        flight => flight.id === selectedReturnFlight.flightId
+      );
+      if (!isStillValid) {
+        setSelectedReturnFlight(null);
+        setSelectedReturn(undefined);
+        showNotification(
+          'warning',
+          'Chuyến về đã chọn không còn hợp lệ',
+          ['Vui lòng chọn lại chuyến về sau thời gian đến của chuyến đi mới']
+        );
+      }
+    }
+  }, [filteredReturnFlights, selectedReturnFlight, setSelectedReturn, showNotification]);
 
   // Tính tổng giá vé: Người lớn và trẻ em tính giá như nhau, em bé 100k
   const totalDeparture = useMemo(() => {
@@ -879,135 +1152,183 @@ export default function SelectFlightRecoveryPage() {
     setSelectedFlight: (flight: { flightId: string, fareIndex: number } | null) => void,
     selectedDate: number,
     setSelectedDate: (date: number) => void
-  ) => (
-    <div className="mb-8">
-      {/* Section Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 rounded-xl p-4 mb-4 shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-              <h2 className="text-xl font-bold text-white">{title}</h2>
-            </div>
-            <div className="hidden md:block w-px h-8 bg-white/30"></div>
-            <div className="flex items-center space-x-3">
-              <div className="text-center">
-                <div className="text-xl font-bold text-white">
-                  {type === 'departure' ? searchData.departureAirport?.airportCode : searchData.arrivalAirport?.airportCode}
-                </div>
-                <div className="text-xs text-blue-100">
-                  {type === 'departure' ? searchData.departureAirport?.city : searchData.arrivalAirport?.city}
-                </div>
+  ) => {
+    // Closure để truy cập departureFlights và selectedDepartureFlight
+    return (
+      <div className="mb-8">
+        {/* Section Header */}
+        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 rounded-xl p-4 mb-4 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+                <h2 className="text-xl font-bold text-white">{title}</h2>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-0.5 bg-white/40"></div>
-                <span className="text-xl text-white">✈</span>
-                <div className="w-8 h-0.5 bg-white/40"></div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl font-bold text-white">
-                  {type === 'departure' ? searchData.arrivalAirport?.airportCode : searchData.departureAirport?.airportCode}
+              <div className="hidden md:block w-px h-8 bg-white/30"></div>
+              <div className="flex items-center space-x-3">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-white">
+                    {type === 'departure' ? searchData.departureAirport?.airportCode : searchData.arrivalAirport?.airportCode}
+                  </div>
+                  <div className="text-xs text-blue-100">
+                    {type === 'departure' ? searchData.departureAirport?.city : searchData.arrivalAirport?.city}
+                  </div>
                 </div>
-                <div className="text-xs text-blue-100">
-                  {type === 'departure' ? searchData.arrivalAirport?.city : searchData.departureAirport?.city}
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-0.5 bg-white/40"></div>
+                  <span className="text-xl text-white">✈</span>
+                  <div className="w-8 h-0.5 bg-white/40"></div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-white">
+                    {type === 'departure' ? searchData.arrivalAirport?.airportCode : searchData.departureAirport?.airportCode}
+                  </div>
+                  <div className="text-xs text-blue-100">
+                    {type === 'departure' ? searchData.arrivalAirport?.city : searchData.departureAirport?.city}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <DateNavigation selectedDate={selectedDate} setSelectedDate={setSelectedDate} searchData={searchData} type={type} />
-      <FareHeaders />
+        <DateNavigation selectedDate={selectedDate} setSelectedDate={setSelectedDate} searchData={searchData} type={type} />
+        <FareHeaders />
 
-      {/* Flight Rows */}
-      <div className="space-y-4">
-        {flights.map((flight) => (
-          <div key={flight.id} className="space-y-4">
-            {/* Flight row */}
-            <div className="grid grid-cols-4 gap-3">
-              <FlightDetails flight={flight} />
+        {/* Flight Rows */}
+        <div className="space-y-4">
+          {flights.map((flight) => (
+            <div key={flight.id} className="space-y-4">
+              {/* Flight row */}
+              <div className="grid grid-cols-4 gap-3 items-stretch">
+                <div className="h-full">
+                  <FlightDetails flight={flight} />
+                </div>
 
-              {flight.fares.map((fare, fareIndex) => {
-                const isSelected = selectedFlight?.flightId === flight.id && selectedFlight?.fareIndex === fareIndex;
-                const isExpanded = expandedFlight?.flightId === flight.id && expandedFlight?.fareIndex === fareIndex && expandedFlight?.type === type;
+                {flight.fares.map((fare, fareIndex) => {
+                  const isSelected = selectedFlight?.flightId === flight.id && selectedFlight?.fareIndex === fareIndex;
+                  const isExpanded = expandedFlight?.flightId === flight.id && expandedFlight?.fareIndex === fareIndex && expandedFlight?.type === type;
 
-                return (
-                  <FareCell
-                    key={fareIndex}
-                    fare={fare}
-                    fareIndex={fareIndex}
-                    flightId={flight.id}
-                    isSelected={isSelected}
-                    isExpanded={isExpanded}
-                    onSelect={() => {
-                      setSelectedFlight({ flightId: flight.id, fareIndex });
+                  return (
+                    <FareCell
+                      key={fareIndex}
+                      fare={fare}
+                      fareIndex={fareIndex}
+                      flightId={flight.id}
+                      isSelected={isSelected}
+                      isExpanded={isExpanded}
+                      onSelect={() => {
+                        // Set local state trước
+                        setSelectedFlight({ flightId: flight.id, fareIndex });
 
-                      const flightData = {
-                        flightId: flight.id,
-                        fareIndex,
-                        fareName: fare.name,
-                        price: fare.price,
-                        tax: fare.tax,
-                        service: fare.service,
-                        code: flight.code,
-                        departTime: flight.departTime,
-                        arriveTime: flight.arriveTime,
-                      };
+                        const flightData = {
+                          flightId: flight.id,
+                          fareIndex,
+                          fareName: fare.name,
+                          price: fare.price,
+                          tax: fare.tax,
+                          service: fare.service,
+                          code: flight.code,
+                          departTime: flight.departTime,
+                          arriveTime: flight.arriveTime,
+                        };
 
-                      if (type === 'departure') {
-                        setSelectedDeparture(flightData);
-                        // Lưu chuyến đi vào localStorage để dùng sau thanh toán
-                        try {
-                          localStorage.setItem('selectedDepartureFlight', JSON.stringify({
-                            flightId: (flight as any)?.flightData?.flightId,
-                            flightNumber: flight.code,
-                            travelClass: fare.name,
-                            price: fare.price,
-                            tax: fare.tax,
-                            aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
-                          }));
-                        } catch { }
-                      } else {
-                        setSelectedReturn(flightData);
-                        // Lưu chuyến về vào localStorage để dùng sau thanh toán
-                        try {
-                          localStorage.setItem('selectedReturnFlight', JSON.stringify({
-                            flightId: (flight as any)?.flightData?.flightId,
-                            flightNumber: flight.code,
-                            travelClass: fare.name,
-                            price: fare.price,
-                            tax: fare.tax,
-                            aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
-                          }));
-                        } catch { }
-                      }
-                    }}
-                    onToggleExpand={() => {
-                      if (isExpanded) {
-                        setExpandedFlight(null);
-                      } else {
-                        setExpandedFlight({ flightId: flight.id, fareIndex, type });
-                      }
-                    }}
-                  />
-                );
-              })}
+                        if (type === 'departure') {
+                          // Set state cho chuyến đi - điều này sẽ trigger filteredReturnFlights recalculate
+                          setSelectedDepartureFlight({ flightId: flight.id, fareIndex });
+                          setSelectedDeparture(flightData);
+
+                          console.log('✅ Departure flight selected:', {
+                            flightId: flight.id,
+                            flightCode: flight.code,
+                            fareIndex,
+                            arrivalTime: (flight as any)?.flightData?.arrivalTime
+                          });
+
+                          // Lưu chuyến đi vào localStorage để dùng sau thanh toán
+                          try {
+                            localStorage.setItem('selectedDepartureFlight', JSON.stringify({
+                              flightId: (flight as any)?.flightData?.flightId,
+                              flightNumber: flight.code,
+                              travelClass: fare.name,
+                              price: fare.price,
+                              tax: fare.tax,
+                              aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
+                            }));
+                          } catch { }
+                        } else {
+                          // Validate: Thời gian khởi hành của chuyến về phải sau thời gian đến của chuyến đi
+                          if (selectedDepartureFlight) {
+                            const selectedDepFlight = departureFlights.find(f => f.id === selectedDepartureFlight.flightId);
+                            if (selectedDepFlight && selectedDepFlight.flightData) {
+                              const departureArrivalTime = new Date(selectedDepFlight.flightData.arrivalTime);
+                              const returnDepartureTime = new Date(flight.flightData?.departureTime || 0);
+
+                              // Debug log
+                              console.log('🔍 Validating return flight selection:', {
+                                departureArrivalTime: departureArrivalTime.toISOString(),
+                                departureArrivalTimeLocal: departureArrivalTime.toLocaleString('vi-VN'),
+                                returnDepartureTime: returnDepartureTime.toISOString(),
+                                returnDepartureTimeLocal: returnDepartureTime.toLocaleString('vi-VN'),
+                                isValid: returnDepartureTime > departureArrivalTime,
+                                comparison: returnDepartureTime.getTime() > departureArrivalTime.getTime()
+                              });
+
+                              if (returnDepartureTime.getTime() <= departureArrivalTime.getTime()) {
+                                showNotification(
+                                  'error',
+                                  'Thời gian không hợp lệ',
+                                  [
+                                    'Thời gian khởi hành của chuyến về phải sau thời gian đến của chuyến đi',
+                                    `Chuyến đi đến: ${departureArrivalTime.toLocaleString('vi-VN')}`,
+                                    `Chuyến về khởi hành: ${returnDepartureTime.toLocaleString('vi-VN')}`
+                                  ]
+                                );
+                                return;
+                              }
+                            }
+                          }
+
+                          setSelectedReturn(flightData);
+                          // Lưu chuyến về vào localStorage để dùng sau thanh toán
+                          try {
+                            localStorage.setItem('selectedReturnFlight', JSON.stringify({
+                              flightId: (flight as any)?.flightData?.flightId,
+                              flightNumber: flight.code,
+                              travelClass: fare.name,
+                              price: fare.price,
+                              tax: fare.tax,
+                              aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
+                            }));
+                          } catch { }
+                        }
+                      }}
+                      onToggleExpand={() => {
+                        if (isExpanded) {
+                          setExpandedFlight(null);
+                        } else {
+                          setExpandedFlight({ flightId: flight.id, fareIndex, type });
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Expanded details */}
+              {expandedFlight?.flightId === flight.id && expandedFlight?.type === type && (
+                <ExpandedDetails
+                  flight={flight}
+                  fare={flight.fares[expandedFlight.fareIndex]}
+                  type={type}
+                  state={searchData}
+                />
+              )}
             </div>
-
-            {/* Expanded details */}
-            {expandedFlight?.flightId === flight.id && expandedFlight?.type === type && (
-              <ExpandedDetails
-                flight={flight}
-                fare={flight.fares[expandedFlight.fareIndex]}
-                type={type}
-                state={searchData}
-              />
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -1086,9 +1407,19 @@ export default function SelectFlightRecoveryPage() {
               )}
 
               {/* Return Flights */}
-              {returnFlights.length > 0 ? (
+              {!selectedDepartureFlight ? (
+                // Chưa chọn chuyến đi - hiển thị thông báo
+                !loading && searchData.returnDate && (
+                  <div className="bg-white rounded-xl p-8 shadow-xl mb-8 text-center">
+                    <p className="text-lg text-gray-600">
+                      Vui lòng chọn chuyến đi trước để xem các chuyến về phù hợp
+                    </p>
+                  </div>
+                )
+              ) : filteredReturnFlights.length > 0 ? (
+                // Đã chọn chuyến đi và có chuyến về hợp lệ
                 renderFlightSection(
-                  returnFlights,
+                  filteredReturnFlights,
                   'return',
                   'CHUYẾN VỀ',
                   selectedReturnFlight,
@@ -1097,9 +1428,12 @@ export default function SelectFlightRecoveryPage() {
                   setSelectedReturnDate
                 )
               ) : (
+                // Đã chọn chuyến đi nhưng không có chuyến về hợp lệ
                 !loading && searchData.returnDate && (
                   <div className="bg-white rounded-xl p-8 shadow-xl mb-8 text-center">
-                    <p className="text-lg text-gray-600">Không tìm thấy chuyến bay về phù hợp</p>
+                    <p className="text-lg text-gray-600">
+                      Không tìm thấy chuyến bay về phù hợp sau thời gian đến của chuyến đi
+                    </p>
                   </div>
                 )
               )}
@@ -1132,7 +1466,7 @@ export default function SelectFlightRecoveryPage() {
             <FlightSummaryCard
               title="Chuyến đi"
               total={totalDeparture}
-              flight={departureFlight}
+              flight={departureFlight || undefined}
               fare={departureFare}
               type="departure"
               state={searchData}

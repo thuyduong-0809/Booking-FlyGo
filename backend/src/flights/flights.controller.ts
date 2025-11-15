@@ -13,8 +13,9 @@ export class FlightsController {
         @Query('departureAirportCode') departureAirportCode?: string,
         @Query('arrivalAirportCode') arrivalAirportCode?: string,
         @Query('departureDate') departureDate?: string,
+        @Query('minDepartureTime') minDepartureTime?: string,
     ): Promise<any> {
-        return this.flightsService.searchFlights(departureAirportCode, arrivalAirportCode, departureDate);
+        return this.flightsService.searchFlights(departureAirportCode, arrivalAirportCode, departureDate, minDepartureTime);
     }
 
     @Get('generate-flight-number/:airlineId')
