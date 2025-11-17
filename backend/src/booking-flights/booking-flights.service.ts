@@ -148,10 +148,11 @@ export class BookingFlightsService {
             if (!flightSeat) throw new Error(`Flight seat not found for seat ${seatNumber}`);
             if (!flightSeat.isAvailable) throw new Error(`Seat ${seatNumber} is already taken for this flight`);
           } else {
-            // chọn ghế trống đầu tiên trong cùng hạng (bắt đầu từ ghế thấp nhất: 01A, 02A...)
+            // chọn ghế trống đầu tiên trong cùng hạng (bắt đầu từ ghế thấp nhất: E01A → E02A → ... → E09A → E10A → ... → E99A → E100A)
             console.log(`🎫 Đang tìm ghế trống cho ${travelClass} trong flight ${flight.flightId}`);
 
             // Tìm FlightSeat available cho flight này, cùng travelClass
+            // Sắp xếp theo seatId vì flightseat được tạo theo thứ tự seatId (E01A → E02A → ... → E09A → E10A → ... → E99A → E100A)
             // Sử dụng lock để tránh race condition khi nhiều người đặt cùng lúc
             flightSeat = await flightSeatRepo.findOne({
               where: {
@@ -163,7 +164,7 @@ export class BookingFlightsService {
                 isAvailable: true,
               },
               relations: ['seat'],
-              order: { seat: { seatNumber: 'ASC' } }, // Sắp xếp tăng dần: 01A, 02A, 03A...
+              order: { seat: { seatId: 'ASC' } }, // Sắp xếp theo seatId để đảm bảo thứ tự tuần tự (E01A → E02A → ... → E09A → E10A → ... → E99A → E100A)
               lock: { mode: 'pessimistic_write' }, // Lock để đảm bảo không bị double booking
             });
 

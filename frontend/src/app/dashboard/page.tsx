@@ -505,16 +505,6 @@ export default function DashboardPage() {
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                     Quản lý chỗ ngồi
                   </button>
-                  <button
-                    onClick={() => setActiveTab('aircraft-maintenance')}
-                    className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'aircraft-maintenance'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                  >
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                    Theo dõi bảo trì
-                  </button>
                 </div>
               )}
 

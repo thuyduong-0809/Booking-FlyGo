@@ -45,7 +45,7 @@ export class FlightSeatsService {
             // Bước 2: Truy vấn toàn bộ Seats của máy bay tương ứng
             const seats = await this.seatRepository.find({
                 where: { aircraft: { aircraftId: flight.aircraft.aircraftId } },
-                order: { seatNumber: 'ASC' }, // Sắp xếp để dễ debug
+                order: { seatId: 'ASC' }, // Sắp xếp theo seatId để giữ đúng thứ tự tạo (E01A → E02A → ... → E09A → E10A → ... → E99A → E100A)
             });
 
             if (seats.length === 0) {

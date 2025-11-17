@@ -303,7 +303,7 @@ export default function ChooseSeatPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
+        <div className="min-h-screen bg-gray-50">
             {/* Top banner */}
             <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 py-6 shadow-lg">
                 <div className="container mx-auto px-4">

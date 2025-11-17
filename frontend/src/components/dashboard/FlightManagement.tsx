@@ -244,6 +244,69 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
     }
   };
 
+  const loadAvailableSeatsByAircraft = async (aircraftId: number) => {
+    if (!aircraftId) {
+      // Reset số ghế khi không có máy bay được chọn
+      setFlightData((prev: any) => ({
+        ...prev,
+        availableEconomySeats: null,
+        availableBusinessSeats: null,
+        availableFirstClassSeats: null,
+      }));
+      return;
+    }
+
+    try {
+      const res: any = await requestApi(`seats/aircraft/${String(aircraftId)}`, "GET");
+      if (res.success && res.data) {
+        // Đếm số ghế available theo từng travelClass
+        const economySeats = res.data.filter(
+          (seat: any) => seat.travelClass === "Economy" && seat.isAvailable === true
+        ).length;
+        const businessSeats = res.data.filter(
+          (seat: any) => seat.travelClass === "Business" && seat.isAvailable === true
+        ).length;
+        const firstClassSeats = res.data.filter(
+          (seat: any) => seat.travelClass === "First" && seat.isAvailable === true
+        ).length;
+
+        // Tự động cập nhật số ghế trống
+        setFlightData((prev: any) => ({
+          ...prev,
+          availableEconomySeats: economySeats,
+          availableBusinessSeats: businessSeats,
+          availableFirstClassSeats: firstClassSeats,
+        }));
+
+        // Xóa lỗi validation nếu có
+        setErrors((prev: any) => {
+          const newErrors = { ...prev };
+          delete newErrors.availableEconomySeats;
+          delete newErrors.availableBusinessSeats;
+          delete newErrors.availableFirstClassSeats;
+          return newErrors;
+        });
+      } else {
+        // Nếu không tìm thấy ghế, reset về null
+        setFlightData((prev: any) => ({
+          ...prev,
+          availableEconomySeats: null,
+          availableBusinessSeats: null,
+          availableFirstClassSeats: null,
+        }));
+      }
+    } catch (error) {
+      console.error("Error loading available seats:", error);
+      // Reset số ghế khi có lỗi
+      setFlightData((prev: any) => ({
+        ...prev,
+        availableEconomySeats: null,
+        availableBusinessSeats: null,
+        availableFirstClassSeats: null,
+      }));
+    }
+  };
+
   const validateInputs = () => {
     const newErrors: any = {};
 
@@ -647,7 +710,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                   </label>
                   <select
                     value={flightData.aircraftId}
-                    onChange={(e) => handleChange('aircraftId', e.target.value)}
+                    onChange={(e) => {
+                      handleChange('aircraftId', e.target.value);
+                      loadAvailableSeatsByAircraft(Number(e.target.value));
+                    }}
                     className={`w-full px-3 py-2 border rounded-lg text-black ${errors.aircraftId ? 'border-red-500' : 'border-gray-300'
                       }`}
                   >
@@ -890,10 +956,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                     value={flightData.availableEconomySeats ?? ""}
                     type="number"
                     min="0"
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
+                    readOnly
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
                       }`}
-                    placeholder="Nhập số ghế trống Economy"
-                    onChange={(e) => handleChange('availableEconomySeats', e.target.value)}
+                    placeholder="Tự động tính"
                   />
                   {errors.availableEconomySeats && (
                     <p className="text-red-500 text-sm mt-1">{errors.availableEconomySeats}</p>
@@ -907,10 +973,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                     value={flightData.availableBusinessSeats ?? ""}
                     type="number"
                     min="0"
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
+                    readOnly
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
                       }`}
-                    placeholder="Nhập số ghế trống Business"
-                    onChange={(e) => handleChange('availableBusinessSeats', e.target.value)}
+                    placeholder="Tự động tính"
                   />
                   {errors.availableBusinessSeats && (
                     <p className="text-red-500 text-sm mt-1">{errors.availableBusinessSeats}</p>
@@ -924,10 +990,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                     value={flightData.availableFirstClassSeats ?? ""}
                     type="number"
                     min="0"
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
+                    readOnly
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
                       }`}
-                    placeholder="Nhập số ghế trống First Class"
-                    onChange={(e) => handleChange('availableFirstClassSeats', e.target.value)}
+                    placeholder="Tự động tính"
                   />
                   {errors.availableFirstClassSeats && (
                     <p className="text-red-500 text-sm mt-1">{errors.availableFirstClassSeats}</p>
@@ -1596,7 +1662,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                 </label>
                 <select
                   value={flightData.aircraftId}
-                  onChange={(e) => handleChange('aircraftId', e.target.value)}
+                  onChange={(e) => {
+                    handleChange('aircraftId', e.target.value);
+                    loadAvailableSeatsByAircraft(Number(e.target.value));
+                  }}
                   className={`w-full px-3 py-2 border rounded-lg text-black ${errors.aircraftId ? 'border-red-500' : 'border-gray-300'
                     }`}
                 >
@@ -1839,10 +1908,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                   value={flightData.availableEconomySeats ?? ""}
                   type="number"
                   min="0"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
+                  readOnly
+                  className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
                     }`}
-                  placeholder="Nhập số ghế trống Economy"
-                  onChange={(e) => handleChange('availableEconomySeats', e.target.value)}
+                  placeholder="Tự động tính"
                 />
                 {errors.availableEconomySeats && (
                   <p className="text-red-500 text-sm mt-1">{errors.availableEconomySeats}</p>
@@ -1856,10 +1925,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                   value={flightData.availableBusinessSeats ?? ""}
                   type="number"
                   min="0"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
+                  readOnly
+                  className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
                     }`}
-                  placeholder="Nhập số ghế trống Business"
-                  onChange={(e) => handleChange('availableBusinessSeats', e.target.value)}
+                  placeholder="Tự động tính"
                 />
                 {errors.availableBusinessSeats && (
                   <p className="text-red-500 text-sm mt-1">{errors.availableBusinessSeats}</p>
@@ -1873,10 +1942,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                   value={flightData.availableFirstClassSeats ?? ""}
                   type="number"
                   min="0"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
+                  readOnly
+                  className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
                     }`}
-                  placeholder="Nhập số ghế trống First Class"
-                  onChange={(e) => handleChange('availableFirstClassSeats', e.target.value)}
+                  placeholder="Tự động tính"
                 />
                 {errors.availableFirstClassSeats && (
                   <p className="text-red-500 text-sm mt-1">{errors.availableFirstClassSeats}</p>
