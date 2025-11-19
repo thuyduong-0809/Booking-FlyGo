@@ -100,7 +100,7 @@ export class EmailService {
 
               <div style="margin-top: 30px; padding: 20px; background-color: #e3f2fd; border-radius: 10px;">
                 <p style="color: #1976d2; font-size: 14px; margin: 0;">
-                  <strong>📌 Lưu ý:</strong> Vui lòng đến sân bay sớm ít nhất 2 giờ trước giờ khởi hành. 
+                  <strong> Lưu ý:</strong> Vui lòng đến sân bay sớm ít nhất 2 giờ trước giờ khởi hành. 
                   Bạn có thể check-in online 48 giờ trước chuyến bay.
                 </p>
               </div>
@@ -108,7 +108,7 @@ export class EmailService {
               <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
               <p style="color: #999; font-size: 14px; text-align: center;">
                 FlyGo - Đặt vé máy bay uy tín<br>
-                📞 Hotline: 1900-xxxx | 📧 Email: support@flygo.vn
+                 Hotline: 1900-xxxx |  Email: support@flygo.vn
               </p>
             </div>
           </div>
@@ -116,10 +116,8 @@ export class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
-      console.log('✅ Payment confirmation email sent to:', email);
       return true;
     } catch (error) {
-      console.error('❌ Error sending payment confirmation email:', error);
       return false;
     }
   }

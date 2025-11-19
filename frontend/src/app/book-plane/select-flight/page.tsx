@@ -301,6 +301,7 @@ const FareCell = ({
   onToggleExpand: () => void;
 }) => {
   const isDisabled = fare.soldOut;
+  const isNotAvailable = fare.soldOut && fare.price === 0; // Không có hạng này
 
   return (
     <button
@@ -317,7 +318,13 @@ const FareCell = ({
           : "bg-gradient-to-br from-white to-gray-50 text-black hover:from-blue-50 hover:to-blue-100 hover:shadow-lg border-gray-200 hover:border-blue-300"
         }`}
     >
-      {isDisabled ? (
+      {isNotAvailable ? (
+        // Không có hạng - hiển thị dấu X lớn
+        <div className="flex flex-col items-center justify-center h-full">
+          <span className="text-3xl font-extrabold tracking-widest text-gray-400">X</span>
+        </div>
+      ) : isDisabled ? (
+        // Hết chỗ - hiển thị thông báo hết chỗ
         <div className="flex flex-col items-center">
           <svg className="w-6 h-6 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -560,10 +567,6 @@ export default function SelectFlightPage() {
   const { state, setSelectedDeparture, grandTotal } = useBooking();
   const { searchData } = useSearch();
 
-  // Debug: Log searchData để kiểm tra dữ liệu
-  console.log('SearchData in select-flight:', searchData);
-  console.log('Departure Date:', searchData.departureDate);
-
   const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
 
   // State cho flights từ API
@@ -622,8 +625,10 @@ export default function SelectFlightPage() {
     const arriveTimeStr = arrivalTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
     // Tạo fares từ economyPrice, businessPrice, firstClassPrice
+    // LUÔN trả về 3 fare theo thứ tự: First, Business, Eco
     const fares: FareOption[] = [];
 
+    // 1. First Class
     if (flight.firstClassPrice > 0 && flight.availableFirstClassSeats > 0) {
       fares.push({
         name: "FIST CLASS",
@@ -645,8 +650,20 @@ export default function SelectFlightPage() {
         ],
         excludes: []
       });
+    } else {
+      // Không có First Class
+      fares.push({
+        name: "FIST CLASS",
+        price: 0,
+        soldOut: true,
+        tax: 0,
+        service: 0,
+        includes: [],
+        excludes: []
+      });
     }
 
+    // 2. Business Class
     if (flight.businessPrice > 0 && flight.availableBusinessSeats > 0) {
       fares.push({
         name: "BUSSINESS",
@@ -668,8 +685,20 @@ export default function SelectFlightPage() {
         ],
         excludes: []
       });
+    } else {
+      // Không có Business Class
+      fares.push({
+        name: "BUSSINESS",
+        price: 0,
+        soldOut: true,
+        tax: 0,
+        service: 0,
+        includes: [],
+        excludes: []
+      });
     }
 
+    // 3. Economy Class
     if (flight.economyPrice > 0 && flight.availableEconomySeats > 0) {
       fares.push({
         name: "Eco",
@@ -688,6 +717,17 @@ export default function SelectFlightPage() {
           "Chênh lệch tiền vé khi thay đổi (nếu có)"
         ]
       });
+    } else {
+      // Không có Economy Class
+      fares.push({
+        name: "Eco",
+        price: 0,
+        soldOut: true,
+        tax: 0,
+        service: 0,
+        includes: [],
+        excludes: []
+      });
     }
 
     return {
@@ -697,15 +737,7 @@ export default function SelectFlightPage() {
       arriveTime: arriveTimeStr,
       aircraft: flight.aircraft?.model || 'Airbus A320',
       note: "Bay thẳng",
-      fares: fares.length > 0 ? fares : [{
-        name: "Eco",
-        price: 0,
-        soldOut: true,
-        tax: 0,
-        service: 0,
-        includes: [],
-        excludes: []
-      }],
+      fares: fares,
       flightData: flight
     };
   };
@@ -722,13 +754,7 @@ export default function SelectFlightPage() {
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         const formatted = `${year}-${month}-${day}`;
-        
-        console.log('📅 select-flight formatDate:', {
-          input: date.toISOString(),
-          inputLocal: date.toLocaleDateString('vi-VN'),
-          output: formatted
-        });
-        
+
         return formatted;
       };
 
@@ -738,23 +764,16 @@ export default function SelectFlightPage() {
         departureDate: searchData.departureDate ? formatDate(searchData.departureDate) : undefined
       };
 
-      console.log('✈️ Searching flights with params:', searchParams);
-
       // Tìm kiếm chuyến đi
       const departureSearchResult = await flightsService.searchFlights(searchParams);
 
-      console.log('🔍 Search result:', departureSearchResult);
-
       if (departureSearchResult.success && departureSearchResult.data) {
-        console.log('✅ Found', departureSearchResult.data.length, 'flights');
         const departureItems = departureSearchResult.data.map(flight => convertFlightToFlightItem(flight));
         setDepartureFlights(departureItems);
       } else {
-        console.warn('⚠️ No flights found');
         setDepartureFlights([]);
       }
     } catch (err: any) {
-      console.error('❌ Error searching flights:', err);
       setError(`Lỗi khi tìm kiếm chuyến bay: ${err.message || 'Không thể kết nối đến server'}`);
       setDepartureFlights([]);
     } finally {
@@ -773,11 +792,6 @@ export default function SelectFlightPage() {
   useEffect(() => {
     if (searchData.departureAirport && searchData.arrivalAirport && searchData.departureDate) {
       // Luôn gọi searchFlights khi có đủ thông tin
-      console.log('🔍 Triggering search with:', {
-        departure: searchData.departureAirport.airportCode,
-        arrival: searchData.arrivalAirport.airportCode,
-        date: searchData.departureDate
-      });
       searchFlights();
     }
   }, [searchFlights]);
@@ -950,12 +964,6 @@ export default function SelectFlightPage() {
                                   setSelectedDeparture(flightData);
 
                                   // Lưu flightId vào localStorage để dùng sau thanh toán
-                                  console.log('💾 Saving flight to localStorage:', {
-                                    flightId: flight.flightData?.flightId,
-                                    code: flight.code,
-                                    flightData: flight.flightData
-                                  });
-
                                   localStorage.setItem('selectedFlight', JSON.stringify({
                                     flightId: flight.flightData?.flightId, // ID từ database
                                     flightNumber: flight.code, // VD: VN001

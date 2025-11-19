@@ -193,12 +193,6 @@ const SearchModal: FC<SearchModalProps> = ({ className = "" }) => {
                 const day = String(date.getDate()).padStart(2, '0');
                 const formatted = `${year}-${month}-${day}`;
 
-                console.log('📅 SearchModal formatDate:', {
-                    input: date.toISOString(),
-                    inputLocal: date.toLocaleDateString('vi-VN'),
-                    output: formatted
-                });
-
                 return formatted;
             };
 
@@ -209,20 +203,7 @@ const SearchModal: FC<SearchModalProps> = ({ className = "" }) => {
                 departureDate: formatDate(searchData.departureDate)
             };
 
-            console.log('🔍 DEBUG SearchModal - Params gửi lên:', {
-                ...searchParams,
-                departureAirport: searchData.departureAirport,
-                arrivalAirport: searchData.arrivalAirport,
-                rawDate: searchData.departureDate
-            });
-
             const departureSearchResult = await flightsService.searchFlights(searchParams);
-
-            console.log('📥 DEBUG SearchModal - Response nhận về:', {
-                success: departureSearchResult.success,
-                dataLength: departureSearchResult.data?.length || 0,
-                firstFlight: departureSearchResult.data?.[0]
-            });
 
             // Kiểm tra chuyến đi
             if (!departureSearchResult.success || !departureSearchResult.data || departureSearchResult.data.length === 0) {
@@ -238,8 +219,6 @@ const SearchModal: FC<SearchModalProps> = ({ className = "" }) => {
                 setIsSearching(false);
                 return;
             }
-
-            console.log(`✅ Tìm thấy ${departureSearchResult.data.length} chuyến bay đi`);
 
             // Nếu là khứ hồi, kiểm tra cả chuyến về
             if (dropOffLocationType === "roundTrip" && searchData.returnDate) {
@@ -263,13 +242,10 @@ const SearchModal: FC<SearchModalProps> = ({ className = "" }) => {
                     return;
                 }
 
-                console.log(`✅ Tìm thấy ${returnSearchResult.data.length} chuyến bay về`);
             }
 
             // Nếu tất cả đều OK, cập nhật loại chuyến bay và điều hướng
             updateTripType(dropOffLocationType as 'roundTrip' | 'oneWay');
-
-            console.log('🎉 Có chuyến bay! Đang chuyển hướng...');
 
             if (dropOffLocationType === "roundTrip") {
                 router.push("/book-plane/select-flight-recovery");

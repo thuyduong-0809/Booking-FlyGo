@@ -149,8 +149,6 @@ export class BookingFlightsService {
             if (!flightSeat.isAvailable) throw new Error(`Seat ${seatNumber} is already taken for this flight`);
           } else {
             // chọn ghế trống đầu tiên trong cùng hạng (bắt đầu từ ghế thấp nhất: E01A → E02A → ... → E09A → E10A → ... → E99A → E100A)
-            console.log(`🎫 Đang tìm ghế trống cho ${travelClass} trong flight ${flight.flightId}`);
-
             // Tìm FlightSeat available cho flight này, cùng travelClass
             // Sắp xếp theo seatId vì flightseat được tạo theo thứ tự seatId (E01A → E02A → ... → E09A → E10A → ... → E99A → E100A)
             // Sử dụng lock để tránh race condition khi nhiều người đặt cùng lúc
@@ -176,7 +174,6 @@ export class BookingFlightsService {
             }
 
             seat = flightSeat.seat;
-            console.log(`✅ Đã chọn ghế: ${seat.seatNumber} (FlightSeatId: ${flightSeat.flightSeatId})`);
           }
 
           // Bước 1: Tạo SeatAllocation (liên kết passenger với ghế)
@@ -186,7 +183,6 @@ export class BookingFlightsService {
             passenger,
           });
           await seatAllocationRepo.save(newSeatAllocation);
-          console.log(`✅ SeatAllocation created: Passenger ${passenger.passengerId} → Seat ${seat.seatNumber}`);
 
           // Bước 2: Cập nhật trạng thái ghế trong FlightSeat
           // QUAN TRỌNG: Cập nhật FlightSeat.isAvailable = false (chỉ cho chuyến bay này)
@@ -197,8 +193,6 @@ export class BookingFlightsService {
           // Lưu trong cùng transaction để đảm bảo atomicity
           await flightSeatRepo.save(flightSeat);
           await bookingFlightRepo.save(newBookingFlight);
-
-          console.log(`✅ FlightSeat updated: Seat ${seat.seatNumber} is now UNAVAILABLE for flight ${flight.flightNumber} (FlightSeatId: ${flightSeat.flightSeatId})`);
 
           // giảm availableSeats trong flight
           switch (travelClass) {
@@ -230,7 +224,7 @@ export class BookingFlightsService {
         };
       });
     } catch (error) {
-      console.error('❌ Transaction Error:', error);
+      console.error(' Transaction Error:', error);
       response.success = false;
       response.message = error.message || 'Error while creating BookingFlight and SeatAllocation';
     }

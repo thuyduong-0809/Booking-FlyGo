@@ -54,7 +54,6 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
     try {
       const res = await requestApi("auth/login", "POST", { email, password });
       if (res.success) {
-        console.log("==> RES LOGIN:", res);
 
         dispatch(loginSuccess({ ...res }));
         dispatch(updateLocalStorage());

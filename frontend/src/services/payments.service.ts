@@ -58,11 +58,8 @@ export const paymentsService = {
     getPaymentsByBooking: async (bookingId: number): Promise<Payment[]> => {
         try {
             const response = await requestApi(`payments/booking/${bookingId}`, "GET");
-            console.log('📦 getPaymentsByBooking response:', response);
-            // Response từ NestJS có format { success, data, message }
             return response?.data || response;
         } catch (error) {
-            console.error('❌ getPaymentsByBooking error:', error);
             throw error;
         }
     },
@@ -74,16 +71,13 @@ export const paymentsService = {
         transactionId?: string
     ): Promise<Payment> => {
         try {
-            console.log(`🔄 Updating payment ${paymentId} to status: ${status}`);
             const response = await requestApi(
                 `payments/${paymentId}/status`,
                 "PUT",
                 { status, transactionId }
             );
-            console.log('✅ Update response:', response);
             return response?.data || response;
         } catch (error) {
-            console.error('❌ updatePaymentStatus error:', error);
             throw error;
         }
     },
@@ -91,12 +85,9 @@ export const paymentsService = {
     // Lấy bookingId từ MoMo orderId
     getBookingByOrderId: async (orderId: string): Promise<number | null> => {
         try {
-            console.log('🔍 Getting bookingId for orderId:', orderId);
             const response = await requestApi(`payments/momo/get-booking/${orderId}`, "GET");
-            console.log('✅ Booking response:', response);
             return response?.bookingId || null;
         } catch (error) {
-            console.error('❌ getBookingByOrderId error:', error);
             return null;
         }
     },

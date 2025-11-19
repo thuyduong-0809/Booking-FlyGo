@@ -49,4 +49,9 @@ export class FlightsController {
     async delete(@Param('id') id: string): Promise<any> {
         return this.flightsService.delete(Number(id));
     }
+
+    @Post('reset-auto-increment')
+    async resetAutoIncrement(): Promise<any> {
+        return this.flightsService.resetFlightAutoIncrement();
+    }
 }

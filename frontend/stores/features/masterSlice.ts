@@ -8,11 +8,11 @@ const initialState = {
   loading: true,
   is_login: false,
   access_token: "",
-  isAdmin:false,
-  isAuth:false,
+  isAdmin: false,
+  isAuth: false,
   user: {
-    avatar:'',
-    id:''
+    avatar: '',
+    id: ''
   },
 };
 
@@ -21,13 +21,12 @@ export const masterSlice = createSlice({
   initialState,
   reducers: {
     loginSuccess: (state, action) => {
-    //   console.log("action: ", action);
       state.access_token = action.payload.data.accessToken;
       state.user = action.payload;
       state.is_login = true;
     },
     initialBootState: (state) => {
-      if(typeof window !== 'undefined'){
+      if (typeof window !== 'undefined') {
         let masterLocalStorage = secureLocalStorage.getItem("master") as string;
         if (masterLocalStorage) {
           let parseLocalStorage = JSON.parse(masterLocalStorage);
@@ -41,18 +40,18 @@ export const masterSlice = createSlice({
       }
     },
     updateLocalStorage: (state: any) => {
-     secureLocalStorage.setItem("master", JSON.stringify(state));
+      secureLocalStorage.setItem("master", JSON.stringify(state));
     },
-    logout: (state:any) => {
-        state.is_login = false;
-        // state.user = { avatar: '', id: '' };
-        state.access_token = "";
-        secureLocalStorage.removeItem("master"); //xoá storage nếu cần
+    logout: (state: any) => {
+      state.is_login = false;
+      // state.user = { avatar: '', id: '' };
+      state.access_token = "";
+      secureLocalStorage.removeItem("master"); //xoá storage nếu cần
     },
   },
 });
 
-export const {initialBootState, updateLocalStorage, loginSuccess, logout } =
+export const { initialBootState, updateLocalStorage, loginSuccess, logout } =
   masterSlice.actions;
 
 export default masterSlice.reducer;

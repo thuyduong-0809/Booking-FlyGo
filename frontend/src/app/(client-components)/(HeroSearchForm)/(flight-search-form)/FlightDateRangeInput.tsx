@@ -65,13 +65,6 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
   const onChangeRangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates;
 
-    console.log('📅 FlightDateRangeInput - Date được chọn:', {
-      start: start?.toISOString(),
-      end: end?.toISOString(),
-      startLocal: start?.toLocaleDateString('vi-VN'),
-      endLocal: end?.toLocaleDateString('vi-VN')
-    });
-
     // Validate ngày đi phải lớn hơn hoặc bằng ngày hiện tại
     if (start) {
       const selectedDate = new Date(start);
@@ -109,8 +102,6 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
     setStartDate(start);
     setEndDate(end);
 
-    // Debug: Log dates để kiểm tra
-    console.log('FlightDateRangeInput - onChangeRangeDate:', { start, end });
 
     // Cập nhật context với ngày đi và ngày về
     updateDepartureDate(start);

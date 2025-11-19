@@ -95,7 +95,6 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
 
   const loadAircrafts = async () => {
     await requestApi("aircrafts", "GET").then((res: any) => {
-      // console.log("res",res);
       if (res.success) {
         setAircraftsList(res.data)
       }
@@ -252,11 +251,6 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
     });
 
     const rows = Object.keys(seatsByRow).map(Number).sort((a, b) => a - b);
-
-    // Debug: Log để kiểm tra các hàng có trong dữ liệu
-    console.log('Các hàng có trong dữ liệu:', rows);
-    console.log('Số hàng đầu tiên:', rows[0]);
-    console.log('Tổng số hàng:', rows.length);
 
     // Tạo map ghế theo vị trí trong layout
     const createSeatMap = (rowSeats: any[], layoutSections: number[]) => {
@@ -505,7 +499,6 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
 
     requestApi("aircrafts", "POST", aircraftData)
       .then((res: any) => {
-        console.log("paload", res)
         if (res.success) {
           showNotification('success', 'Thêm máy bay thành công');
           loadAircrafts();
@@ -653,7 +646,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
   const updateAircraft = (): void => {
     const isValid = validateUpdateInputs();
     if (!isValid) return; // nếu có lỗi thì dừng
-    // console.log('select',String(selectedId))
+
     requestApi(`aircrafts/${String(selectedId)}`, "PUT", aircraftUpdateData)
       .then((res: any) => {
         if (res.success) {
@@ -665,7 +658,6 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
         }
       })
       .catch((error: any) => {
-        console.log('error aircraft', error);
         showNotification('error', 'Cập nhật thất bại', error?.message || 'Đã xảy ra lỗi không xác định');
       });
   };
@@ -678,14 +670,9 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
         showNotification('error', 'Xóa thất bại', res.message || 'Vui lòng thử lại');
       }
     }).catch((error: any) => {
-      console.log(error);
       showNotification('error', 'Xóa thất bại', error?.message || 'Đã xảy ra lỗi không xác định');
     })
   }
-
-
-
-
   const [maintenances, setMaintenances] = useState<ExtendedMaintenance[]>([
     {
       id: 1,

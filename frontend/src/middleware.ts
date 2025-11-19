@@ -24,8 +24,6 @@ export function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
     const role = decoded.role;
 
-    // console.log("ROLE:", role, "| PATH:", pathname);
-
     //  ADMIN hoặc AGENT không được vào trang /
     if (pathname === "/" && (role === "SystemAdmin" || role === "BookingAgent" || role === "FlightManager" || role === "CheckInStaff" || role === "AirlinePartner")) {
       const url = req.nextUrl.clone();

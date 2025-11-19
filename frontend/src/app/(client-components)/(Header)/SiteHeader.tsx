@@ -29,7 +29,7 @@ let OPTIONS = {
 let OBSERVER: IntersectionObserver | null = null;
 const PAGES_HIDE_HEADER_BORDER: PathName[] = [
   "/home-3",
-  "/listing-fly-detail",
+  "/book-plane/choose-seat",
   // "/listing-fly-detail",
   // "/listing-experiences-detail",
   // "/listing-stay-detail",
@@ -53,10 +53,9 @@ const SiteHeader = () => {
 
   useEffect(() => {
     if (is_login) {
-      console.log(is_login)
       setHeaderSelected("Header 2");
-    }else{
-        setHeaderSelected("Header 1");
+    } else {
+      setHeaderSelected("Header 1");
     }
   }, [is_login]);
 
@@ -81,11 +80,10 @@ const SiteHeader = () => {
             return (
               <div
                 key={header}
-                className={`py-1.5 px-3.5 flex items-center rounded-full font-medium text-xs cursor-pointer select-none ${
-                  headerSelected === header
-                    ? "bg-black text-white shadow-black/10 shadow-lg"
-                    : "border border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500"
-                }`}
+                className={`py-1.5 px-3.5 flex items-center rounded-full font-medium text-xs cursor-pointer select-none ${headerSelected === header
+                  ? "bg-black text-white shadow-black/10 shadow-lg"
+                  : "border border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500"
+                  }`}
                 onClick={() => setHeaderSelected(header)}
               >
                 {header}
@@ -107,9 +105,8 @@ const SiteHeader = () => {
             {({ open }) => (
               <>
                 <Popover.Button
-                  className={`p-2.5 bg-white hover:bg-neutral-100 dark:bg-primary-6000 dark:hover:bg-primary-700 rounded-xl shadow-xl border border-neutral-200 dark:border-primary-6000 z-10 focus:outline-none ${
-                    open ? " focus:ring-2 ring-primary-500" : ""
-                  }`}
+                  className={`p-2.5 bg-white hover:bg-neutral-100 dark:bg-primary-6000 dark:hover:bg-primary-700 rounded-xl shadow-xl border border-neutral-200 dark:border-primary-6000 z-10 focus:outline-none ${open ? " focus:ring-2 ring-primary-500" : ""
+                    }`}
                 >
                   <CogIcon className="w-8 h-8" />
                 </Popover.Button>
@@ -129,7 +126,7 @@ const SiteHeader = () => {
                         <div className="w-full border-b border-neutral-200 dark:border-neutral-700 mt-4"></div>
                         {renderRadioHeaders()}
                       </div>
-                    
+
                     </div>
                   </Popover.Panel>
                 </Transition>

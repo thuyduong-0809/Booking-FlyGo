@@ -158,6 +158,9 @@ export class SeatsService {
             const seats = await this.seatRepository.find({
                 where: { aircraft: { aircraftId: id } },
                 relations: ['aircraft'],
+                order: {
+                    seatNumber: 'ASC',
+                },
             });
 
             if (seats.length > 0) {

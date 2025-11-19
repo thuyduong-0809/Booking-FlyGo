@@ -65,12 +65,7 @@ export const flightsService = {
         const queryString = queryParams.toString();
         const url = queryString ? `flights/search?${queryString}` : "flights";
 
-        console.log('🔍 Calling search endpoint:', url);
-        console.log('📋 Search params:', params);
-
         const response = await requestApi(url, "GET");
-
-        console.log('✅ Search response:', response);
 
         return response;
     },

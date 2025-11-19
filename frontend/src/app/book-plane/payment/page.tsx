@@ -30,7 +30,6 @@ export default function PaymentPage() {
   useEffect(() => {
     const urlBookingId = searchParams.get('bookingId');
     if (urlBookingId && !state.bookingId) {
-      console.log('📌 Found bookingId in URL:', urlBookingId);
       setBookingId(Number(urlBookingId));
       fetchBookingDetails(Number(urlBookingId));
     }
@@ -40,21 +39,13 @@ export default function PaymentPage() {
   const fetchBookingDetails = async (bookingId: number) => {
     try {
       setLoadingBooking(true);
-      console.log('🔍 Fetching booking details for:', bookingId);
 
       const response = await requestApi(`bookings/${bookingId}`, "GET");
-      console.log('📋 Booking response:', response);
 
       if (response.success && response.data) {
-        console.log('✅ Booking data received:', response.data);
-        console.log('📦 Booking flights:', response.data.bookingFlights);
-        console.log('👥 Passengers:', response.data.passengers);
         setBookingData(response.data);
-      } else {
-        console.warn('⚠️ No booking data in response');
       }
     } catch (error) {
-      console.error('❌ Error fetching booking details:', error);
     } finally {
       setLoadingBooking(false);
     }
@@ -102,12 +93,6 @@ export default function PaymentPage() {
   const totalChildren = bookingData?.passengers?.filter((p: any) => p.ageCategory === 'Child').length || searchData.passengers?.children || 0;
   const totalInfants = bookingData?.passengers?.filter((p: any) => p.ageCategory === 'Infant').length || searchData.passengers?.infants || 0;
 
-  // Debug logging
-  console.log('🔍 Booking data:', bookingData);
-  console.log('✈️ Departure flight:', dep);
-  console.log('✈️ Return flight:', ret);
-  console.log('👥 Passengers - Adults:', totalAdults, 'Children:', totalChildren, 'Infants:', totalInfants);
-
   // Kiểm tra loại chuyến bay
   const isOneWay = bookingData?.bookingFlights?.length === 1 || searchData.tripType === 'oneWay';
 
@@ -150,9 +135,6 @@ export default function PaymentPage() {
       return;
     }
 
-    console.log('🚀 === STARTING PAYMENT COMPLETION PROCESS ===');
-    console.log('📌 Booking ID:', state.bookingId);
-
     try {
       setIsProcessing(true);
 
@@ -167,7 +149,6 @@ export default function PaymentPage() {
 
         // Check if payment is already completed
         if (latestPayment.paymentStatus === 'Completed') {
-          console.log('✅ Payment already completed, redirecting...');
           setShowMoMoPayment(false);
           window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
           return;

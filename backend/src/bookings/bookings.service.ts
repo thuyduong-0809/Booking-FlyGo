@@ -162,15 +162,6 @@ export class BookingsService {
                 ],
                 order: { bookingId: 'DESC' }
             });
-            console.log('📋 Found bookings:', bookings.length);
-            if (bookings.length > 0) {
-                console.log('Booking 0 - bookingFlights count:', bookings[0].bookingFlights?.length);
-                console.log('Booking 0 - bookingFlights:', bookings[0].bookingFlights?.map(bf => ({
-                    bookingFlightId: bf.bookingFlightId,
-                    seatNumber: bf.seatNumber,
-                    seatAllocationsCount: bf.seatAllocations?.length
-                })));
-            }
             response.success = true;
             response.data = bookings;
             response.message = 'Successfully retrieved bookings for user';

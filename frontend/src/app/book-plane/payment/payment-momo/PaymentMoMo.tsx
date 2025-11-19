@@ -47,15 +47,7 @@ export default function PaymentMoMo({
         try {
             // Thêm bookingId vào redirectUrl để success page có thể update status  
             const redirectUrl = `${window.location.origin}/book-plane/payment/success?bookingId=${bookingId}`;
-            console.log('📍 Redirect URL with bookingId:', redirectUrl);
             const ipnUrl = `http://localhost:3001/payments/momo/callback`;
-
-            console.log('Creating MoMo payment with data:', {
-                amount: totalAmount,
-                bookingId: bookingId,
-                orderInfo: orderInfo,
-                redirectUrl: redirectUrl,
-            });
 
             const response = await paymentsService.createMoMoPayment({
                 amount: totalAmount,
@@ -64,8 +56,6 @@ export default function PaymentMoMo({
                 redirectUrl: redirectUrl,
                 ipnUrl: ipnUrl,
             });
-
-            console.log('MoMo payment response:', response);
 
             if (response && response.payUrl) {
                 setPayUrl(response.payUrl);
@@ -79,7 +69,6 @@ export default function PaymentMoMo({
                 setError('Không thể tạo liên kết thanh toán: ' + (response?.message || 'Không có response'));
             }
         } catch (err: any) {
-            console.error('Error creating MoMo payment:', err);
             setError(err.message || err.response?.data?.message || 'Có lỗi xảy ra khi tạo thanh toán');
         } finally {
             setLoading(false);
@@ -93,7 +82,6 @@ export default function PaymentMoMo({
         );
 
         if (confirmed) {
-            console.log('User confirmed payment completed');
             onComplete();
         }
     };

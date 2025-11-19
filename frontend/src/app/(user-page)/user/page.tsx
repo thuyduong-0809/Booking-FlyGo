@@ -42,7 +42,6 @@ const UserPage = () => {
                 const userId = payload.userId;
 
                 if (!userId) {
-                    console.error("User ID not found in token");
                     router.push("/login");
                     return;
                 }
@@ -53,7 +52,6 @@ const UserPage = () => {
                     setUserData(response.data);
                 }
             } catch (error) {
-                console.error("Error fetching user data:", error);
             } finally {
                 setLoading(false);
             }
@@ -113,11 +111,7 @@ const UserPage = () => {
             if (editData.dateOfBirth) dataToSend.dateOfBirth = editData.dateOfBirth;
             if (editData.passportNumber) dataToSend.passportNumber = editData.passportNumber;
 
-            console.log("Data to send:", dataToSend);
-
             const response = await requestApi(`users/${userId}`, "PUT", dataToSend);
-
-            console.log("Response:", response);
 
             if (response.success) {
                 setSuccess("Cập nhật thông tin thành công!");
@@ -128,7 +122,6 @@ const UserPage = () => {
                 setError(response.message || "Cập nhật thất bại");
             }
         } catch (error: any) {
-            console.error("Error updating user:", error);
             setError(error.message || "Có lỗi xảy ra khi cập nhật thông tin");
         } finally {
             setLoading(false);

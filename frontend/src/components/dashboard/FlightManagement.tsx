@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Flight, Aircraft, Airline, Airport, Terminal, FlightWithDetails } from '../../types/database';
 import { requestApi } from '@/lib/api';
+import { useNotification } from '@/components/Notification';
 
 // Extended interfaces for local state management
 interface ExtendedFlight extends Flight {
@@ -34,7 +35,8 @@ interface FlightManagementProps { activeSubTab?: string }
 
 export default function FlightManagement({ activeSubTab = 'flights' }: FlightManagementProps) {
 
-  const [flightData, setFlightData] = useState({
+  const { showNotification } = useNotification();
+  const [flightData, setFlightData] = useState<any>({
     flightNumber: "",
     airlineId: "",
     departureAirportId: "",
@@ -55,7 +57,7 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
   });
 
 
-  const [flightUpdateData, setFlightUpdateData] = useState({
+  const [flightUpdateData, setFlightUpdateData] = useState<any>({
     flightNumber: "",
     departureTime: "",
     arrivalTime: "",
@@ -76,6 +78,31 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [isCreatingFlight, setIsCreatingFlight] = useState(false);
+
+  const currencyFormatter = new Intl.NumberFormat('en-US');
+
+  const formatCurrencyDisplay = (value: number | string | null) => {
+    if (value === null || value === '' || value === undefined) return '';
+    const numericValue = typeof value === 'number' ? value : Number(value);
+    if (Number.isNaN(numericValue)) return '';
+    return currencyFormatter.format(numericValue);
+  };
+
+  const parseCurrencyInput = (input: string): number | '' => {
+    const sanitized = input.replace(/[^\d]/g, '');
+    if (!sanitized) return '';
+    return Number(sanitized);
+  };
+
+  const handlePriceInput = (field: string, rawValue: string, isUpdate = false) => {
+    const parsedValue = parseCurrencyInput(rawValue);
+    if (isUpdate) {
+      handleUpdateChange(field, parsedValue);
+    } else {
+      handleChange(field, parsedValue);
+    }
+  };
 
   const getFlightStatusColor = (status: string) => {
     switch (status) {
@@ -131,6 +158,13 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
   const [errors, setErrors] = useState<any>({});
   const [updateErrors, setUpdateErrors] = useState<any>({});
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const canEditEconomyPrice = Number(flightData.availableEconomySeats) > 0;
+  const canEditBusinessPrice = Number(flightData.availableBusinessSeats) > 0;
+  const canEditFirstClassPrice = Number(flightData.availableFirstClassSeats) > 0;
+
+  const canEditEconomyPriceUpdate = Number(flightUpdateData.availableEconomySeats) > 0;
+  const canEditBusinessPriceUpdate = Number(flightUpdateData.availableBusinessSeats) > 0;
+  const canEditFirstClassPriceUpdate = Number(flightUpdateData.availableFirstClassSeats) > 0;
   // const [loading,setLoading] = useState(true) 
 
   useEffect(() => {
@@ -370,14 +404,20 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
     }
 
     // --- Giá vé ---
-    if (!flightData.economyPrice || Number(flightData.economyPrice) <= 0) {
-      newErrors.economyPrice = "Vui lòng nhập giá Economy hợp lệ (> 0).";
+    if (Number(flightData.availableEconomySeats) > 0) {
+      if (!flightData.economyPrice || Number(flightData.economyPrice) <= 0) {
+        newErrors.economyPrice = "Vui lòng nhập giá Economy hợp lệ (> 0).";
+      }
     }
-    if (!flightData.businessPrice || Number(flightData.businessPrice) <= 0) {
-      newErrors.businessPrice = "Vui lòng nhập giá Business hợp lệ (> 0).";
+    if (Number(flightData.availableBusinessSeats) > 0) {
+      if (!flightData.businessPrice || Number(flightData.businessPrice) <= 0) {
+        newErrors.businessPrice = "Vui lòng nhập giá Business hợp lệ (> 0).";
+      }
     }
-    if (!flightData.firstClassPrice || Number(flightData.firstClassPrice) <= 0) {
-      newErrors.firstClassPrice = "Vui lòng nhập giá First Class hợp lệ (> 0).";
+    if (Number(flightData.availableFirstClassSeats) > 0) {
+      if (!flightData.firstClassPrice || Number(flightData.firstClassPrice) <= 0) {
+        newErrors.firstClassPrice = "Vui lòng nhập giá First Class hợp lệ (> 0).";
+      }
     }
     if (
       flightData.availableEconomySeats === "" ||
@@ -418,23 +458,22 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
       newErrors.arrivalTime = "Thời gian đến phải sau thời gian khởi hành.";
     }
 
-    // --- Giá vé ---
-    if (!flightUpdateData.economyPrice.trim()) {
-      newErrors.economyPrice = "Vui lòng nhập giá Economy.";
-    } else if (Number(flightUpdateData.economyPrice) <= 0) {
-      newErrors.economyPrice = "Giá Economy phải > 0.";
+    if (Number(flightUpdateData.availableEconomySeats) > 0) {
+      if (!flightUpdateData.economyPrice || Number(flightUpdateData.economyPrice) <= 0) {
+        newErrors.economyPrice = "Giá Economy phải > 0.";
+      }
     }
 
-    if (!flightUpdateData.businessPrice.trim()) {
-      newErrors.businessPrice = "Vui lòng nhập giá Business.";
-    } else if (Number(flightUpdateData.businessPrice) <= 0) {
-      newErrors.businessPrice = "Giá Business phải > 0.";
+    if (Number(flightUpdateData.availableBusinessSeats) > 0) {
+      if (!flightUpdateData.businessPrice || Number(flightUpdateData.businessPrice) <= 0) {
+        newErrors.businessPrice = "Giá Business phải > 0.";
+      }
     }
 
-    if (!flightUpdateData.firstClassPrice.trim()) {
-      newErrors.firstClassPrice = "Vui lòng nhập giá First Class.";
-    } else if (Number(flightUpdateData.firstClassPrice) <= 0) {
-      newErrors.firstClassPrice = "Giá First Class phải > 0.";
+    if (Number(flightUpdateData.availableFirstClassSeats) > 0) {
+      if (!flightUpdateData.firstClassPrice || Number(flightUpdateData.firstClassPrice) <= 0) {
+        newErrors.firstClassPrice = "Giá First Class phải > 0.";
+      }
     }
 
     if (
@@ -514,10 +553,24 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
 
 
   const handleChange = (field: string, value: any) => {
-    setFlightData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFlightData((prev: any) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      };
+
+      if (field === 'availableEconomySeats' && Number(value) <= 0) {
+        updated.economyPrice = '';
+      }
+      if (field === 'availableBusinessSeats' && Number(value) <= 0) {
+        updated.businessPrice = '';
+      }
+      if (field === 'availableFirstClassSeats' && Number(value) <= 0) {
+        updated.firstClassPrice = '';
+      }
+
+      return updated;
+    });
 
     // Xóa lỗi của field đó khi người dùng nhập lại
     setErrors((prev: any) => {
@@ -529,10 +582,24 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
 
 
   const handleUpdateChange = (field: string, value: any) => {
-    setFlightUpdateData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFlightUpdateData((prev: any) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      };
+
+      if (field === 'availableEconomySeats' && Number(value) <= 0) {
+        updated.economyPrice = '';
+      }
+      if (field === 'availableBusinessSeats' && Number(value) <= 0) {
+        updated.businessPrice = '';
+      }
+      if (field === 'availableFirstClassSeats' && Number(value) <= 0) {
+        updated.firstClassPrice = '';
+      }
+
+      return updated;
+    });
 
     // Xóa lỗi của field đó khi người dùng nhập lại
     setUpdateErrors((prev: any) => {
@@ -555,9 +622,11 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
     }
   };
 
-  const handleAddFlight = (): void => {
+  const handleAddFlight = async (): Promise<void> => {
     const isValid = validateInputs();
     if (!isValid) return; // Dừng nếu có lỗi
+    if (isCreatingFlight) return;
+    setIsCreatingFlight(true);
 
     const formattedData = {
       ...flightData,
@@ -580,30 +649,43 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
       availableFirstClassSeats: Number(flightData.availableFirstClassSeats),
     };
 
-    requestApi("flights", "POST", formattedData).then((res: any) => {
-      console.log("API response:", res);
+    try {
+      const res: any = await requestApi("flights", "POST", formattedData);
+
       if (res.success) {
-        // Backend đã tự động tạo FlightSeats cho tất cả ghế của aircraft
-        alert("Thêm chuyến bay mới thành công!\n\nHệ thống đã tự động tạo trạng thái ghế (FlightSeats) cho tất cả ghế của máy bay này.")
-        clearFlightData()
-        setShowAddModal(false)
-        // Reload danh sách flights để hiển thị flight mới
-        loadFlights()
+        const flightId = res.data?.flightId;
+        const flightSeatResult = await syncFlightSeats(flightId);
+        if (flightSeatResult.success) {
+          showNotification(
+            'success',
+            'Thêm chuyến bay mới thành công',
+            `Đã tạo ${flightSeatResult.data?.count ?? 0} FlightSeat dựa trên cấu hình ghế máy bay.`
+          );
+        } else {
+          showNotification(
+            'warning',
+            'Thêm chuyến bay thành công nhưng chưa tạo được FlightSeat',
+            flightSeatResult.message || 'Vui lòng kiểm tra lại cấu hình ghế.'
+          );
+        }
+        clearFlightData();
+        setShowAddModal(false);
+        loadFlights();
       } else if (res.errorCode === 'FLIGHT_EXISTS') {
-        // alert("chuyến bay đã tồn tại")
         setErrors((prev: any) => ({
           ...prev,
           flightNumber: "Mã chuyến bay đã tồn tại. Vui lòng nhập mã khác.",
         }));
+        showNotification('warning', 'Mã chuyến bay đã tồn tại', 'Vui lòng nhập mã khác.');
       } else {
-        alert("Thêm chuyến bay thất bại: " + (res.message || "Lỗi không xác định"))
+        showNotification('error', 'Thêm chuyến bay thất bại', res.message || 'Lỗi không xác định');
       }
-    }).catch((error: any) => {
+    } catch (error: any) {
       console.error("Error creating flight:", error);
-      alert("Lỗi khi tạo chuyến bay: " + (error.message || "Lỗi không xác định"))
-    })
-
-    // onSubmit(formattedData); // Gọi API từ cha (hoặc bạn có thể dùng requestApi ở đây)
+      showNotification('error', 'Lỗi khi tạo chuyến bay', error.message || 'Lỗi không xác định');
+    } finally {
+      setIsCreatingFlight(false);
+    }
   };
 
   const handleSelectFlightId = (id: string) => {
@@ -657,6 +739,18 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
     }).catch((error: any) => console.log(error))
   }
 
+  const syncFlightSeats = async (flightId?: number) => {
+    if (!flightId) {
+      return { success: false, message: "FlightId không hợp lệ." };
+    }
+    try {
+      return await requestApi(`flight-seats/flight/${flightId}/generate`, "POST");
+    } catch (error: any) {
+      console.error("Error generating flight seats:", error);
+      return { success: false, message: error?.message || "Không thể tạo FlightSeat tự động." };
+    }
+  };
+
 
 
 
@@ -670,9 +764,9 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Tạo chuyến bay mới</h3>
-              <form onSubmit={(e) => {
+              <form onSubmit={async (e) => {
                 e.preventDefault();
-                handleAddFlight();
+                await handleAddFlight();
               }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {/* Airline */}
@@ -902,13 +996,14 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                 <div>
                   <label className="block text-md font-medium text-gray-700 mb-1">Giá Economy (₫)</label>
                   <input
-                    value={flightData.economyPrice ?? ""}
-                    type="number"
-                    min="0"
+                    value={formatCurrencyDisplay(flightData.economyPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditEconomyPrice}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.economyPrice ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder="Nhập giá vé hạng Economy"
-                    onChange={(e) => handleChange('economyPrice', e.target.value)}
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditEconomyPrice ? "Nhập giá vé hạng Economy" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('economyPrice', e.target.value)}
                   />
                   {errors.economyPrice && (
                     <p className="text-red-500 text-sm mt-1">{errors.economyPrice}</p>
@@ -919,13 +1014,14 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                 <div>
                   <label className="block text-md font-medium text-gray-700 mb-1">Giá Business (₫)</label>
                   <input
-                    value={flightData.businessPrice ?? ""}
-                    type="number"
-                    min="0"
+                    value={formatCurrencyDisplay(flightData.businessPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditBusinessPrice}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.businessPrice ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder="Nhập giá vé hạng Business"
-                    onChange={(e) => handleChange('businessPrice', e.target.value)}
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditBusinessPrice ? "Nhập giá vé hạng Business" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('businessPrice', e.target.value)}
                   />
                   {errors.businessPrice && (
                     <p className="text-red-500 text-sm mt-1">{errors.businessPrice}</p>
@@ -936,13 +1032,14 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                 <div>
                   <label className="block text-md font-medium text-gray-700 mb-1">Giá First Class (₫)</label>
                   <input
-                    value={flightData.firstClassPrice ?? ""}
-                    type="number"
-                    min="0"
+                    value={formatCurrencyDisplay(flightData.firstClassPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditFirstClassPrice}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.firstClassPrice ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder="Nhập giá vé hạng First Class"
-                    onChange={(e) => handleChange('firstClassPrice', e.target.value)}
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditFirstClassPrice ? "Nhập giá vé hạng First Class" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('firstClassPrice', e.target.value)}
                   />
                   {errors.firstClassPrice && (
                     <p className="text-red-500 text-sm mt-1">{errors.firstClassPrice}</p>
@@ -1010,9 +1107,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={isCreatingFlight}
+                    className={`px-4 py-2 rounded-lg text-white transition-colors ${isCreatingFlight ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                   >
-                    Tạo chuyến bay
+                    {isCreatingFlight ? 'Đang tạo...' : 'Tạo chuyến bay'}
                   </button>
                 </div>
 
@@ -1148,13 +1246,14 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                 <div>
                   <label className="block text-md font-medium text-gray-700 mb-1">Giá Economy (₫)</label>
                   <input
-                    value={flightUpdateData.economyPrice ?? ""}
-                    type="number"
-                    min="0"
+                    value={formatCurrencyDisplay(flightUpdateData.economyPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditEconomyPriceUpdate}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.economyPrice ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder="Nhập giá vé hạng Economy"
-                    onChange={(e) => handleUpdateChange('economyPrice', e.target.value)}
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditEconomyPriceUpdate ? "Nhập giá vé hạng Economy" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('economyPrice', e.target.value, true)}
                   />
                   {updateErrors.economyPrice && (
                     <p className="text-red-500 text-sm mt-1">{updateErrors.economyPrice}</p>
@@ -1165,13 +1264,14 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                 <div>
                   <label className="block text-md font-medium text-gray-700 mb-1">Giá Business (₫)</label>
                   <input
-                    value={flightUpdateData.businessPrice ?? ""}
-                    type="number"
-                    min="0"
+                    value={formatCurrencyDisplay(flightUpdateData.businessPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditBusinessPriceUpdate}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.businessPrice ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder="Nhập giá vé hạng Business"
-                    onChange={(e) => handleUpdateChange('businessPrice', e.target.value)}
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditBusinessPriceUpdate ? "Nhập giá vé hạng Business" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('businessPrice', e.target.value, true)}
                   />
                   {updateErrors.businessPrice && (
                     <p className="text-red-500 text-sm mt-1">{updateErrors.businessPrice}</p>
@@ -1182,13 +1282,14 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                 <div>
                   <label className="block text-md font-medium text-gray-700 mb-1">Giá First Class (₫)</label>
                   <input
-                    value={flightUpdateData.firstClassPrice ?? ""}
-                    type="number"
-                    min="0"
+                    value={formatCurrencyDisplay(flightUpdateData.firstClassPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditFirstClassPriceUpdate}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.firstClassPrice ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder="Nhập giá vé hạng First Class"
-                    onChange={(e) => handleUpdateChange('firstClassPrice', e.target.value)}
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditFirstClassPriceUpdate ? "Nhập giá vé hạng First Class" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('firstClassPrice', e.target.value, true)}
                   />
                   {updateErrors.firstClassPrice && (
                     <p className="text-red-500 text-sm mt-1">{updateErrors.firstClassPrice}</p>
@@ -1622,9 +1723,9 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className=" bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh]">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm chuyến bay mới</h3>
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
-              handleAddFlight();
+              await handleAddFlight();
             }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
               {/* Airline */}
@@ -1962,9 +2063,10 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  disabled={isCreatingFlight}
+                  className={`px-4 py-2 rounded-lg text-white transition-colors ${isCreatingFlight ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                 >
-                  Tạo chuyến bay
+                  {isCreatingFlight ? 'Đang tạo...' : 'Tạo chuyến bay'}
                 </button>
               </div>
 

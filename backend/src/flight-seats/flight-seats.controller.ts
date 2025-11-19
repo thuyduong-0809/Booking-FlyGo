@@ -1,9 +1,9 @@
-import { Controller, Get, Param, Put, Body } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { FlightSeatsService } from 'src/flight-seats/flight-seats.service';
 
 @Controller('flight-seats')
 export class FlightSeatsController {
-  constructor(private readonly flightSeatsService: FlightSeatsService) {}
+  constructor(private readonly flightSeatsService: FlightSeatsService) { }
 
   @Get('flight/:flightId')
   async findByFlight(@Param('flightId') flightId: number) {
@@ -33,6 +33,16 @@ export class FlightSeatsController {
     @Body('isAvailable') isAvailable: boolean,
   ) {
     return this.flightSeatsService.updateAvailability(flightId, seatId, isAvailable);
+  }
+
+  @Post('flight/:flightId/generate')
+  async generateFlightSeats(@Param('flightId') flightId: number) {
+    return this.flightSeatsService.createFlightSeatsForFlight(Number(flightId));
+  }
+
+  @Post('reset-auto-increment')
+  async resetAutoIncrement() {
+    return this.flightSeatsService.resetFlightSeatAutoIncrement();
   }
 }
 

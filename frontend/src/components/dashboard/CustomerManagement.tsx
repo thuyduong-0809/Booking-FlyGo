@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { 
+import {
   UserGroupIcon,
   PlusIcon,
   PencilIcon,
@@ -107,7 +107,7 @@ export default function CustomerManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [membershipFilter, setMembershipFilter] = useState('');
-  const [customers,setCustomers] = useState([])
+  const [customers, setCustomers] = useState([])
 
   const getStatusColor = (isActive: boolean) => {
     return isActive ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
@@ -127,39 +127,37 @@ export default function CustomerManagement() {
     return isActive ? 'Hoạt động' : 'Không hoạt động';
   };
 
-  const filteredCustomers = customers.filter((customer:any) => {
+  const filteredCustomers = customers.filter((customer: any) => {
     const matchesSearch = customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        //  customer.phone.toString().includes(searchTerm) ||
-                         customer.userId.toString().includes(searchTerm);
+      customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      //  customer.phone.toString().includes(searchTerm) ||
+      customer.userId.toString().includes(searchTerm);
     const matchesStatus = !statusFilter || (statusFilter === 'Active' ? customer.isActive : !customer.isActive);
     const matchesMembership = !membershipFilter || customer.loyaltyTier === membershipFilter;
     return matchesSearch && matchesStatus && matchesMembership;
   });
 
-  useEffect(()=>{
-      loadCustomers()
-      loadBookings()
+  useEffect(() => {
+    loadCustomers()
+    loadBookings()
 
-  },[])
+  }, [])
 
   const loadCustomers = async () => {
     await requestApi("users/customers", "GET").then((res: any) => {
-      // console.log("res",res);
       if (res.success) {
-         setCustomers(res.data)
+        setCustomers(res.data)
       }
     }).catch((error: any) => {
       console.error(error)
     });
   }
 
-  const [bookings,setBookings] = useState([])
-    const loadBookings = async () => {
+  const [bookings, setBookings] = useState([])
+  const loadBookings = async () => {
     await requestApi("bookings", "GET").then((res: any) => {
-      // console.log("res",res);
       if (res.success) {
-         setBookings(res.data)
+        setBookings(res.data)
       }
     }).catch((error: any) => {
       console.error(error)
@@ -167,18 +165,18 @@ export default function CustomerManagement() {
   }
 
   const [customerData, setCustomerData] = useState({
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  passwordHash: "",
-  confirmPassword: "",
-  dateOfBirth: "",
-  loyaltyTier: "Standard",
-  isActive:true
-});
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    passwordHash: "",
+    confirmPassword: "",
+    dateOfBirth: "",
+    loyaltyTier: "Standard",
+    isActive: true
+  });
 
-  const clearData = () =>{
+  const clearData = () => {
     setCustomerData({
       firstName: "",
       lastName: "",
@@ -188,28 +186,28 @@ export default function CustomerManagement() {
       confirmPassword: "",
       dateOfBirth: "",
       loyaltyTier: "Standard",
-      isActive:true,
+      isActive: true,
     })
-    
+
   }
 
   const [customerUpdateData, setCustomerUpdateData] = useState({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      passwordHash: "",
-      confirmPassword: "",
-      dateOfBirth: "",
-      loyaltyTier: "Standard",
-      isActive:true
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    passwordHash: "",
+    confirmPassword: "",
+    dateOfBirth: "",
+    loyaltyTier: "Standard",
+    isActive: true
   })
 
-const [selectedId,setSelectedId]= useState(0)
+  const [selectedId, setSelectedId] = useState(0)
 
-const [errors, setErrors] = useState<any>({});
-const [UpdateErrors, setUpdateErrors] = useState<any>({});
-const validateCustomerInputs = () => {
+  const [errors, setErrors] = useState<any>({});
+  const [UpdateErrors, setUpdateErrors] = useState<any>({});
+  const validateCustomerInputs = () => {
     const newErrors: any = {};
 
     // --- Họ và tên ---
@@ -272,47 +270,47 @@ const validateCustomerInputs = () => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; 
+    return Object.keys(newErrors).length === 0;
   };
-  
-  const addCustomer = ()=>{
-    if(!validateCustomerInputs()) return
-    requestApi("users","POST",customerData).then((res:any)=>{
-        if(res.success){
-           alert('Thêm khách hàng thành công!')
-           setShowAddModal(false)
-           setErrors({})
-           clearData()
-           loadCustomers()
-           
-        }
-    }).catch((err:any)=>{
-        console.error(err)
+
+  const addCustomer = () => {
+    if (!validateCustomerInputs()) return
+    requestApi("users", "POST", customerData).then((res: any) => {
+      if (res.success) {
+        alert('Thêm khách hàng thành công!')
+        setShowAddModal(false)
+        setErrors({})
+        clearData()
+        loadCustomers()
+
+      }
+    }).catch((err: any) => {
+      console.error(err)
     })
   }
 
-    const handleSelectCustomerId = (id: string) => {
-      requestApi(`users/${id}`, "GET").then((res: any) => {
-        if (res.success)
-          setCustomerUpdateData(res.data)
-          setSelectedId(Number(id))
-      }).catch((err: any) => {
-        console.error(err)
-      })
-    }
+  const handleSelectCustomerId = (id: string) => {
+    requestApi(`users/${id}`, "GET").then((res: any) => {
+      if (res.success)
+        setCustomerUpdateData(res.data)
+      setSelectedId(Number(id))
+    }).catch((err: any) => {
+      console.error(err)
+    })
+  }
 
-    const updateCustomer = ()=>{
+  const updateCustomer = () => {
     // if(!validateCustomerInputs()) return
-    requestApi(`users/${String(selectedId)}`,"PUT",customerUpdateData).then((res:any)=>{
-        if(res.success){
-           alert('Cập nhật khách hàng thành công!')
-           setShowUpdateModal(false)
-           loadCustomers()
-          //  clearData()
-           
-        }
-    }).catch((err:any)=>{
-        console.error(err)
+    requestApi(`users/${String(selectedId)}`, "PUT", customerUpdateData).then((res: any) => {
+      if (res.success) {
+        alert('Cập nhật khách hàng thành công!')
+        setShowUpdateModal(false)
+        loadCustomers()
+        //  clearData()
+
+      }
+    }).catch((err: any) => {
+      console.error(err)
     })
 
 
@@ -325,17 +323,17 @@ const validateCustomerInputs = () => {
     setIsDeleteConfirmOpen(true);
   };
 
-  const deleteCustomer =(id: string): void=>{
-    requestApi(`users/${id}`,"DELETE").then((res:any)=>{
-        if(res.success){
-           alert('xóa khách hàng thành công!')
-          //  setIsDeleteConfirmOpen(false)
-           loadCustomers()
-          //  clearData()
-           
-        }
-    }).catch((err:any)=>{
-        console.error(err)
+  const deleteCustomer = (id: string): void => {
+    requestApi(`users/${id}`, "DELETE").then((res: any) => {
+      if (res.success) {
+        alert('xóa khách hàng thành công!')
+        //  setIsDeleteConfirmOpen(false)
+        loadCustomers()
+        //  clearData()
+
+      }
+    }).catch((err: any) => {
+      console.error(err)
     })
 
   }
@@ -356,7 +354,7 @@ const validateCustomerInputs = () => {
           <PlusIcon className="h-5 w-5 mr-2" />
           Thêm khách hàng
         </button>
-        
+
       </div>
 
       {/* Stats Cards */}
@@ -380,7 +378,7 @@ const validateCustomerInputs = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Hoạt động</p>
               <p className="text-2xl font-bold text-gray-900">
-                {customers.filter((c:any) => c.isActive === true).length}
+                {customers.filter((c: any) => c.isActive === true).length}
               </p>
             </div>
           </div>
@@ -393,7 +391,7 @@ const validateCustomerInputs = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Thành viên VIP</p>
               <p className="text-2xl font-bold text-gray-900">
-                {customers.filter((c:any) => c.loyaltyTier === 'Gold' || c.loyaltyTier === 'Platinum').length}
+                {customers.filter((c: any) => c.loyaltyTier === 'Gold' || c.loyaltyTier === 'Platinum').length}
               </p>
             </div>
           </div>
@@ -427,7 +425,7 @@ const validateCustomerInputs = () => {
               className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
             />
           </div>
-          <select 
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -437,7 +435,7 @@ const validateCustomerInputs = () => {
             <option value="Inactive">Không hoạt động</option>
             <option value="Blocked">Bị khóa</option>
           </select>
-          <select 
+          <select
             value={membershipFilter}
             onChange={(e) => setMembershipFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -484,7 +482,7 @@ const validateCustomerInputs = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCustomers.map((customer:any) => (
+              {filteredCustomers.map((customer: any) => (
                 <tr key={customer.userId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -534,10 +532,10 @@ const validateCustomerInputs = () => {
                         <EyeIcon className="h-5 w-5" />
                       </button>
                       <button className="text-green-600 hover:text-green-900"
-                      onClick={()=>{setShowUpdateModal(true),handleSelectCustomerId(customer.userId)}}>
+                        onClick={() => { setShowUpdateModal(true), handleSelectCustomerId(customer.userId) }}>
                         <PencilIcon className="h-5 w-5" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900" onClick={()=>confirmDelete(customer.userId)}>
+                      <button className="text-red-600 hover:text-red-900" onClick={() => confirmDelete(customer.userId)}>
                         <TrashIcon className="h-5 w-5" />
                       </button>
 
@@ -546,50 +544,50 @@ const validateCustomerInputs = () => {
                   </td>
                 </tr>
               ))}
-                  <Dialog
-                      open={isDeleteConfirmOpen}
-                      onClose={() => setIsDeleteConfirmOpen(false)}
-                      className="relative z-50"
-                    >
-                      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-                      <div className="fixed inset-0 flex items-center justify-center p-4">
-                        <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
-                          <div className="flex justify-between items-center mb-3">
-                            <Dialog.Title className="text-lg font-semibold text-gray-800">
-                              Xác nhận xóa
-                            </Dialog.Title>
-                            <button onClick={() => setIsDeleteConfirmOpen(false)}>
-                              <XMarkIcon className="h-5 w-5 text-gray-500" />
-                            </button>
-                          </div>
+              <Dialog
+                open={isDeleteConfirmOpen}
+                onClose={() => setIsDeleteConfirmOpen(false)}
+                className="relative z-50"
+              >
+                <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+                <div className="fixed inset-0 flex items-center justify-center p-4">
+                  <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
+                    <div className="flex justify-between items-center mb-3">
+                      <Dialog.Title className="text-lg font-semibold text-gray-800">
+                        Xác nhận xóa
+                      </Dialog.Title>
+                      <button onClick={() => setIsDeleteConfirmOpen(false)}>
+                        <XMarkIcon className="h-5 w-5 text-gray-500" />
+                      </button>
+                    </div>
 
-                          <p className="text-gray-600 mb-5">
-                            Bạn có chắc muốn xóa khách hàng này không?
-                          </p>
+                    <p className="text-gray-600 mb-5">
+                      Bạn có chắc muốn xóa khách hàng này không?
+                    </p>
 
-                          <div className="flex justify-end space-x-3">
-                            <button
-                              onClick={() => setIsDeleteConfirmOpen(false)}
-                              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                            >
-                              Hủy
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (customerToDelete) {
-                                  deleteCustomer(customerToDelete.toString());
-                                  setIsDeleteConfirmOpen(false);
-                                  console.error('customerToDelete',customerToDelete)
-                                }
-                              }}
-                              className="px-3 py-1 bg-red-600 text-white ``rounded hover:bg-red-700"
-                            >
-                              Xóa
-                            </button>
-                          </div>
-                        </Dialog.Panel>
-                      </div>
-                    </Dialog>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => setIsDeleteConfirmOpen(false)}
+                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (customerToDelete) {
+                            deleteCustomer(customerToDelete.toString());
+                            setIsDeleteConfirmOpen(false);
+                            console.error('customerToDelete', customerToDelete)
+                          }
+                        }}
+                        className="px-3 py-1 bg-red-600 text-white ``rounded hover:bg-red-700"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </div>
+              </Dialog>
             </tbody>
           </table>
         </div>
@@ -600,183 +598,174 @@ const validateCustomerInputs = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm khách hàng mới</h3>
-                <form className="space-y-4" onSubmit={(e)=>{
-                  e.preventDefault()
-                  addCustomer()
-                }}>
-                  {/* Họ và tên */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Họ</label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={customerData.firstName ?? ""}
-                        onChange={(e) => setCustomerData({ ...customerData, firstName: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.firstName ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Họ"
-                      />
-                      {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
-                    </div>
+            <form className="space-y-4" onSubmit={(e) => {
+              e.preventDefault()
+              addCustomer()
+            }}>
+              {/* Họ và tên */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Họ</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={customerData.firstName ?? ""}
+                    onChange={(e) => setCustomerData({ ...customerData, firstName: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.firstName ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="Họ"
+                  />
+                  {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+                </div>
 
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Tên</label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={customerData.lastName}
-                        onChange={(e) => setCustomerData({ ...customerData, lastName: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.lastName ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Tên đệm và tên"
-                      />
-                      {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Tên</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={customerData.lastName}
+                    onChange={(e) => setCustomerData({ ...customerData, lastName: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.lastName ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="Tên đệm và tên"
+                  />
+                  {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                </div>
+              </div>
 
-                  {/* Email và số điện thoại */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={customerData.email}
-                        onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.email ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="simpleuser@example.com"
-                      />
-                      {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                    </div>
+              {/* Email và số điện thoại */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={customerData.email}
+                    onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.email ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="simpleuser@example.com"
+                  />
+                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                </div>
 
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={customerData.phone}
-                        onChange={(e) => setCustomerData({ ...customerData, phone: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.phone ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Nhập số điện thoại"
-                      />
-                      {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={customerData.phone}
+                    onChange={(e) => setCustomerData({ ...customerData, phone: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.phone ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="Nhập số điện thoại"
+                  />
+                  {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                </div>
+              </div>
 
-                  {/* Mật khẩu và xác nhận mật khẩu */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Mật khẩu</label>
-                      <input
-                        type="password"
-                        name="passwordHash"
-                        value={customerData.passwordHash}
-                        onChange={(e) => setCustomerData({ ...customerData, passwordHash: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.passwordHash ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Nhập mật khẩu"
-                      />
-                      {errors.passwordHash && <p className="text-red-500 text-sm mt-1">{errors.passwordHash}</p>}
-                    </div>
+              {/* Mật khẩu và xác nhận mật khẩu */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Mật khẩu</label>
+                  <input
+                    type="password"
+                    name="passwordHash"
+                    value={customerData.passwordHash}
+                    onChange={(e) => setCustomerData({ ...customerData, passwordHash: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.passwordHash ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="Nhập mật khẩu"
+                  />
+                  {errors.passwordHash && <p className="text-red-500 text-sm mt-1">{errors.passwordHash}</p>}
+                </div>
 
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Xác nhận mật khẩu</label>
-                      <input
-                        type="password"
-                        name="confirmPassword"
-                        value={customerData.confirmPassword}
-                        onChange={(e) => setCustomerData({ ...customerData, confirmPassword: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Nhập lại mật khẩu"
-                      />
-                      {errors.confirmPassword && (
-                        <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
-                      )}
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Xác nhận mật khẩu</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={customerData.confirmPassword}
+                    onChange={(e) => setCustomerData({ ...customerData, confirmPassword: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="Nhập lại mật khẩu"
+                  />
+                  {errors.confirmPassword && (
+                    <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                  )}
+                </div>
+              </div>
 
-                  {/* Ngày sinh và hạng thành viên */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Ngày sinh</label>
-                      <input
-                        type="date"
-                        name="dateOfBirth"
-                        value={customerData.dateOfBirth}
-                        onChange={(e) => setCustomerData({ ...customerData, dateOfBirth: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.dateOfBirth ? "border-red-500" : "border-gray-300"
-                        }`}
-                      />
-                      {errors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth}</p>}
-                    </div>
+              {/* Ngày sinh và hạng thành viên */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Ngày sinh</label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={customerData.dateOfBirth}
+                    onChange={(e) => setCustomerData({ ...customerData, dateOfBirth: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.dateOfBirth ? "border-red-500" : "border-gray-300"
+                      }`}
+                  />
+                  {errors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth}</p>}
+                </div>
 
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Hạng thành viên</label>
-                      <select
-                        name="loyaltyTier"
-                        value={customerData.loyaltyTier}
-                        onChange={(e) => setCustomerData({ ...customerData, loyaltyTier: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.loyaltyTier ? "border-red-500" : "border-gray-300"
-                        }`}
-                      >
-                        <option value="Standard">Standard</option>
-                        <option value="Silver">Silver</option>
-                        <option value="Gold">Gold</option>
-                        <option value="Platinum">Platinum</option>
-                      </select>
-                      {errors.loyaltyTier && <p className="text-red-500 text-sm mt-1">{errors.loyaltyTier}</p>}
-                    </div>
-                     <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
-                      <select
-                        name="isActive"
-                        value={customerData.isActive ? "true" : "false"}
-                        onChange={(e) =>
-                        setCustomerData({
-                          ...customerData,
-                          isActive: e.target.value === "true", // ép kiểu boolean
-                        })
-                      }
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.isActive ? "border-red-500" : "border-gray-300"
-                        }`}
-                      >
-                        <option value="false">Không hoạt động</option>
-                        <option value="true">Hoạt động</option>
-                      </select>
-                      {errors.isActive && <p className="text-red-500 text-sm mt-1">{errors.isActive}</p>}
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Hạng thành viên</label>
+                  <select
+                    name="loyaltyTier"
+                    value={customerData.loyaltyTier}
+                    onChange={(e) => setCustomerData({ ...customerData, loyaltyTier: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.loyaltyTier ? "border-red-500" : "border-gray-300"
+                      }`}
+                  >
+                    <option value="Standard">Standard</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Platinum">Platinum</option>
+                  </select>
+                  {errors.loyaltyTier && <p className="text-red-500 text-sm mt-1">{errors.loyaltyTier}</p>}
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <select
+                    name="isActive"
+                    value={customerData.isActive ? "true" : "false"}
+                    onChange={(e) =>
+                      setCustomerData({
+                        ...customerData,
+                        isActive: e.target.value === "true", // ép kiểu boolean
+                      })
+                    }
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.isActive ? "border-red-500" : "border-gray-300"
+                      }`}
+                  >
+                    <option value="false">Không hoạt động</option>
+                    <option value="true">Hoạt động</option>
+                  </select>
+                  {errors.isActive && <p className="text-red-500 text-sm mt-1">{errors.isActive}</p>}
+                </div>
+              </div>
 
-                  {/* Nút hành động */}
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {setShowAddModal(false),setErrors({})}}
-                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Thêm khách hàng
-                    </button>
-                  </div>
-                </form>
+              {/* Nút hành động */}
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => { setShowAddModal(false), setErrors({}) }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Thêm khách hàng
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
@@ -784,84 +773,80 @@ const validateCustomerInputs = () => {
 
 
 
-    {/* Update Customer Modal */}
+      {/* Update Customer Modal */}
       {showUpdateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Cập nhật thông tin khách hàng</h3>
-                <form className="space-y-4" onSubmit={(e)=>{
-                  e.preventDefault()
-                  updateCustomer()
-                }}>
-                  {/* Họ và tên */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Họ</label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={customerUpdateData.firstName ?? ""}
-                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, firstName: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          UpdateErrors.firstName ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Họ"
-                      />
-                      {UpdateErrors.firstName && <p className="text-red-500 text-sm mt-1">{UpdateErrors.firstName}</p>}
-                    </div>
+            <form className="space-y-4" onSubmit={(e) => {
+              e.preventDefault()
+              updateCustomer()
+            }}>
+              {/* Họ và tên */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Họ</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={customerUpdateData.firstName ?? ""}
+                    onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, firstName: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${UpdateErrors.firstName ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="Họ"
+                  />
+                  {UpdateErrors.firstName && <p className="text-red-500 text-sm mt-1">{UpdateErrors.firstName}</p>}
+                </div>
 
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Tên</label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={customerUpdateData.lastName}
-                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, lastName: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          UpdateErrors.lastName ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Tên đệm và tên"
-                      />
-                      {UpdateErrors.lastName && <p className="text-red-500 text-sm mt-1">{UpdateErrors.lastName}</p>}
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Tên</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={customerUpdateData.lastName}
+                    onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, lastName: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${UpdateErrors.lastName ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="Tên đệm và tên"
+                  />
+                  {UpdateErrors.lastName && <p className="text-red-500 text-sm mt-1">{UpdateErrors.lastName}</p>}
+                </div>
+              </div>
 
-                  {/* Email và số điện thoại */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
-                      <input
-                        readOnly
-                        type="email"
-                        name="email"
-                        value={customerUpdateData.email}
-                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, email: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          UpdateErrors.email ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="simpleuser@example.com"
-                      />
-                      {UpdateErrors.email && <p className="text-red-500 text-sm mt-1">{UpdateErrors.email}</p>}
-                    </div>
+              {/* Email và số điện thoại */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    readOnly
+                    type="email"
+                    name="email"
+                    value={customerUpdateData.email}
+                    onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, email: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${UpdateErrors.email ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="simpleuser@example.com"
+                  />
+                  {UpdateErrors.email && <p className="text-red-500 text-sm mt-1">{UpdateErrors.email}</p>}
+                </div>
 
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={customerUpdateData.phone}
-                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, phone: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                         UpdateErrors.phone ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Nhập số điện thoại"
-                      />
-                      {UpdateErrors.phone && <p className="text-red-500 text-sm mt-1">{UpdateErrors.phone}</p>}
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={customerUpdateData.phone}
+                    onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, phone: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${UpdateErrors.phone ? "border-red-500" : "border-gray-300"
+                      }`}
+                    placeholder="Nhập số điện thoại"
+                  />
+                  {UpdateErrors.phone && <p className="text-red-500 text-sm mt-1">{UpdateErrors.phone}</p>}
+                </div>
+              </div>
 
-                  {/* Mật khẩu và xác nhận mật khẩu */}
-                  {/* <div className="grid grid-cols-2 gap-4">
+              {/* Mật khẩu và xác nhận mật khẩu */}
+              {/* <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-md font-medium text-gray-700 mb-1">Mật khẩu</label>
                       <input
@@ -895,79 +880,76 @@ const validateCustomerInputs = () => {
                     </div>
                   </div> */}
 
-                  {/* Ngày sinh và hạng thành viên */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Ngày sinh</label>
-                      <input
-                        type="date"
-                        name="dateOfBirth"
-                        value={customerUpdateData.dateOfBirth}
-                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, dateOfBirth: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                         UpdateErrors.dateOfBirth ? "border-red-500" : "border-gray-300"
-                        }`}
-                      />
-                      {UpdateErrors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{UpdateErrors.dateOfBirth}</p>}
-                    </div>
+              {/* Ngày sinh và hạng thành viên */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Ngày sinh</label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={customerUpdateData.dateOfBirth}
+                    onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, dateOfBirth: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${UpdateErrors.dateOfBirth ? "border-red-500" : "border-gray-300"
+                      }`}
+                  />
+                  {UpdateErrors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{UpdateErrors.dateOfBirth}</p>}
+                </div>
 
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Hạng thành viên</label>
-                      <select
-                        name="loyaltyTier"
-                        value={customerUpdateData.loyaltyTier}
-                        onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, loyaltyTier: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          UpdateErrors.loyaltyTier ? "border-red-500" : "border-gray-300"
-                        }`}
-                      >
-                        <option value="Standard">Standard</option>
-                        <option value="Silver">Silver</option>
-                        <option value="Gold">Gold</option>
-                        <option value="Platinum">Platinum</option>
-                      </select>
-                      {UpdateErrors.loyaltyTier && <p className="text-red-500 text-sm mt-1">{UpdateErrors.loyaltyTier}</p>}
-                    </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Hạng thành viên</label>
+                  <select
+                    name="loyaltyTier"
+                    value={customerUpdateData.loyaltyTier}
+                    onChange={(e) => setCustomerUpdateData({ ...customerUpdateData, loyaltyTier: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${UpdateErrors.loyaltyTier ? "border-red-500" : "border-gray-300"
+                      }`}
+                  >
+                    <option value="Standard">Standard</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Platinum">Platinum</option>
+                  </select>
+                  {UpdateErrors.loyaltyTier && <p className="text-red-500 text-sm mt-1">{UpdateErrors.loyaltyTier}</p>}
+                </div>
 
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
-                      <select
-                        name="isActive"
-                        value={customerUpdateData.isActive ? "true" : "false"}
-                        onChange={(e) =>
-                        setCustomerUpdateData({
-                          ...customerUpdateData,
-                          isActive: e.target.value === "true", // ép kiểu boolean
-                        })
-                      }
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                          UpdateErrors.isActive ? "border-red-500" : "border-gray-300"
-                        }`}
-                      >
-                        <option value="false">Không hoạt động</option>
-                        <option value="true">Hoạt động</option>
-                      </select>
-                      {UpdateErrors.isActive && <p className="text-red-500 text-sm mt-1">{UpdateErrors.isActive}</p>}
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <select
+                    name="isActive"
+                    value={customerUpdateData.isActive ? "true" : "false"}
+                    onChange={(e) =>
+                      setCustomerUpdateData({
+                        ...customerUpdateData,
+                        isActive: e.target.value === "true", // ép kiểu boolean
+                      })
+                    }
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${UpdateErrors.isActive ? "border-red-500" : "border-gray-300"
+                      }`}
+                  >
+                    <option value="false">Không hoạt động</option>
+                    <option value="true">Hoạt động</option>
+                  </select>
+                  {UpdateErrors.isActive && <p className="text-red-500 text-sm mt-1">{UpdateErrors.isActive}</p>}
+                </div>
+              </div>
 
-                  {/* Nút hành động */}
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowUpdateModal(false)}
-                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Cập nhật
-                    </button>
-                  </div>
-                </form>
+              {/* Nút hành động */}
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowUpdateModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Cập nhật
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
