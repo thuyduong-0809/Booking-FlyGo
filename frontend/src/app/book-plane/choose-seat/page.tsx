@@ -271,9 +271,41 @@ export default function ChooseSeatPage() {
         return: null
     });
     const selectedSeatsRef = useRef(selectedSeatsByLeg);
+    const seatToggleOpenedRef = useRef(false);
     useEffect(() => {
         selectedSeatsRef.current = selectedSeatsByLeg;
     }, [selectedSeatsByLeg]);
+
+    const resetSeatSelectionFlags = (seatList: Seat[]) => {
+        let hasChange = false;
+        const updatedList = seatList.map(seat => {
+            if (!seat.isSelected) return seat;
+            hasChange = true;
+            return { ...seat, isSelected: false };
+        });
+        return hasChange ? updatedList : seatList;
+    };
+
+    const clearAllSeatSelections = () => {
+        setSelectedSeatsByLeg({ departure: [], return: [] });
+        selectedSeatsRef.current = { departure: [], return: [] };
+        setSeats(prev => (prev.length === 0 ? prev : resetSeatSelectionFlags(prev)));
+
+        (['departure', 'return'] as SeatLegKey[]).forEach(legKey => {
+            const cachedSeats = seatCacheRef.current[legKey] || [];
+            if (cachedSeats.length > 0) {
+                seatCacheRef.current[legKey] = resetSeatSelectionFlags(cachedSeats);
+            }
+        });
+
+        if (typeof window !== 'undefined') {
+            try {
+                window.localStorage.removeItem('selectedSeats');
+            } catch (error) {
+                console.error('Không thể xóa selectedSeats khỏi localStorage:', error);
+            }
+        }
+    };
 
     const seatSelectionLimit = Math.max(1, totalAdults + totalChildren || 0);
 
@@ -552,16 +584,22 @@ export default function ChooseSeatPage() {
         }
     }, [isOneWay]);
 
-    const handleSeatModalOpen = () => {
+    const handleSeatModalOpen = (openedFromSeatToggle: boolean = false) => {
         if (legInfos.length > 0) {
             setActiveLegKey(legInfos[0].key);
         }
         setSeatLimitMessage('');
+        seatToggleOpenedRef.current = openedFromSeatToggle;
         setSeatModalOpen(true);
     };
 
     const handleSeatModalClose = () => {
         setSeatModalOpen(false);
+        if (seatToggleOpenedRef.current) {
+            toggleService('seat-selection', false);
+        }
+        seatToggleOpenedRef.current = false;
+        setSeatLimitMessage('');
     };
 
     const handleSeatModalConfirm = () => {
@@ -577,6 +615,9 @@ export default function ChooseSeatPage() {
             setSeatLimitMessage(`Vui lòng chọn ghế cho ${currentLegLabel.toLowerCase()}.`);
             return;
         }
+
+        toggleService('seat-selection', true);
+        seatToggleOpenedRef.current = false;
 
         // Lưu ghế đã chọn vào localStorage để sử dụng sau khi thanh toán
         try {
@@ -626,13 +667,20 @@ export default function ChooseSeatPage() {
         setSeatModalOpen(false);
     };
 
-    const toggleService = (serviceId: string) => {
+    const toggleService = (serviceId: string, nextState?: boolean) => {
+        let seatServiceTurnedOff = false;
+
         setServices(prev => {
-            const updatedServices = prev.map(service =>
-                service.id === serviceId
-                    ? { ...service, isSelected: !service.isSelected }
-                    : service
-            );
+            const updatedServices = prev.map(service => {
+                if (service.id !== serviceId) {
+                    return service;
+                }
+                const targetState = typeof nextState === 'boolean' ? nextState : !service.isSelected;
+                if (service.id === 'seat-selection' && service.isSelected && !targetState) {
+                    seatServiceTurnedOff = true;
+                }
+                return { ...service, isSelected: targetState };
+            });
 
             // Cập nhật context với dịch vụ đã chọn
             const selectedServices = updatedServices
@@ -648,6 +696,11 @@ export default function ChooseSeatPage() {
 
             return updatedServices;
         });
+
+        if (seatServiceTurnedOff) {
+            seatToggleOpenedRef.current = false;
+            clearAllSeatSelections();
+        }
     };
 
     const toggleSection = (sectionId: string) => {
@@ -699,24 +752,29 @@ export default function ChooseSeatPage() {
         }
     };
 
-    const seatDetailsByLegText = legInfos
-        .map(leg => {
-            const seatsForLeg = selectedSeatsByLeg[leg.key] || [];
-            if (seatsForLeg.length === 0) return '';
-            const labels = seatsForLeg.map(seat => seat.seatNumber || `${seat.row}${seat.column}`).join(', ');
-            return `${leg.label}: ${labels}`;
-        })
-        .filter(Boolean)
-        .join(' | ');
-    const seatServiceDetails = seatDetailsByLegText || seatRouteDetails;
+    const seatDetailsByLegText = useMemo(() => {
+        return legInfos
+            .map(leg => {
+                const seatsForLeg = selectedSeatsByLeg[leg.key] || [];
+                if (seatsForLeg.length === 0) return null;
+                const labels = seatsForLeg.map(seat => seat.seatNumber || `${seat.row}${seat.column}`).join(', ');
+                return `${leg.label}: ${labels}`;
+            })
+            .filter(Boolean)
+            .join(' | ');
+    }, [legInfos, selectedSeatsByLeg]);
+
+    const seatServiceDetails = useMemo(() => {
+        if (seatDetailsByLegText && seatDetailsByLegText.trim() !== '') {
+            return seatDetailsByLegText;
+        }
+        return seatRouteDetails;
+    }, [seatDetailsByLegText, seatRouteDetails]);
 
     useEffect(() => {
         setServices(prev =>
             prev.map(service => {
                 if (service.id !== 'seat-selection') return service;
-                if (service.details === seatServiceDetails) {
-                    return service;
-                }
                 return { ...service, details: seatServiceDetails };
             })
         );
@@ -835,27 +893,39 @@ export default function ChooseSeatPage() {
                                             {service.description && (
                                                 <p className="text-sm text-black mt-1">{service.description}</p>
                                             )}
-                                            {service.details && (
-                                                <div className="mt-2 text-sm text-black">
-                                                    <div className="flex items-center space-x-1">
-                                                        <span>{service.details}</span>
-                                                    </div>
+                                            {service.details && !(isSeatService && !service.isSelected) && (
+                                                <div className="mt-2">
+                                                    {isSeatService && service.isSelected && seatDetailsByLegText && seatDetailsByLegText.trim() !== '' ? (
+                                                        <div className="space-y-2">
+                                                            <div className="text-xs font-semibold text-gray-500 uppercase">Ghế đã chọn:</div>
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                {legInfos.map(leg => {
+                                                                    const seatsForLeg = selectedSeatsByLeg[leg.key] || [];
+                                                                    if (seatsForLeg.length === 0) return null;
+                                                                    return (
+                                                                        <div key={leg.key} className="flex items-center gap-2 flex-wrap">
+                                                                            <span className="text-xs font-medium text-gray-600">{leg.label}:</span>
+                                                                            <div className="flex flex-wrap gap-1">
+                                                                                {seatsForLeg.map(seat => (
+                                                                                    <span
+                                                                                        key={seat.id}
+                                                                                        className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-semibold border border-blue-200"
+                                                                                    >
+                                                                                        {seat.seatNumber || `${seat.row}${seat.column}`}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-sm text-black">
+                                                            <span>{service.details}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                            {isSeatService && (
-                                                <button
-                                                    type="button"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        handleSeatModalOpen();
-                                                    }}
-                                                    className="mt-3 inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
-                                                >
-                                                    Mở sơ đồ ghế
-                                                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                    </svg>
-                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -868,6 +938,16 @@ export default function ChooseSeatPage() {
                                         <button
                                             onClick={(event) => {
                                                 event.stopPropagation();
+                                                if (isSeatService) {
+                                                    const nextState = !service.isSelected;
+                                                    toggleService(service.id, nextState);
+                                                    if (nextState) {
+                                                        handleSeatModalOpen(true);
+                                                    } else {
+                                                        seatToggleOpenedRef.current = false;
+                                                    }
+                                                    return;
+                                                }
                                                 toggleService(service.id);
                                             }}
                                             className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${service.isSelected
