@@ -111,6 +111,33 @@ export default function PaymentSuccessPage() {
         }
     };
 
+    // Hàm tính baggageAllowance dựa trên travelClass
+    // Theo yêu cầu: eco là 7kg, business là 14kg, firstclass là 16kg
+    const getBaggageAllowance = (travelClass: 'Economy' | 'Business' | 'First'): number => {
+        switch (travelClass) {
+            case 'First':
+                return 16; // 16kg cho First Class (theo yêu cầu)
+            case 'Business':
+                return 14; // 14kg cho Business
+            case 'Economy':
+                return 7; // 7kg cho Economy
+            default:
+                return 7; // Mặc định 7kg
+        }
+    };
+
+    // Hàm map travelClass từ fare name sang database enum
+    const mapTravelClass = (travelClassName: string): 'Economy' | 'Business' | 'First' => {
+        const className = travelClassName?.toUpperCase();
+        if (className === 'FIRST CLASS' || className === 'FIST CLASS') {
+            return 'First';
+        } else if (className === 'BUSSINESS' || className === 'BUSINESS') {
+            return 'Business';
+        } else {
+            return 'Economy';
+        }
+    };
+
     // Hàm tạo bookingFlights và seatAllocations
     const createBookingFlightsAndSeatAllocations = async (bookingId: number) => {
         try {
@@ -145,16 +172,9 @@ export default function PaymentSuccessPage() {
                 return;
             }
 
-            // 3. Kiểm tra travelClass - map từ fare name sang database enum
-            let travelClass: 'Economy' | 'Business' | 'First' = 'Economy';
-            const travelClassName = depFlight.travelClass?.toUpperCase();
-            if (travelClassName === 'FIRST CLASS' || travelClassName === 'FIST CLASS') {
-                travelClass = 'First';
-            } else if (travelClassName === 'BUSSINESS' || travelClassName === 'BUSINESS') {
-                travelClass = 'Business';
-            } else {
-                travelClass = 'Economy';
-            }
+            // 3. Kiểm tra travelClass cho chuyến đi - map từ fare name sang database enum
+            const departureTravelClass = mapTravelClass(depFlight.travelClass || '');
+            const departureBaggageAllowance = getBaggageAllowance(departureTravelClass);
             // 4. Lấy ghế đã chọn từ localStorage (nếu có)
             let selectedSeats: { departure?: Array<{ seatNumber: string; flightId: number }>, return?: Array<{ seatNumber: string; flightId: number }> } = {};
             try {
@@ -193,8 +213,8 @@ export default function PaymentSuccessPage() {
                     const bookingFlightData = {
                         bookingId: bookingId,
                         flightId: Number(depFlight.flightId), // Đảm bảo là number
-                        travelClass: travelClass,
-                        baggageAllowance: 0,
+                        travelClass: departureTravelClass,
+                        baggageAllowance: departureBaggageAllowance,
                         seatNumber: seatNumber, // Truyền ghế đã chọn (nếu có)
                         passengerId: passenger.passengerId
                     };
@@ -212,6 +232,10 @@ export default function PaymentSuccessPage() {
 
             // 4b. Nếu có chuyến về → tạo tiếp bookingFlight cho chuyến về
             if (retFlight && retFlight.flightId) {
+                // Kiểm tra travelClass cho chuyến về - map từ fare name sang database enum
+                const returnTravelClass = mapTravelClass(retFlight.travelClass || depFlight.travelClass || '');
+                const returnBaggageAllowance = getBaggageAllowance(returnTravelClass);
+
                 const returnSeats = selectedSeats.return || [];
                 for (let i = 0; i < passengers.length; i++) {
                     const passenger = passengers[i];
@@ -230,8 +254,8 @@ export default function PaymentSuccessPage() {
                         const bookingFlightData = {
                             bookingId: bookingId,
                             flightId: Number(retFlight.flightId),
-                            travelClass: travelClass,
-                            baggageAllowance: 0,
+                            travelClass: returnTravelClass,
+                            baggageAllowance: returnBaggageAllowance,
                             seatNumber: seatNumber, // Truyền ghế đã chọn (nếu có)
                             passengerId: passenger.passengerId
                         };
