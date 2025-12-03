@@ -131,7 +131,10 @@ const PageLogin: FC<PageLoginProps> = ({ }) => {
             <label className="block">
               <span className="flex justify-between items-center text-neutral-800 dark:text-gray-200 font-medium text-sm mb-2">
                 Mật khẩu
-                <Link href="#" className="text-sm text-primary-600 underline dark:text-blue-400 hover:text-primary-700 dark:hover:text-blue-300 transition-colors">
+                <Link
+                  href={`/reset-password${email ? `?email=${encodeURIComponent(email)}` : ''}`}
+                  className="text-sm text-primary-600 underline dark:text-blue-400 hover:text-primary-700 dark:hover:text-blue-300 transition-colors"
+                >
                   Quên mật khẩu?
                 </Link>
               </span>

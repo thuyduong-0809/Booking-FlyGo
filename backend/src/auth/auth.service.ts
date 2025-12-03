@@ -7,6 +7,9 @@ import { common_response } from 'src/untils/common';
 import { LoginLocalDto } from 'src/auth/dto/login-local.dto';
 import { SendOtpDto } from 'src/auth/dto/send-otp.dto';
 import { VerifyOtpDto } from 'src/auth/dto/verify-otp.dto';
+import { ForgotPasswordDto } from 'src/auth/dto/forgot-password.dto';
+import { VerifyResetOtpDto } from 'src/auth/dto/verify-reset-otp.dto';
+import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
 import validator from 'validator';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -14,6 +17,7 @@ import { EmailService } from 'src/email/email.service';
 import { OtpService } from 'src/otp/otp.service';
 import { User } from 'src/users/entities/users.entity';
 import { UserRole } from 'src/user-roles/entities/user-roles.entity';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -175,6 +179,9 @@ export class AuthService {
   // Lưu thông tin đăng ký tạm thời (chưa tạo account)
   private pendingRegistrations = new Map<string, { email: string; passwordHash: string; firstName: string; lastName: string }>();
 
+  // Lưu reset tokens
+  private resetTokens = new Map<string, { email: string; token: string; expires: number }>();
+
   async sendOtp(sendOtpDto: SendOtpDto) {
     let response = { ...common_response };
     try {
@@ -310,5 +317,126 @@ export class AuthService {
     return response;
   }
 
+  // Reset Password Methods
+  async sendResetPasswordOtp(forgotPasswordDto: ForgotPasswordDto) {
+    let response = { ...common_response };
+    try {
+      const { email } = forgotPasswordDto;
+
+      // Kiểm tra xem email có tồn tại trong hệ thống không
+      const existingUser = await this.userRepository.findOne({ where: { email } });
+      if (!existingUser) {
+        response.success = false;
+        response.message = 'Không tìm thấy tài khoản với email này';
+        response.statusCode = 404;
+        return response;
+      }
+
+      // Tạo OTP cho reset password
+      const otp = this.otpService.generateOtp();
+      this.otpService.storeOtp(`reset_${email}`, otp); // Prefix để phân biệt với OTP đăng ký
+
+      // Gửi email OTP
+      const emailSent = await this.emailService.sendResetPasswordOtpEmail(email, otp);
+
+      if (emailSent) {
+        response.success = true;
+        response.message = 'Mã OTP đã được gửi đến email của bạn';
+        response.statusCode = 200;
+      } else {
+        response.success = false;
+        response.message = 'Không thể gửi email OTP';
+        response.statusCode = 500;
+      }
+    } catch (error) {
+      console.error(error);
+      response.success = false;
+      response.message = error.message || "Có lỗi xảy ra khi gửi OTP";
+      response.statusCode = 500;
+    }
+    return response;
+  }
+
+  async verifyResetPasswordOtp(verifyResetOtpDto: VerifyResetOtpDto) {
+    let response = { ...common_response };
+    try {
+      const { email, otp } = verifyResetOtpDto;
+
+      // Xác thực OTP
+      const isValidOtp = this.otpService.verifyOtp(`reset_${email}`, otp);
+      if (!isValidOtp) {
+        response.success = false;
+        response.message = 'Mã OTP không hợp lệ hoặc đã hết hạn';
+        response.statusCode = 400;
+        return response;
+      }
+
+      // Tạo reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expires = Date.now() + 15 * 60 * 1000; // 15 phút
+
+      this.resetTokens.set(resetToken, { email, token: resetToken, expires });
+
+      // Xóa OTP đã sử dụng
+      this.otpService.removeOtp(`reset_${email}`);
+
+      response.success = true;
+      response.message = 'Xác thực OTP thành công';
+      response.data = { resetToken };
+      response.statusCode = 200;
+
+    } catch (error) {
+      console.error(error);
+      response.success = false;
+      response.message = error.message || "Có lỗi xảy ra khi xác thực OTP";
+      response.statusCode = 500;
+    }
+    return response;
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    let response = { ...common_response };
+    try {
+      const { email, newPassword, resetToken } = resetPasswordDto;
+
+      // Kiểm tra reset token
+      const tokenData = this.resetTokens.get(resetToken);
+      if (!tokenData || tokenData.email !== email || Date.now() > tokenData.expires) {
+        response.success = false;
+        response.message = 'Token reset không hợp lệ hoặc đã hết hạn';
+        response.statusCode = 400;
+        return response;
+      }
+
+      // Tìm user
+      const user = await this.userRepository.findOne({ where: { email } });
+      if (!user) {
+        response.success = false;
+        response.message = 'Không tìm thấy tài khoản';
+        response.statusCode = 404;
+        return response;
+      }
+
+      // Hash mật khẩu mới
+      const hashedPassword = await this.hashPassword(newPassword);
+
+      // Cập nhật mật khẩu
+      await this.userRepository.update(user.userId, { passwordHash: hashedPassword });
+
+      // Xóa reset token đã sử dụng
+      this.resetTokens.delete(resetToken);
+
+      response.success = true;
+      response.message = 'Đổi mật khẩu thành công';
+      response.statusCode = 200;
+
+    } catch (error) {
+      console.error(error);
+      response.success = false;
+      response.message = error.message || "Có lỗi xảy ra khi đổi mật khẩu";
+      response.statusCode = 500;
+    }
+    return response;
+  }
 
 }
