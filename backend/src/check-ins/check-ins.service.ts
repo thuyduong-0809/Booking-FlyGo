@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BookingFlight } from 'src/booking-flights/entities/booking-flights.entity';
 import { CreateCheckInDto } from 'src/check-ins/dto/create-check-in.dto';
-import { CheckIn } from 'src/check-ins/entities/check-ins.entity';
+import { BoardingStatus, CheckIn, CheckInType } from 'src/check-ins/entities/check-ins.entity';
 import { Passenger } from 'src/passengers/entities/passengers.entity';
 import { common_response } from 'src/untils/common';
 import { Repository } from 'typeorm';
@@ -13,12 +13,15 @@ import { SeatAllocation } from 'src/seat-allocations/entities/seat-allocations.e
 import * as QRCode from 'qrcode';
 import * as nodemailer from 'nodemailer';
 import { UpdateCheckInDto } from 'src/check-ins/dto/update-check-in.dto';
+import { Booking } from 'src/bookings/entities/bookings.entity';
 
 @Injectable()
 export class CheckInsService {
+  
  constructor(@InjectRepository(CheckIn) private checkinRepository: Repository<CheckIn>,
          @InjectRepository(Passenger) private passengerRepository: Repository<Passenger>,
         @InjectRepository(BookingFlight) private bookingFlightRepository: Repository<BookingFlight>,
+         @InjectRepository(Booking) private bookingRepository: Repository<Booking>,
         @InjectRepository(SeatAllocation) private seatAllcationRepository: Repository<SeatAllocation>,
     ) { }
 
@@ -172,35 +175,115 @@ export class CheckInsService {
     }
   }
 
+  //  async createOnlineCheckin(createCheckInDto: CreateCheckInDto): Promise<any> {
+//     let response = { ...common_response };
+//     try {
+//        //kiểm tra vé đã checkin
+//        const bookingFlightExisting = await this.checkinRepository.findOne({
+//         where: {bookingFlight:{bookingFlightId:createCheckInDto.bookingFlightId} },
+//         relations: ['bookingFlight'],
+//       });
+//       if(bookingFlightExisting){
+//         response.success = false;
+//         response.message = 'BookingFlight existing into checkins';
+//         response.errorCode = 'BOOKINGFLIGHT_DUPLICATE';
+//         return response;
+//       }
+//       // Tìm bookingFlight
+//       const bookingFlight = await this.bookingFlightRepository.findOne({
+//         where: { bookingFlightId: createCheckInDto.bookingFlightId },
+//         relations: ['flight', 'booking', 'flight.departureAirport', 'flight.arrivalAirport'],
+//       });
+
+//       if (!bookingFlight) {
+//         response.success = false;
+//         response.message = 'BookingFlight not found';
+//         response.errorCode = 'BOOKINGFLIGHT_NOT_EXIST';
+//         return response;
+//       }
+
+//       //Lấy passenger từ seatAllocation
+//       const seatAllcation = await this.seatAllcationRepository.findOne({
+//         where: { bookingFlight: { bookingFlightId: bookingFlight.bookingFlightId } },
+//         relations: ['bookingFlight', 'passenger'],
+//       });
+
+//       if (!seatAllcation?.passenger) {
+//         response.success = false;
+//         response.message = 'Passenger not found';
+//         response.errorCode = 'PASSENGER_NOT_EXIST';
+//         return response;
+//       }
+
+//       //Tạo check-in mới
+//       const newCheckin = this.checkinRepository.create({
+//         ...createCheckInDto,
+//         bookingFlight,
+//         passenger: seatAllcation.passenger,
+//       });
+//       await this.checkinRepository.save(newCheckin);
+
+//       //Sinh PDF có QR code
+//       const boardingPassPath = await this.generateBoardingPassPDF(
+//         newCheckin,
+//         bookingFlight,
+//         seatAllcation.passenger,
+//       );
+
+//       newCheckin.boardingPassUrl = boardingPassPath;
+//       await this.checkinRepository.save(newCheckin);
+
+//       //Gửi email kèm QR code / file PDF
+//       await this.sendBoardingPassEmail(
+//         bookingFlight.booking.contactEmail,
+
+//         newCheckin,
+//       bookingFlight,
+//       seatAllcation.passenger,
+//       boardingPassPath
+//       );
+
+//       response.success = true;
+//       response.message = 'Online check-in successful';
+//       response.data = newCheckin;
+//       return response;
+//     } catch (error) {
+//       console.error(error);
+//       response.success = false;
+//       response.message = error.message || 'Error creating online check-in';
+//       return response;
+//     }
+//   }
 
 
-    private async generateBoardingPassPDF(checkin, bookingFlight, passenger) {
-    // const dir = path.join(__dirname, '../../uploads/boarding-passes');
-    const dir = path.join(process.cwd(), 'uploads/boarding-passes');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    const fileName = `boarding-pass-${checkin.checkInId}.pdf`;
-    const filePath = path.join(dir, fileName);
+private async generateBoardingPassPDF(checkin, bookingFlight, passenger): Promise<string> {
+  const dir = path.join(process.cwd(), 'uploads/boarding-passes');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
+  const fileName = `boarding-pass-${checkin.checkInId}.pdf`;
+  const filePath = path.join(dir, fileName);
+
+  return new Promise(async (resolve, reject) => {
     const doc = new PDFDocument({ margin: 50 });
-    // Nạp font tiếng Việt
+
+    // Font
     const fontPath = path.join(process.cwd(), 'src/assets/fonts/DejaVuSans.ttf');
     doc.registerFont('DejaVu', fontPath);
-    doc.font('DejaVu'); // Dùng font này cho toàn bộ PDF
+    doc.font('DejaVu');
 
-    doc.pipe(fs.createWriteStream(filePath));
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
 
-    // Header
+    // ---- Nội dung PDF (giữ nguyên code của bạn) ----
     doc.fontSize(18).text('BOARDING PASS', { align: 'center', underline: true });
     doc.moveDown();
 
-    // Thông tin hành khách
     doc.fontSize(12).text(`Hành khách: ${passenger.lastName} ${passenger.firstName}`);
     doc.text(`Loại hành khách: ${passenger.passengerType}`);
     doc.text(`Hình thức Check-in: ${checkin.checkInType === 'Airport' ? 'Tại sân bay' : 'Trực tuyến'}`);
     doc.moveDown();
 
-    // Thông tin chuyến bay
     const flight = bookingFlight.flight;
     doc.text(`Số hiệu chuyến bay: ${flight.flightNumber}`);
     doc.text(`Hành trình: ${flight.departureAirport.airportCode} → ${flight.arrivalAirport.airportCode}`);
@@ -208,7 +291,6 @@ export class CheckInsService {
     doc.text(`Giờ đến: ${new Date(flight.arrivalTime).toLocaleString('vi-VN')}`);
     doc.moveDown();
 
-    // Thông tin đặt chỗ
     doc.text(`Mã đặt chỗ: ${bookingFlight.booking.bookingReference}`);
     doc.text(`Số ghế: ${bookingFlight.seatNumber}`);
     doc.text(`Hạng ghế: ${bookingFlight.travelClass}`);
@@ -219,20 +301,11 @@ export class CheckInsService {
       Boarded: 'Đã lên máy bay',
       GateClosed: 'Cổng đã đóng',
     };
-    doc.text(`Trạng thái: ${statusMap[checkin.boardingStatus] || checkin.boardingStatus}`);
+    doc.text(`Trạng thái: ${statusMap[checkin.boardingStatus]}`);
 
     const checkinDate = new Date(new Date(checkin.checkedInAt).getTime() + 7 * 60 * 60 * 1000);
-    const formattedCheckin = checkinDate.toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-    doc.text(`Thời gian Check-in: ${formattedCheckin}`);
+    doc.text(`Thời gian Check-in: ${checkinDate.toLocaleString('vi-VN')}`);
 
-     // QR Code Section
     const qrData = JSON.stringify({
       checkInId: checkin.checkInId,
       bookingReference: bookingFlight.booking.bookingReference,
@@ -242,99 +315,142 @@ export class CheckInsService {
 
     const qrImage = await QRCode.toDataURL(qrData, { margin: 1 });
     const qrImageBuffer = Buffer.from(qrImage.split(',')[1], 'base64');
-
     doc.image(qrImageBuffer, { align: 'center', fit: [150, 150], valign: 'center' });
     doc.moveDown(1);
-    doc.fontSize(10).text('Vui lòng xuất trình mã QR này khi làm thủ tục / lên máy bay', { align: 'center' });
 
+    doc.fontSize(10).text('Vui lòng xuất trình mã QR...', { align: 'center' });
     doc.moveDown(2);
     doc.fontSize(10).text('Cảm ơn bạn đã lựa chọn FlyGo!', { align: 'center' });
 
     doc.end();
 
-    return `/uploads/boarding-passes/${fileName}`;
-  }
+    // ********* QUAN TRỌNG *********
+    // Chờ file được ghi xong
+    stream.on('finish', () => resolve(`/uploads/boarding-passes/${fileName}`));
+    stream.on('error', (err) => reject(err));
+  });
+}
 
 
- async createOnlineCheckin(createCheckInDto: CreateCheckInDto): Promise<any> {
-    let response = { ...common_response };
-    try {
-       //kiểm tra vé đã checkin
-       const bookingFlightExisting = await this.checkinRepository.findOne({
-        where: {bookingFlight:{bookingFlightId:createCheckInDto.bookingFlightId} },
-        relations: ['bookingFlight'],
-      });
-      if(bookingFlightExisting){
-        response.success = false;
-        response.message = 'BookingFlight existing into checkins';
-        response.errorCode = 'BOOKINGFLIGHT_DUPLICATE';
-        return response;
-      }
-      // Tìm bookingFlight
-      const bookingFlight = await this.bookingFlightRepository.findOne({
-        where: { bookingFlightId: createCheckInDto.bookingFlightId },
-        relations: ['flight', 'booking', 'flight.departureAirport', 'flight.arrivalAirport'],
-      });
 
-      if (!bookingFlight) {
-        response.success = false;
-        response.message = 'BookingFlight not found';
-        response.errorCode = 'BOOKINGFLIGHT_NOT_EXIST';
-        return response;
-      }
 
-      //Lấy passenger từ seatAllocation
-      const seatAllcation = await this.seatAllcationRepository.findOne({
-        where: { bookingFlight: { bookingFlightId: bookingFlight.bookingFlightId } },
-        relations: ['bookingFlight', 'passenger'],
-      });
+  
 
-      if (!seatAllcation?.passenger) {
-        response.success = false;
-        response.message = 'Passenger not found';
-        response.errorCode = 'PASSENGER_NOT_EXIST';
-        return response;
-      }
+async createOnlineCheckinByBookingReference(bookingReference: string): Promise<any> {
+  let response = { ...common_response };
+  try {
+    const booking = await this.bookingRepository.findOne({
+      where: { bookingReference: bookingReference },
+    });
 
-      //Tạo check-in mới
-      const newCheckin = this.checkinRepository.create({
-        ...createCheckInDto,
-        bookingFlight,
-        passenger: seatAllcation.passenger,
-      });
-      await this.checkinRepository.save(newCheckin);
-
-      //Sinh PDF có QR code
-      const boardingPassPath = await this.generateBoardingPassPDF(
-        newCheckin,
-        bookingFlight,
-        seatAllcation.passenger,
-      );
-
-      newCheckin.boardingPassUrl = boardingPassPath;
-      await this.checkinRepository.save(newCheckin);
-
-      //Gửi email kèm QR code / file PDF
-      await this.sendBoardingPassEmail(
-        bookingFlight.booking.contactEmail,
-
-        newCheckin,
-      bookingFlight,
-      seatAllcation.passenger,
-      boardingPassPath
-      );
-
-      response.success = true;
-      response.message = 'Online check-in successful';
-      response.data = newCheckin;
-      return response;
-    } catch (error) {
-      console.error(error);
+    if (!booking) {
       response.success = false;
-      response.message = error.message || 'Error creating online check-in';
+      response.message = 'Booking not found';
       return response;
     }
+
+    const bookingFlights = await this.bookingFlightRepository.find({
+      where: { booking: { bookingId: booking.bookingId } },
+      relations: ['flight', 'booking', 'flight.departureAirport', 'flight.arrivalAirport']
+    });
+
+    if (bookingFlights.length === 0) {
+      response.success = false;
+      response.message = 'No booking flights found';
+      return response;
+    }
+
+    interface CheckinResult {
+      bookingFlightId: number;
+      status: string;
+      message: string;
+      checkInId?: number;
+      pdf?: string;
+    }
+
+    const results: CheckinResult[] = [];
+
+    for (const bf of bookingFlights) {
+      
+      // Kiểm tra đã checkin chưa
+      const existingCheckin = await this.checkinRepository.findOne({
+        where: { bookingFlight: { bookingFlightId: bf.bookingFlightId } },
+      });
+
+      if (existingCheckin) {
+        results.push({
+          bookingFlightId: bf.bookingFlightId,
+          status: 'SKIPPED',
+          message: 'Already checked-in',
+          checkInId: existingCheckin.checkInId,
+          pdf: existingCheckin.boardingPassUrl
+        });
+        continue;
+      }
+
+      // Lấy passenger
+      const seatAllocation = await this.seatAllcationRepository.findOne({
+        where: { bookingFlight: { bookingFlightId: bf.bookingFlightId } },
+        relations: ['passenger'],
+      });
+
+      if (!seatAllocation?.passenger) {
+        results.push({
+          bookingFlightId: bf.bookingFlightId,
+          status: 'FAILED',
+          message: 'Passenger not found',
+        });
+        continue;
+      }
+
+      const passenger = seatAllocation.passenger;
+
+      // Tạo check-in
+      const newCheckin = this.checkinRepository.create({
+        checkInType: CheckInType.Online,
+        bookingFlight: bf,
+        passenger: passenger,
+        boardingStatus: BoardingStatus.NotBoarded,
+      });
+
+      await this.checkinRepository.save(newCheckin);
+
+      // Tạo PDF cho từng checkin
+      const pdfPath = await this.generateBoardingPassPDF(newCheckin, bf, passenger);
+      newCheckin.boardingPassUrl = pdfPath;
+      await this.checkinRepository.save(newCheckin);
+
+      // Gửi email cho từng segment
+      await this.sendBoardingPassEmail(
+        booking.contactEmail,
+        newCheckin,
+        bf,
+        passenger,
+        pdfPath
+      );
+
+      results.push({
+        bookingFlightId: bf.bookingFlightId,
+        status: 'SUCCESS',
+        message: 'Check-in created',
+        checkInId: newCheckin.checkInId,
+        pdf: pdfPath
+      });
+    }
+
+    response.success = true;
+    response.message = 'Batch check-in completed';
+    response.data = results;
+    return response;
+
+  } catch (error) {
+    console.error(error);
+    response.success = false;
+    response.message = error.message || 'Error creating online check-in';
+    return response;
   }
+}
+
 
 private async sendBoardingPassEmail(email: string, checkin: any, bookingFlight: any, passenger: any, pdfPath: string) {
   // Tạo nội dung QR Code (cùng với nội dung PDF)

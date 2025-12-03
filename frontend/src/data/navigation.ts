@@ -201,7 +201,7 @@ export const NAVIGATION_DEMO: NavItemType[] = [
   },
   {
     id: ncNanoId(),
-    href: "#",
+    href: "/checkin",
     name: "Online Check-in",
     isNew: true,
   },
