@@ -35,6 +35,14 @@ export class FlightSeatsController {
     return this.flightSeatsService.updateAvailability(flightId, seatId, isAvailable);
   }
 
+  @Put('seat/:seatId/availability')
+  async updateAvailabilityBySeat(
+    @Param('seatId') seatId: number,
+    @Body('isAvailable') isAvailable: boolean,
+  ) {
+    return this.flightSeatsService.updateAvailabilityBySeat(seatId, isAvailable);
+  }
+
   @Post('flight/:flightId/generate')
   async generateFlightSeats(@Param('flightId') flightId: number) {
     return this.flightSeatsService.createFlightSeatsForFlight(Number(flightId));

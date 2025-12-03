@@ -33,7 +33,7 @@ interface AircraftManagementProps {
 }
 
 export default function AircraftManagement({ activeSubTab = 'aircraft' }: AircraftManagementProps) {
-  const { showNotification } = useNotification();
+  const { showNotification, showConfirmModal } = useNotification();
 
   const [loading, setLoading] = useState(true);
   const [AircraftsList, setAircraftsList] = useState([]);
@@ -647,6 +647,25 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
     const isValid = validateUpdateInputs();
     if (!isValid) return; // nếu có lỗi thì dừng
 
+    // Tìm thông tin máy bay để hiển thị trong modal
+    const aircraft: any = AircraftsList.find((a: any) => a.aircraftId === selectedId);
+    const aircraftName = aircraft ? `${aircraft.aircraftCode} - ${aircraft.model}` : `máy bay`;
+
+    // Hiển thị modal xác nhận
+    showConfirmModal({
+      title: 'Xác nhận cập nhật máy bay',
+      message: `Bạn có chắc chắn muốn cập nhật thông tin ${aircraftName} không?`,
+      confirmText: 'Có, cập nhật',
+      cancelText: 'Hủy',
+      confirmButtonColor: 'blue',
+      onConfirm: () => performUpdateAircraft(),
+      onCancel: () => {
+        console.log('Người dùng đã hủy cập nhật máy bay');
+      }
+    });
+  };
+
+  const performUpdateAircraft = (): void => {
     requestApi(`aircrafts/${String(selectedId)}`, "PUT", aircraftUpdateData)
       .then((res: any) => {
         if (res.success) {
@@ -662,6 +681,25 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
       });
   };
   const deleteAicraft = (id: string): void => {
+    // Tìm thông tin máy bay để hiển thị trong modal
+    const aircraft: any = AircraftsList.find((a: any) => a.aircraftId === Number(id));
+    const aircraftName = aircraft ? `${aircraft.aircraftCode} - ${aircraft.model}` : `máy bay ID ${id}`;
+
+    // Hiển thị modal xác nhận
+    showConfirmModal({
+      title: 'Xác nhận xóa máy bay',
+      message: `Bạn có chắc chắn muốn xóa ${aircraftName} không? Hành động này không thể hoàn tác.`,
+      confirmText: 'Có, xóa',
+      cancelText: 'Hủy',
+      confirmButtonColor: 'red',
+      onConfirm: () => performDeleteAircraft(id),
+      onCancel: () => {
+        console.log('Người dùng đã hủy xóa máy bay');
+      }
+    });
+  }
+
+  const performDeleteAircraft = (id: string): void => {
     requestApi(`aircrafts/${id}`, "DELETE").then((res: any) => {
       if (res.success) {
         showNotification('success', 'Xóa máy bay thành công!');
@@ -814,10 +852,80 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
       return
     }
 
+    // Hiển thị modal xác nhận
+    showConfirmModal({
+      title: 'Xác nhận cập nhật ghế',
+      message: `Bạn có chắc chắn muốn cập nhật ghế ${seatDataUpdate.seatNumber} không? Hành động này sẽ ảnh hưởng đến tất cả chuyến bay đang sử dụng ghế này.`,
+      confirmText: 'Có, cập nhật',
+      cancelText: 'Hủy',
+      confirmButtonColor: 'blue',
+      onConfirm: () => performSeatUpdate(),
+      onCancel: () => {
+        console.log('Người dùng đã hủy cập nhật ghế');
+      }
+    });
+  }
+
+  const performSeatUpdate = () => {
     setLoading(true)
+
+    // Log dữ liệu được gửi để debug
+    console.log('Updating seat data:', {
+      seatId: selectedSeatId,
+      seatData: seatDataUpdate
+    });
+
     requestApi(`seats/${String(selectedSeatId)}`, "PUT", seatDataUpdate).then((res: any) => {
+      console.log('Seat update response:', res);
+
       if (res.success) {
-        showNotification('success', 'Cập nhật ghế thành công');
+        // Hiển thị thông báo chi tiết về việc cập nhật
+        let message = 'Cập nhật ghế thành công';
+        if (res.data && res.data.isAvailableChanged) {
+          const {
+            flightSeatsAffected = 0,
+            flightSeatsUpdated = 0,
+            flightSeatsCreated = 0,
+            totalFlights = 0,
+            bulkUpdateAffected = 0,
+            newAvailability
+          } = res.data;
+
+          message += `. Trạng thái mới: ${newAvailability ? 'Hoạt động' : 'Không hoạt động'}`;
+
+          if (totalFlights > 0) {
+            message += `. Đã kiểm tra ${totalFlights} chuyến bay`;
+
+            if (flightSeatsCreated > 0) {
+              message += `, tạo mới ${flightSeatsCreated} FlightSeat`;
+            }
+
+            if (flightSeatsUpdated > 0) {
+              message += `, cập nhật ${flightSeatsUpdated} FlightSeat`;
+            }
+
+            if (bulkUpdateAffected > 0) {
+              message += `, cập nhật nhiều ${bulkUpdateAffected} FlightSeat`;
+            }
+
+            if (flightSeatsAffected === 0 && bulkUpdateAffected === 0) {
+              message += `, không có FlightSeat nào cần thay đổi`;
+            }
+          } else {
+            message += `. Máy bay chưa có chuyến bay nào`;
+          }
+
+          // Gọi API để kiểm tra kết quả
+          setTimeout(() => {
+            requestApi(`seats/${selectedSeatId}/flight-seats`, "GET")
+              .then((checkRes: any) => {
+                console.log('FlightSeats check after update:', checkRes);
+              })
+              .catch(err => console.error('Error checking FlightSeats:', err));
+          }, 1000);
+        }
+        showNotification('success', message, "", 3000);
+
         // Reload ghế để cập nhật UI
         loadSeatsByAircraftId(selectAircraftId)
         // Reset form
@@ -837,7 +945,6 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
       setLoading(false)
     })
   }
-
   if (loading) {
     return <div className="flex justify-center items-center h-screen text-2xl font-bold text-black">Vui lòng đợi...</div>;
   }
@@ -1498,6 +1605,14 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
                       <p className="text-sm text-blue-800">
                         <span className="font-semibold">Đã chọn ghế:</span> {seatDataUpdate.seatNumber} - {seatDataUpdate.travelClass}
                       </p>
+                    </div>
+
+                    {/* Cảnh báo về việc đồng bộ với FlightSeats */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-amber-800">
+                        <span className="font-semibold">Lưu ý:</span> Khi cập nhật trạng thái ghế, hệ thống sẽ cập nhật hết ghế không cho đặt trên tất cả các chuyến bay sử dụng máy bay này.
+                      </p>
+
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

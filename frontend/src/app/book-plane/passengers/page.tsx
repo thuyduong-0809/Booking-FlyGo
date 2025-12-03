@@ -201,8 +201,8 @@ export default function PassengersPage() {
       }
 
       // Kiểm tra tuổi
-      if (age < 18) {
-        return 'Người lớn phải từ 18 tuổi trở lên';
+      if (age < 12) {
+        return 'Người lớn phải từ 12 tuổi trở lên';
       }
       if (age > 100) {
         return 'Ngày sinh không hợp lệ (quá 100 tuổi)';

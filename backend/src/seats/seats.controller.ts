@@ -29,6 +29,21 @@ export class SeatsController {
         return this.seatsService.findOne(Number(id))
     }
 
+    @Get(':id/flight-seats')
+    async findFlightSeatsBySeat(@Param('id') id: string): Promise<any> {
+        return this.seatsService.findFlightSeatsBySeat(Number(id));
+    }
+
+    @Get(':id/flights')
+    async findFlightsBySeat(@Param('id') id: string): Promise<any> {
+        return this.seatsService.findFlightsBySeat(Number(id));
+    }
+
+    @Post(':id/sync-flight-seats')
+    async forceSyncFlightSeats(@Param('id') id: string): Promise<any> {
+        return this.seatsService.forceSyncFlightSeats(Number(id));
+    }
+
     // POST routes - các route cụ thể đặt trước
     @Post('reset-auto-increment')
     async resetAutoIncrement(): Promise<any> {

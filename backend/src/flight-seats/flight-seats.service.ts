@@ -185,6 +185,36 @@ export class FlightSeatsService {
     }
 
     /**
+     * Cập nhật trạng thái isAvailable cho tất cả FlightSeats của một ghế cụ thể
+     * Được gọi khi cập nhật trạng thái hoạt động của ghế trong bảng Seats
+     */
+    async updateAvailabilityBySeat(
+        seatId: number,
+        isAvailable: boolean,
+    ): Promise<any> {
+        const response = { ...common_response };
+        try {
+            const updateResult = await this.flightSeatRepository.update(
+                { seat: { seatId } },
+                { isAvailable }
+            );
+
+            response.success = true;
+            response.message = `Updated availability for ${updateResult.affected || 0} flight seats`;
+            response.data = {
+                affectedFlightSeats: updateResult.affected || 0,
+                seatId,
+                isAvailable
+            };
+            return response;
+        } catch (error) {
+            response.success = false;
+            response.message = error.message || 'Error updating flight seats availability by seat';
+            return response;
+        }
+    }
+
+    /**
      * Lấy danh sách ghế available của một Flight theo travelClass
      */
     async findAvailableSeatsByClass(

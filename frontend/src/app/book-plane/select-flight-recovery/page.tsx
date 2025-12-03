@@ -120,11 +120,12 @@ const FlightRoute = ({ type, searchData }: { type: 'departure' | 'return', searc
 );
 
 // Component: Date Navigation
-const DateNavigation = ({ selectedDate, setSelectedDate, searchData, type }: {
+const DateNavigation = ({ selectedDate, setSelectedDate, searchData, type, onMonthYearChange }: {
   selectedDate: number,
   setSelectedDate: (date: number) => void,
   searchData: any,
-  type: 'departure' | 'return'
+  type: 'departure' | 'return',
+  onMonthYearChange?: (month: number, year: number) => void
 }) => {
   function getDateContext(dateObj: Date | undefined, fallbackMonth = 9, fallbackDate = 14) {
     const d = dateObj ? new Date(dateObj) : new Date(2025, fallbackMonth, fallbackDate);
@@ -154,96 +155,113 @@ const DateNavigation = ({ selectedDate, setSelectedDate, searchData, type }: {
   const currentIndex = visibleDates.indexOf(selectedDate);
   const maxDay = getMaxDayOfMonth(currYear, currMonth);
 
-  const goToPrevious = () => {
-    if (currentIndex > 0) {
-      setSelectedDate(visibleDates[currentIndex - 1]);
-    } else {
-      let prevMonth = currMonth;
-      let prevYear = currYear;
-      if (visibleDates[0] <= 1) {
-        if (prevMonth === 0) {
-          prevMonth = 11;
-          prevYear -= 1;
-        } else {
-          prevMonth -= 1;
-        }
-        const maxDayPrev = getMaxDayOfMonth(prevYear, prevMonth);
-        const newDates = [maxDayPrev - 3, maxDayPrev - 2, maxDayPrev - 1, maxDayPrev].filter(d => d >= 1 && d <= maxDayPrev);
-        setVisibleDates(newDates);
-        setCurrMonth(prevMonth);
-        setCurrYear(prevYear);
-        setSelectedDate(newDates[newDates.length - 1]);
-      } else {
-        const prevStartDate = visibleDates[0] - 4;
-        const newDates = [prevStartDate, prevStartDate + 1, prevStartDate + 2, prevStartDate + 3].filter(d => d >= 1 && d <= maxDay);
-        if (newDates.length > 0) {
-          setVisibleDates(newDates);
-          setSelectedDate(newDates[newDates.length - 1]);
-        }
+  // Helper function để tạo Date object từ ngày được chọn
+  const getCurrentDate = () => {
+    return new Date(currYear, currMonth, selectedDate);
+  };
+
+  // Helper function để build danh sách ngày hiển thị từ một ngày cụ thể
+  const buildDateRange = (startDate: Date) => {
+    const dates: number[] = [];
+    const year = startDate.getFullYear();
+    const month = startDate.getMonth();
+    const maxDay = getMaxDayOfMonth(year, month);
+
+    // Tạo 4 ngày bắt đầu từ startDate
+    for (let i = 0; i < 4; i++) {
+      const day = startDate.getDate() + i;
+      // Chỉ thêm ngày nếu hợp lệ (từ 1 đến maxDay của tháng đó)
+      if (day >= 1 && day <= maxDay) {
+        dates.push(day);
       }
     }
+
+    // Đảm bảo có ít nhất 1 ngày
+    if (dates.length === 0) {
+      dates.push(startDate.getDate());
+    }
+
+    return dates;
+  };
+
+  // Helper function để chuyển sang ngày tiếp theo
+  const getNextDate = () => {
+    const currentDate = getCurrentDate();
+    const nextDate = new Date(currentDate);
+    nextDate.setDate(currentDate.getDate() + 1);
+    return nextDate;
+  };
+
+  // Helper function để chuyển sang ngày trước
+  const getPrevDate = () => {
+    const currentDate = getCurrentDate();
+    const prevDate = new Date(currentDate);
+    prevDate.setDate(currentDate.getDate() - 1);
+    return prevDate;
+  };
+
+  const goToPrevious = () => {
+    const prevDate = getPrevDate();
+    const prevMonth = prevDate.getMonth();
+    const prevYear = prevDate.getFullYear();
+    const prevDay = prevDate.getDate();
+
+    // Cập nhật visibleDates để hiển thị ngày trước
+    const startDate = new Date(prevYear, prevMonth, prevDay - 1); // Bắt đầu từ ngày trước để có 4 ngày
+    const newDates = buildDateRange(startDate);
+
+    setVisibleDates(newDates);
+    setCurrMonth(prevMonth);
+    setCurrYear(prevYear);
+    setSelectedDate(prevDay);
+    onMonthYearChange?.(prevMonth, prevYear);
   };
 
   const goToNext = () => {
-    if (currentIndex < visibleDates.length - 1) {
-      setSelectedDate(visibleDates[currentIndex + 1]);
-    } else {
-      let nextMonth = currMonth;
-      let nextYear = currYear;
-      if (visibleDates[visibleDates.length - 1] >= maxDay) {
-        if (nextMonth === 11) {
-          nextMonth = 0;
-          nextYear += 1;
-        } else {
-          nextMonth += 1;
-        }
-        const maxDayNext = getMaxDayOfMonth(nextYear, nextMonth);
-        const newDates = [1, 2, 3, 4].filter(d => d >= 1 && d <= maxDayNext);
-        setVisibleDates(newDates);
-        setCurrMonth(nextMonth);
-        setCurrYear(nextYear);
-        setSelectedDate(newDates[0]);
-      } else {
-        const nextStartDate = visibleDates[visibleDates.length - 1] + 1;
-        const newDates = [nextStartDate, nextStartDate + 1, nextStartDate + 2, nextStartDate + 3].filter(d => d >= 1 && d <= maxDay);
-        if (newDates.length > 0) {
-          setVisibleDates(newDates);
-          setSelectedDate(newDates[0]);
-        }
-      }
+    // Tính ngày tiếp theo bằng cách +1 ngày vào ngày hiện tại
+    const currentDate = new Date(currYear, currMonth, selectedDate);
+    const nextDate = new Date(currentDate);
+    nextDate.setDate(currentDate.getDate() + 1);
+
+    const nextMonth = nextDate.getMonth();
+    const nextYear = nextDate.getFullYear();
+    const nextDay = nextDate.getDate();
+
+    // Cập nhật month/year và selectedDate
+    setCurrMonth(nextMonth);
+    setCurrYear(nextYear);
+    setSelectedDate(nextDay);
+
+    // Xây dựng danh sách ngày hiển thị
+    // Bắt đầu từ ngày tiếp theo (hoặc ngày trước nó nếu cần 4 ngày)
+    let startDay = nextDay;
+    if (nextDay > 1) {
+      // Nếu không phải ngày đầu tháng, bắt đầu từ ngày trước để có 4 ngày
+      startDay = Math.max(1, nextDay - 1);
     }
+
+    const startDate = new Date(nextYear, nextMonth, startDay);
+    const newDates = buildDateRange(startDate);
+
+    setVisibleDates(newDates);
+    onMonthYearChange?.(nextMonth, nextYear);
   };
 
+  // Đồng bộ visibleDates khi selectedDate thay đổi (chỉ khi cần thiết)
   React.useEffect(() => {
-    if (selectedDate > maxDay) {
-      let newMonth = currMonth + 1;
-      let newYear = currYear;
-      if (newMonth > 11) {
-        newMonth = 0;
-        newYear += 1;
-      }
-      const maxDayNext = getMaxDayOfMonth(newYear, newMonth);
-      const newDates = [1, 2, 3, 4].filter(d => d >= 1 && d <= maxDayNext);
+    // Kiểm tra nếu selectedDate không nằm trong visibleDates
+    if (!visibleDates.includes(selectedDate)) {
+      // Cập nhật visibleDates để bao gồm selectedDate
+      const startDate = new Date(currYear, currMonth, selectedDate - 1);
+      const newDates = buildDateRange(startDate);
       setVisibleDates(newDates);
-      setCurrMonth(newMonth);
-      setCurrYear(newYear);
-      setSelectedDate(1);
     }
-    if (selectedDate < 1) {
-      let newMonth = currMonth - 1;
-      let newYear = currYear;
-      if (newMonth < 0) {
-        newMonth = 11;
-        newYear -= 1;
-      }
-      const maxPrev = getMaxDayOfMonth(newYear, newMonth);
-      const newDates = [maxPrev - 3, maxPrev - 2, maxPrev - 1, maxPrev].filter(d => d >= 1 && d <= maxPrev);
-      setVisibleDates(newDates);
-      setCurrMonth(newMonth);
-      setCurrYear(newYear);
-      setSelectedDate(maxPrev);
-    }
-  }, [selectedDate, currMonth, currYear, maxDay]);
+  }, [selectedDate, currMonth, currYear]);
+
+  // Thông báo thay đổi tháng/năm khi state thay đổi
+  React.useEffect(() => {
+    onMonthYearChange?.(currMonth, currYear);
+  }, [currMonth, currYear, onMonthYearChange]);
 
   // Cập nhật lại tháng/năm khi đổi searchData
   React.useEffect(() => {
@@ -284,7 +302,9 @@ const DateNavigation = ({ selectedDate, setSelectedDate, searchData, type }: {
                 <div className={`text-sm font-bold ${date === selectedDate ? 'text-black' : 'text-gray-700'}`}>
                   {(() => {
                     const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-                    const dayOfWeek = dayNames[date % 7];
+                    // Tạo Date object với năm, tháng, ngày để tính đúng thứ trong tuần
+                    const dateObj = new Date(currYear, currMonth, date);
+                    const dayOfWeek = dayNames[dateObj.getDay()];
                     return `${dayOfWeek} ${date} tháng`;
                   })()}
                 </div>
@@ -537,6 +557,8 @@ const FlightSummaryCard = ({
   type,
   state,
   selectedDate,
+  currentMonth,
+  currentYear,
   adultsCount,
   childrenCount,
   infantsCount
@@ -548,6 +570,8 @@ const FlightSummaryCard = ({
   type: 'departure' | 'return';
   state: any;
   selectedDate: number;
+  currentMonth: number;
+  currentYear: number;
   adultsCount: number;
   childrenCount: number;
   infantsCount: number;
@@ -555,14 +579,10 @@ const FlightSummaryCard = ({
   // Function to get full date string for display
   const getFullDateString = (date: number) => {
     const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-    const dayOfWeek = dayNames[date % 7];
-    const month = type === 'departure'
-      ? (state.departureDate ? state.departureDate.getMonth() + 1 : 10)
-      : (state.returnDate ? state.returnDate.getMonth() + 1 : 10);
-    const year = type === 'departure'
-      ? (state.departureDate ? state.departureDate.getFullYear() : 2025)
-      : (state.returnDate ? state.returnDate.getFullYear() : 2025);
-    return `${dayOfWeek}, ${date}/${month}/${year}`;
+    // Sử dụng currentMonth và currentYear từ DateNavigation
+    const dateObj = new Date(currentYear, currentMonth, date);
+    const dayOfWeek = dayNames[dateObj.getDay()];
+    return `${dayOfWeek}, ${String(date).padStart(2, '0')}/${String(currentMonth + 1).padStart(2, '0')}/${currentYear}`;
   };
 
   // Kiểm tra nếu không có dữ liệu
@@ -687,6 +707,26 @@ export default function SelectFlightRecoveryPage() {
     searchData.returnDate ? searchData.returnDate.getDate() : 14
   );
 
+  // State để lưu tháng/năm hiện tại từ DateNavigation cho chuyến đi
+  const [departureCurrentMonth, setDepartureCurrentMonth] = useState(
+    searchData.departureDate ? searchData.departureDate.getMonth() : 9
+  );
+  const [departureCurrentYear, setDepartureCurrentYear] = useState(
+    searchData.departureDate ? searchData.departureDate.getFullYear() : 2025
+  );
+
+  // State để lưu tháng/năm hiện tại từ DateNavigation cho chuyến về
+  const [returnCurrentMonth, setReturnCurrentMonth] = useState(
+    searchData.returnDate ? searchData.returnDate.getMonth() : 9
+  );
+  const [returnCurrentYear, setReturnCurrentYear] = useState(
+    searchData.returnDate ? searchData.returnDate.getFullYear() : 2025
+  );
+
+  // State để lưu ngày đang tìm kiếm (để tránh tìm lại khi chọn lại cùng ngày)
+  const [lastSearchedDepartureDate, setLastSearchedDepartureDate] = useState<Date | null>(null);
+  const [lastSearchedReturnDate, setLastSearchedReturnDate] = useState<Date | null>(null);
+
   // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
@@ -714,14 +754,40 @@ export default function SelectFlightRecoveryPage() {
     fetchUserData();
   }, []);
 
-  // Đồng bộ ngày với searchData khi context thay đổi
+  // Đồng bộ ngày với searchData khi context thay đổi (chỉ khi thực sự thay đổi)
   useEffect(() => {
     if (searchData.departureDate) {
-      setSelectedDepartureDate(searchData.departureDate.getDate());
+      const searchDate = searchData.departureDate.getDate();
+      const searchMonth = searchData.departureDate.getMonth();
+      const searchYear = searchData.departureDate.getFullYear();
+
+      // Chỉ đồng bộ nếu ngày từ searchData khác với ngày hiện tại được chọn
+      const currentSelectedDate = new Date(departureCurrentYear, departureCurrentMonth, selectedDepartureDate);
+      const searchDateObj = new Date(searchYear, searchMonth, searchDate);
+
+      if (searchDateObj.getTime() !== currentSelectedDate.getTime()) {
+        setSelectedDepartureDate(searchDate);
+        setDepartureCurrentMonth(searchMonth);
+        setDepartureCurrentYear(searchYear);
+        setLastSearchedDepartureDate(null);
+      }
     }
     if (searchData.returnDate) {
-      setSelectedReturnDate(searchData.returnDate.getDate());
+      const searchDate = searchData.returnDate.getDate();
+      const searchMonth = searchData.returnDate.getMonth();
+      const searchYear = searchData.returnDate.getFullYear();
+
+      const currentSelectedDate = new Date(returnCurrentYear, returnCurrentMonth, selectedReturnDate);
+      const searchDateObj = new Date(searchYear, searchMonth, searchDate);
+
+      if (searchDateObj.getTime() !== currentSelectedDate.getTime()) {
+        setSelectedReturnDate(searchDate);
+        setReturnCurrentMonth(searchMonth);
+        setReturnCurrentYear(searchYear);
+        setLastSearchedReturnDate(null);
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchData.departureDate, searchData.returnDate]);
 
   // Fetch flights khi component mount hoặc searchData thay đổi
@@ -734,10 +800,56 @@ export default function SelectFlightRecoveryPage() {
     else if (!searchData.departureAirport && departureFlights.length === 0) {
       setDepartureFlights(recoveryFlights);
       setReturnFlights(recoveryReturnFlights);
-    } else {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchData.departureAirport?.airportCode, searchData.arrivalAirport?.airportCode, searchData.departureDate]);
+
+  // Tự động tìm lại chuyến đi khi người dùng chọn ngày mới
+  useEffect(() => {
+    if (searchData.departureAirport && searchData.arrivalAirport && departureCurrentYear && departureCurrentMonth !== undefined && selectedDepartureDate) {
+      // Tạo date object mới từ ngày đã chọn
+      const newDate = new Date(departureCurrentYear, departureCurrentMonth, selectedDepartureDate);
+      // So sánh với ngày đã tìm kiếm lần cuối
+      const shouldSearch = !lastSearchedDepartureDate ||
+        lastSearchedDepartureDate.getDate() !== selectedDepartureDate ||
+        lastSearchedDepartureDate.getMonth() !== departureCurrentMonth ||
+        lastSearchedDepartureDate.getFullYear() !== departureCurrentYear;
+
+      if (shouldSearch) {
+        searchFlights(newDate, searchData.returnDate || undefined);
+        // Luôn cập nhật lastSearchedDepartureDate ngay cả khi không có kết quả
+        setLastSearchedDepartureDate(newDate);
+        // Reset selection khi đổi ngày (chỉ reset selection, không reset ngày)
+        setSelectedDepartureFlight(null);
+        setSelectedReturnFlight(null);
+        setExpandedFlight(null);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDepartureDate, departureCurrentMonth, departureCurrentYear]);
+
+  // Tự động tìm lại chuyến về khi người dùng chọn ngày mới
+  useEffect(() => {
+    if (searchData.arrivalAirport && searchData.departureAirport && returnCurrentYear && returnCurrentMonth !== undefined && selectedReturnDate && searchData.returnDate) {
+      // Tạo date object mới từ ngày đã chọn
+      const newDate = new Date(returnCurrentYear, returnCurrentMonth, selectedReturnDate);
+      // So sánh với ngày đã tìm kiếm lần cuối
+      const shouldSearch = !lastSearchedReturnDate ||
+        lastSearchedReturnDate.getDate() !== selectedReturnDate ||
+        lastSearchedReturnDate.getMonth() !== returnCurrentMonth ||
+        lastSearchedReturnDate.getFullYear() !== returnCurrentYear;
+
+      if (shouldSearch) {
+        searchFlights(searchData.departureDate || undefined, newDate);
+        // Luôn cập nhật lastSearchedReturnDate ngay cả khi không có kết quả
+        setLastSearchedReturnDate(newDate);
+        // Reset selection chuyến về khi đổi ngày (chỉ reset selection, không reset ngày)
+        setSelectedReturnFlight(null);
+        setExpandedFlight(null);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedReturnDate, returnCurrentMonth, returnCurrentYear]);
 
   // Hàm chuyển đổi flight từ API sang FlightItem
   const convertFlightToFlightItem = (flight: Flight): FlightItem => {
@@ -835,7 +947,7 @@ export default function SelectFlightRecoveryPage() {
   };
 
   // Hàm tìm kiếm chuyến bay
-  const searchFlights = async () => {
+  const searchFlights = async (customDepartureDate?: Date, customReturnDate?: Date) => {
     setLoading(true);
     setError('');
 
@@ -850,30 +962,35 @@ export default function SelectFlightRecoveryPage() {
         return formatted;
       };
 
-      // Debug: Log thông tin tìm kiếm chuyến đi
+      // Sử dụng customDate nếu có, nếu không thì dùng từ searchData
+      const departureDateToSearch = customDepartureDate || searchData.departureDate;
+      const returnDateToSearch = customReturnDate || searchData.returnDate;
+
       // Tìm kiếm chuyến đi
-      const departureSearchParams = {
-        departureAirportCode: searchData.departureAirport?.airportCode,
-        arrivalAirportCode: searchData.arrivalAirport?.airportCode,
-        departureDate: formatDate(searchData.departureDate!)
-      };
+      if (departureDateToSearch) {
+        const departureSearchParams = {
+          departureAirportCode: searchData.departureAirport?.airportCode,
+          arrivalAirportCode: searchData.arrivalAirport?.airportCode,
+          departureDate: formatDate(departureDateToSearch)
+        };
 
-      const departureSearchResult = await flightsService.searchFlights(departureSearchParams);
+        const departureSearchResult = await flightsService.searchFlights(departureSearchParams);
 
-      if (departureSearchResult.success && departureSearchResult.data) {
-        const departureItems = departureSearchResult.data.map(flight => convertFlightToFlightItem(flight));
-        setDepartureFlights(departureItems);
-      } else {
-        setDepartureFlights([]);
+        if (departureSearchResult.success && departureSearchResult.data) {
+          const departureItems = departureSearchResult.data.map(flight => convertFlightToFlightItem(flight));
+          setDepartureFlights(departureItems);
+        } else {
+          setDepartureFlights([]);
+        }
       }
 
       // Tìm kiếm chuyến về (nếu có returnDate)
       // Lưu ý: Chưa filter theo thời gian chuyến đi ở đây, sẽ filter sau khi chọn chuyến đi
-      if (searchData.returnDate) {
+      if (returnDateToSearch) {
         const returnSearchResult = await flightsService.searchFlights({
           departureAirportCode: searchData.arrivalAirport?.airportCode,
           arrivalAirportCode: searchData.departureAirport?.airportCode,
-          departureDate: formatDate(searchData.returnDate)
+          departureDate: formatDate(returnDateToSearch)
         });
 
         if (returnSearchResult.success && returnSearchResult.data) {
@@ -1069,7 +1186,9 @@ export default function SelectFlightRecoveryPage() {
     selectedFlight: { flightId: string, fareIndex: number } | null,
     setSelectedFlight: (flight: { flightId: string, fareIndex: number } | null) => void,
     selectedDate: number,
-    setSelectedDate: (date: number) => void
+    setSelectedDate: (date: number) => void,
+    showEmptyMessage?: boolean,
+    emptyMessage?: string
   ) => {
     // Closure để truy cập departureFlights và selectedDepartureFlight
     return (
@@ -1109,123 +1228,148 @@ export default function SelectFlightRecoveryPage() {
           </div>
         </div>
 
-        <DateNavigation selectedDate={selectedDate} setSelectedDate={setSelectedDate} searchData={searchData} type={type} />
-        <FareHeaders />
+        <DateNavigation
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          searchData={searchData}
+          type={type}
+          onMonthYearChange={(month, year) => {
+            if (type === 'departure') {
+              setDepartureCurrentMonth(month);
+              setDepartureCurrentYear(year);
+            } else {
+              setReturnCurrentMonth(month);
+              setReturnCurrentYear(year);
+            }
+          }}
+        />
 
-        {/* Flight Rows */}
-        <div className="space-y-4">
-          {flights.map((flight) => (
-            <div key={flight.id} className="space-y-4">
-              {/* Flight row */}
-              <div className="grid grid-cols-4 gap-3 items-stretch">
-                <div className="h-full">
-                  <FlightDetails flight={flight} />
-                </div>
+        {/* Chỉ hiển thị FareHeaders và Flight Rows khi có chuyến bay */}
+        {flights.length > 0 ? (
+          <>
+            <FareHeaders />
 
-                {flight.fares.map((fare, fareIndex) => {
-                  const isSelected = selectedFlight?.flightId === flight.id && selectedFlight?.fareIndex === fareIndex;
-                  const isExpanded = expandedFlight?.flightId === flight.id && expandedFlight?.fareIndex === fareIndex && expandedFlight?.type === type;
+            {/* Flight Rows */}
+            <div className="space-y-4">
+              {flights.map((flight) => (
+                <div key={flight.id} className="space-y-4">
+                  {/* Flight row */}
+                  <div className="grid grid-cols-4 gap-3 items-stretch">
+                    <div className="h-full">
+                      <FlightDetails flight={flight} />
+                    </div>
 
-                  return (
-                    <FareCell
-                      key={fareIndex}
-                      fare={fare}
-                      fareIndex={fareIndex}
-                      flightId={flight.id}
-                      isSelected={isSelected}
-                      isExpanded={isExpanded}
-                      onSelect={() => {
-                        // Set local state trước
-                        setSelectedFlight({ flightId: flight.id, fareIndex });
+                    {flight.fares.map((fare, fareIndex) => {
+                      const isSelected = selectedFlight?.flightId === flight.id && selectedFlight?.fareIndex === fareIndex;
+                      const isExpanded = expandedFlight?.flightId === flight.id && expandedFlight?.fareIndex === fareIndex && expandedFlight?.type === type;
 
-                        const flightData = {
-                          flightId: flight.id,
-                          fareIndex,
-                          fareName: fare.name,
-                          price: fare.price,
-                          tax: fare.tax,
-                          service: fare.service,
-                          code: flight.code,
-                          departTime: flight.departTime,
-                          arriveTime: flight.arriveTime,
-                        };
+                      return (
+                        <FareCell
+                          key={fareIndex}
+                          fare={fare}
+                          fareIndex={fareIndex}
+                          flightId={flight.id}
+                          isSelected={isSelected}
+                          isExpanded={isExpanded}
+                          onSelect={() => {
+                            // Set local state trước
+                            setSelectedFlight({ flightId: flight.id, fareIndex });
 
-                        if (type === 'departure') {
-                          // Set state cho chuyến đi - điều này sẽ trigger filteredReturnFlights recalculate
-                          setSelectedDepartureFlight({ flightId: flight.id, fareIndex });
-                          setSelectedDeparture(flightData);
-
-                          // Lưu chuyến đi vào localStorage để dùng sau thanh toán
-                          try {
-                            localStorage.setItem('selectedDepartureFlight', JSON.stringify({
-                              flightId: (flight as any)?.flightData?.flightId,
-                              flightNumber: flight.code,
-                              travelClass: fare.name,
+                            const flightData = {
+                              flightId: flight.id,
+                              fareIndex,
+                              fareName: fare.name,
                               price: fare.price,
                               tax: fare.tax,
-                              aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
-                            }));
-                          } catch { }
-                        } else {
-                          // Validate: Thời gian khởi hành của chuyến về phải sau thời gian đến của chuyến đi
-                          if (selectedDepartureFlight) {
-                            const selectedDepFlight = departureFlights.find(f => f.id === selectedDepartureFlight.flightId);
-                            if (selectedDepFlight && selectedDepFlight.flightData) {
-                              const departureArrivalTime = new Date(selectedDepFlight.flightData.arrivalTime);
-                              const returnDepartureTime = new Date(flight.flightData?.departureTime || 0);
-                              if (returnDepartureTime.getTime() <= departureArrivalTime.getTime()) {
-                                showNotification(
-                                  'error',
-                                  'Thời gian không hợp lệ',
-                                  [
-                                    'Thời gian khởi hành của chuyến về phải sau thời gian đến của chuyến đi',
-                                    `Chuyến đi đến: ${departureArrivalTime.toLocaleString('vi-VN')}`,
-                                    `Chuyến về khởi hành: ${returnDepartureTime.toLocaleString('vi-VN')}`
-                                  ]
-                                );
-                                return;
+                              service: fare.service,
+                              code: flight.code,
+                              departTime: flight.departTime,
+                              arriveTime: flight.arriveTime,
+                            };
+
+                            if (type === 'departure') {
+                              // Set state cho chuyến đi - điều này sẽ trigger filteredReturnFlights recalculate
+                              setSelectedDepartureFlight({ flightId: flight.id, fareIndex });
+                              setSelectedDeparture(flightData);
+
+                              // Lưu chuyến đi vào localStorage để dùng sau thanh toán
+                              try {
+                                localStorage.setItem('selectedDepartureFlight', JSON.stringify({
+                                  flightId: (flight as any)?.flightData?.flightId,
+                                  flightNumber: flight.code,
+                                  travelClass: fare.name,
+                                  price: fare.price,
+                                  tax: fare.tax,
+                                  aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
+                                }));
+                              } catch { }
+                            } else {
+                              // Validate: Thời gian khởi hành của chuyến về phải sau thời gian đến của chuyến đi
+                              if (selectedDepartureFlight) {
+                                const selectedDepFlight = departureFlights.find(f => f.id === selectedDepartureFlight.flightId);
+                                if (selectedDepFlight && selectedDepFlight.flightData) {
+                                  const departureArrivalTime = new Date(selectedDepFlight.flightData.arrivalTime);
+                                  const returnDepartureTime = new Date(flight.flightData?.departureTime || 0);
+                                  if (returnDepartureTime.getTime() <= departureArrivalTime.getTime()) {
+                                    showNotification(
+                                      'error',
+                                      'Thời gian không hợp lệ',
+                                      [
+                                        'Thời gian khởi hành của chuyến về phải sau thời gian đến của chuyến đi',
+                                        `Chuyến đi đến: ${departureArrivalTime.toLocaleString('vi-VN')}`,
+                                        `Chuyến về khởi hành: ${returnDepartureTime.toLocaleString('vi-VN')}`
+                                      ]
+                                    );
+                                    return;
+                                  }
+                                }
                               }
+
+                              setSelectedReturn(flightData);
+                              // Lưu chuyến về vào localStorage để dùng sau thanh toán
+                              try {
+                                localStorage.setItem('selectedReturnFlight', JSON.stringify({
+                                  flightId: (flight as any)?.flightData?.flightId,
+                                  flightNumber: flight.code,
+                                  travelClass: fare.name,
+                                  price: fare.price,
+                                  tax: fare.tax,
+                                  aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
+                                }));
+                              } catch { }
                             }
-                          }
+                          }}
+                          onToggleExpand={() => {
+                            if (isExpanded) {
+                              setExpandedFlight(null);
+                            } else {
+                              setExpandedFlight({ flightId: flight.id, fareIndex, type });
+                            }
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
 
-                          setSelectedReturn(flightData);
-                          // Lưu chuyến về vào localStorage để dùng sau thanh toán
-                          try {
-                            localStorage.setItem('selectedReturnFlight', JSON.stringify({
-                              flightId: (flight as any)?.flightData?.flightId,
-                              flightNumber: flight.code,
-                              travelClass: fare.name,
-                              price: fare.price,
-                              tax: fare.tax,
-                              aircraftId: (flight as any)?.flightData?.aircraft?.aircraftId,
-                            }));
-                          } catch { }
-                        }
-                      }}
-                      onToggleExpand={() => {
-                        if (isExpanded) {
-                          setExpandedFlight(null);
-                        } else {
-                          setExpandedFlight({ flightId: flight.id, fareIndex, type });
-                        }
-                      }}
+                  {/* Expanded details */}
+                  {expandedFlight?.flightId === flight.id && expandedFlight?.type === type && (
+                    <ExpandedDetails
+                      flight={flight}
+                      fare={flight.fares[expandedFlight.fareIndex]}
+                      type={type}
+                      state={searchData}
                     />
-                  );
-                })}
-              </div>
-
-              {/* Expanded details */}
-              {expandedFlight?.flightId === flight.id && expandedFlight?.type === type && (
-                <ExpandedDetails
-                  flight={flight}
-                  fare={flight.fares[expandedFlight.fareIndex]}
-                  type={type}
-                  state={searchData}
-                />
-              )}
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        ) : showEmptyMessage ? (
+          // Hiển thị thông báo khi không có chuyến bay
+          <div className="bg-white rounded-xl p-8 shadow-xl text-center">
+            <p className="text-lg text-gray-600">{emptyMessage || 'Không tìm thấy chuyến bay phù hợp'}</p>
+          </div>
+        ) : null}
       </div>
     );
   };
@@ -1287,54 +1431,47 @@ export default function SelectFlightRecoveryPage() {
 
           {!loading && (
             <>
-              {/* Departure Flights */}
-              {departureFlights.length > 0 ? (
-                renderFlightSection(
-                  departureFlights,
-                  'departure',
-                  'CHUYẾN ĐI',
-                  selectedDepartureFlight,
-                  setSelectedDepartureFlight,
-                  selectedDepartureDate,
-                  setSelectedDepartureDate
-                )
-              ) : (
-                !loading && (
-                  <div className="bg-white rounded-xl p-8 shadow-xl mb-8 text-center">
-                    <p className="text-lg text-gray-600">Không tìm thấy chuyến bay đi phù hợp</p>
-                  </div>
-                )
+              {/* Departure Flights - Luôn hiển thị với DateNavigation, kể cả khi không có chuyến bay */}
+              {renderFlightSection(
+                departureFlights,
+                'departure',
+                'CHUYẾN ĐI',
+                selectedDepartureFlight,
+                setSelectedDepartureFlight,
+                selectedDepartureDate,
+                setSelectedDepartureDate,
+                true, // showEmptyMessage
+                departureFlights.length === 0 ? 'Không tìm thấy chuyến bay đi phù hợp' : undefined // emptyMessage
               )}
 
-              {/* Return Flights */}
-              {!selectedDepartureFlight ? (
-                // Chưa chọn chuyến đi - hiển thị thông báo
-                !loading && searchData.returnDate && (
-                  <div className="bg-white rounded-xl p-8 shadow-xl mb-8 text-center">
-                    <p className="text-lg text-gray-600">
-                      Vui lòng chọn chuyến đi trước để xem các chuyến về phù hợp
-                    </p>
-                  </div>
-                )
-              ) : filteredReturnFlights.length > 0 ? (
-                // Đã chọn chuyến đi và có chuyến về hợp lệ
-                renderFlightSection(
-                  filteredReturnFlights,
-                  'return',
-                  'CHUYẾN VỀ',
-                  selectedReturnFlight,
-                  setSelectedReturnFlight,
-                  selectedReturnDate,
-                  setSelectedReturnDate
-                )
-              ) : (
-                // Đã chọn chuyến đi nhưng không có chuyến về hợp lệ
-                !loading && searchData.returnDate && (
-                  <div className="bg-white rounded-xl p-8 shadow-xl mb-8 text-center">
-                    <p className="text-lg text-gray-600">
-                      Không tìm thấy chuyến bay về phù hợp sau thời gian đến của chuyến đi
-                    </p>
-                  </div>
+              {/* Return Flights - Luôn hiển thị với DateNavigation nếu có returnDate */}
+              {searchData.returnDate && (
+                !selectedDepartureFlight ? (
+                  // Chưa chọn chuyến đi - hiển thị header, DateNavigation và thông báo
+                  renderFlightSection(
+                    [],
+                    'return',
+                    'CHUYẾN VỀ',
+                    selectedReturnFlight,
+                    setSelectedReturnFlight,
+                    selectedReturnDate,
+                    setSelectedReturnDate,
+                    true,
+                    'Vui lòng chọn chuyến đi trước để xem các chuyến về phù hợp'
+                  )
+                ) : (
+                  // Đã chọn chuyến đi - hiển thị header, DateNavigation và danh sách chuyến về
+                  renderFlightSection(
+                    filteredReturnFlights,
+                    'return',
+                    'CHUYẾN VỀ',
+                    selectedReturnFlight,
+                    setSelectedReturnFlight,
+                    selectedReturnDate,
+                    setSelectedReturnDate,
+                    true,
+                    filteredReturnFlights.length === 0 ? 'Không tìm thấy chuyến bay về phù hợp sau thời gian đến của chuyến đi' : undefined
+                  )
                 )
               )}
             </>
@@ -1371,6 +1508,8 @@ export default function SelectFlightRecoveryPage() {
               type="departure"
               state={searchData}
               selectedDate={selectedDepartureDate}
+              currentMonth={departureCurrentMonth}
+              currentYear={departureCurrentYear}
               adultsCount={adultsCount}
               childrenCount={childrenCount}
               infantsCount={infantsCount}
@@ -1384,6 +1523,8 @@ export default function SelectFlightRecoveryPage() {
               type="return"
               state={searchData}
               selectedDate={selectedReturnDate}
+              currentMonth={returnCurrentMonth}
+              currentYear={returnCurrentYear}
               adultsCount={adultsCount}
               childrenCount={childrenCount}
               infantsCount={infantsCount}

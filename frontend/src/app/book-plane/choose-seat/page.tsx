@@ -82,6 +82,35 @@ interface FlightSeatApi {
 
 const seatLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K'];
 
+// Mapping từ FareClassName sang SeatCabin
+const fareClassToSeatCabin: Record<string, SeatCabin> = {
+    // First Class variants
+    'FIST CLASS': 'First',
+    'FIRST CLASS': 'First',
+    'First': 'First',
+    'first': 'First',
+
+    // Business Class variants  
+    'BUSINESS': 'Business',
+    'Business': 'Business',
+    'business': 'Business',
+
+    // Economy Class variants
+    'ECONOMY': 'Economy',
+    'Economy': 'Economy',
+    'economy': 'Economy',
+    'ECO': 'Economy',
+    'Eco': 'Economy',
+    'eco': 'Economy'
+};
+
+// Giá ghế theo hạng và vị trí
+const seatPrices: Record<SeatCabin, { window: number; middle: number; aisle: number }> = {
+    First: { window: 0, middle: 0, aisle: 0 }, // First class miễn phí
+    Business: { window: 100000, middle: 80000, aisle: 100000 },
+    Economy: { window: 100000, middle: 80000, aisle: 100000 }
+};
+
 const defaultLayouts: Record<SeatCabin, string> = {
     First: '1-2-1',
     Business: '2-2-2',
@@ -101,7 +130,7 @@ const defaultMealSelections: MealSelectionsState = {
 const defaultPetServiceState: PetServiceState = {
     enabled: false,
     price: 4000000,
-    note: 'Vận chuyển thú cưng an toàn cùng Vietjet'
+    note: 'Vận chuyển thú cưng an toàn cùng FlyGo'
 };
 
 const seatCabinStyles: Record<SeatCabin, string> = {
@@ -118,6 +147,159 @@ const getSeatVisualClass = (seat: Seat) => {
         return 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200/70';
     }
     return seatCabinStyles[seat.travelClass] || seatCabinStyles.Economy;
+};
+
+// Xác định hạng vé từ SelectedFare
+const getTravelClassFromFare = (fare?: SelectedFare): SeatCabin => {
+    if (!fare?.fareName) return 'Economy';
+    return fareClassToSeatCabin[fare.fareName] || 'Economy';
+};
+
+// Lấy hạng vé từ thông tin đặt chỗ (state booking)
+const getTravelClassFromBookingState = (departureFare?: SelectedFare, returnFare?: SelectedFare, legKey?: SeatLegKey): SeatCabin => {
+    console.log('Getting travel class from booking state:');
+    console.log('departureFare:', departureFare);
+    console.log('returnFare:', returnFare);
+    console.log('legKey:', legKey);
+
+    // Nếu có legKey cụ thể, ưu tiên lấy theo chặng đó
+    if (legKey) {
+        const targetFare = legKey === 'departure' ? departureFare : returnFare;
+        if (targetFare?.fareName) {
+            const mappedClass = fareClassToSeatCabin[targetFare.fareName] || 'Economy';
+            console.log(`Travel class for ${legKey}: ${targetFare.fareName} -> ${mappedClass}`);
+            return mappedClass;
+        }
+    }
+
+    // Fallback: lấy hạng cao nhất giữa 2 chuyến
+    const departureClass = getTravelClassFromFare(departureFare);
+    const returnClass = getTravelClassFromFare(returnFare);
+
+    const classHierarchy: Record<SeatCabin, number> = {
+        'First': 3,
+        'Business': 2,
+        'Economy': 1
+    };
+
+    const finalClass = classHierarchy[returnClass] > classHierarchy[departureClass] ? returnClass : departureClass;
+    console.log(`Final travel class from booking state: ${finalClass}`);
+    return finalClass;
+};
+
+// Lấy hạng vé từ localStorage selectedFlight
+const getTravelClassFromLocalStorage = (): SeatCabin => {
+    if (typeof window === 'undefined') return 'Economy';
+
+    try {
+        // Kiểm tra các keys có thể có trong localStorage
+        const storageKeys = ['selectedDepartureFlight', 'selectedReturnFlight', 'selectedFlight'];
+
+        let highestClass: SeatCabin = 'Economy';
+        const classHierarchy: Record<SeatCabin, number> = {
+            'First': 3,
+            'Business': 2,
+            'Economy': 1
+        };
+
+        for (const key of storageKeys) {
+            const flightData = window.localStorage.getItem(key);
+            if (flightData) {
+                const parsed = JSON.parse(flightData);
+                if (parsed?.travelClass) {
+                    const travelClass = parsed.travelClass;
+                    console.log(`Travel class from ${key}:`, travelClass);
+                    const mappedClass = fareClassToSeatCabin[travelClass] || 'Economy';
+
+                    // Chọn hạng cao nhất
+                    if (classHierarchy[mappedClass] > classHierarchy[highestClass]) {
+                        highestClass = mappedClass;
+                    }
+                }
+            }
+        }
+
+        console.log('Final travel class selected:', highestClass);
+        return highestClass;
+    } catch (error) {
+        console.error('Không thể đọc dữ liệu flight từ localStorage:', error);
+    }
+
+    return 'Economy';
+};
+
+// Lấy hạng vé cho chặng cụ thể từ localStorage
+const getTravelClassForLeg = (legKey: SeatLegKey): SeatCabin => {
+    if (typeof window === 'undefined') return 'Economy';
+
+    try {
+        const storageKey = legKey === 'departure' ? 'selectedDepartureFlight' : 'selectedReturnFlight';
+        const fallbackKey = 'selectedFlight';
+
+        // Ưu tiên key chính, fallback về selectedFlight
+        const keys = [storageKey, fallbackKey];
+
+        for (const key of keys) {
+            const flightData = window.localStorage.getItem(key);
+            if (flightData) {
+                const parsed = JSON.parse(flightData);
+                if (parsed?.travelClass) {
+                    const travelClass = parsed.travelClass;
+                    const mappedClass = fareClassToSeatCabin[travelClass] || 'Economy';
+                    console.log(`Travel class for ${legKey} from ${key}: '${travelClass}' -> '${mappedClass}'`);
+                    console.log('Available mappings:', Object.keys(fareClassToSeatCabin));
+                    return mappedClass;
+                }
+            }
+        }
+    } catch (error) {
+        console.error(`Không thể đọc dữ liệu flight cho ${legKey} từ localStorage:`, error);
+    }
+
+    console.log(`No travel class found for ${legKey}, defaulting to Economy`);
+    return 'Economy';
+};
+
+// Xác định vị trí ghế (cửa sổ, giữa, lối đi)
+const getSeatPosition = (seat: Seat, layout: number[]): 'window' | 'middle' | 'aisle' => {
+    const position = getSeatPositionInLayout(seat.column, layout);
+    if (!position) {
+        // Fallback: dựa vào chữ cái đầu/cuối
+        const seatLetter = seat.column;
+        if (seatLetter === 'A' || seatLetter === 'F') return 'window';
+        if (seatLetter === 'C' || seatLetter === 'D') return 'aisle';
+        return 'middle';
+    }
+
+    const { section, position: posInSection } = position;
+    const sectionSize = layout[section];
+
+    // Ghế ở section đầu tiên, vị trí đầu tiên = cửa sổ bên trái
+    if (section === 0 && posInSection === 0) return 'window';
+
+    // Ghế ở section cuối cùng, vị trí cuối cùng = cửa sổ bên phải  
+    if (section === layout.length - 1 && posInSection === sectionSize - 1) return 'window';
+
+    // Ghế ở cuối section (trừ section cuối) hoặc đầu section (trừ section đầu) = lối đi
+    if (posInSection === sectionSize - 1 && section < layout.length - 1) return 'aisle';
+    if (posInSection === 0 && section > 0) return 'aisle';
+
+    return 'middle';
+};
+
+// Tính giá ghế dựa trên hạng và vị trí
+const calculateSeatPrice = (seat: Seat, allowedClass: SeatCabin, layout: number[]): number => {
+    // Nếu ghế không thuộc hạng được phép, không tính tiền
+    if (seat.travelClass !== allowedClass) return 0;
+
+    // Nếu là First class, miễn phí
+    if (allowedClass === 'First') return 0;
+
+    const position = getSeatPosition(seat, layout);
+    const basePrice = seatPrices[allowedClass][position] || 0;
+
+    console.log(`Calculating price for seat ${seat.seatNumber} (${allowedClass}, ${position}): ${basePrice}`);
+    return basePrice;
 };
 
 const formatLegDateLabel = (value?: Date | string | null) => {
@@ -294,8 +476,8 @@ export default function ChooseSeatPage() {
             {
                 id: 'seat-selection',
                 name: 'Chọn chỗ ngồi yêu thích',
-                description: 'Hãy chọn chỗ ngồi yêu thích của bạn',
-                price: 90000,
+                description: 'Chỉ được chọn ghế theo hạng vé đã mua. Giá thay đổi theo vị trí ghế.',
+                price: 0, // Sẽ được cập nhật theo hạng vé
                 isSelected: false,
                 icon: 'seat',
                 details: seatRouteDetails
@@ -379,6 +561,8 @@ export default function ChooseSeatPage() {
     const [mealActiveLegKey, setMealActiveLegKey] = useState<SeatLegKey>('departure');
     const [mealModalMessage, setMealModalMessage] = useState('');
     const [isPetModalOpen, setPetModalOpen] = useState(false);
+    const [allowedTravelClass, setAllowedTravelClass] = useState<SeatCabin>('Economy');
+    const [seatPricePerPerson, setSeatPricePerPerson] = useState(0);
 
     const seatCacheRef = useRef<Record<SeatLegKey, Seat[]>>({
         departure: [],
@@ -400,6 +584,72 @@ export default function ChooseSeatPage() {
     useEffect(() => {
         selectedSeatsRef.current = selectedSeatsByLeg;
     }, [selectedSeatsByLeg]);
+
+    // Xác định hạng vé được phép dựa trên chuyến bay đã chọn
+    useEffect(() => {
+        const departureFare = state.selectedDeparture;
+        const returnFare = state.selectedReturn;
+
+        // Ưu tiên 1: Lấy từ thông tin đặt chỗ (booking state)
+        if (departureFare || returnFare) {
+            const bookingClass = getTravelClassFromBookingState(departureFare, returnFare, activeLegKey);
+            console.log(`Setting allowed travel class from booking state for ${activeLegKey}:`, bookingClass);
+            setAllowedTravelClass(bookingClass);
+            return;
+        }
+
+        // Ưu tiên 2: Lấy từ localStorage cho chặng hiện tại
+        const currentLegClass = getTravelClassForLeg(activeLegKey);
+
+        // Ưu tiên 3: Lấy hạng cao nhất từ tất cả chuyến bay trong localStorage
+        const globalClass = getTravelClassFromLocalStorage();
+
+        let finalClass: SeatCabin = currentLegClass;
+
+        // Nếu không có dữ liệu cho chặng hiện tại, dùng hạng global
+        if (currentLegClass === 'Economy' && globalClass !== 'Economy') {
+            finalClass = globalClass;
+        }
+
+        console.log(`Setting allowed travel class from localStorage for ${activeLegKey}:`, finalClass);
+        setAllowedTravelClass(finalClass);
+    }, [state.selectedDeparture, state.selectedReturn, isOneWay, activeLegKey]);
+
+    // Theo dõi thay đổi localStorage khi component mount (chỉ khi không có booking state)
+    useEffect(() => {
+        const updateTravelClassFromStorage = () => {
+            // Chỉ update từ localStorage nếu không có booking state
+            if (!state.selectedDeparture && !state.selectedReturn) {
+                const currentLegClass = getTravelClassForLeg(activeLegKey);
+                const globalClass = getTravelClassFromLocalStorage();
+
+                // Ưu tiên hạng của chặng hiện tại, fallback về global
+                const finalClass = currentLegClass !== 'Economy' ? currentLegClass : globalClass;
+
+                console.log(`Updating travel class from storage for ${activeLegKey}:`, finalClass);
+                setAllowedTravelClass(finalClass);
+            }
+        };
+
+        // Chỉ cập nhật khi không có booking state
+        if (!state.selectedDeparture && !state.selectedReturn) {
+            updateTravelClassFromStorage();
+        }
+
+        // Lắng nghe sự kiện storage change (nếu localStorage thay đổi từ tab khác)
+        window.addEventListener('storage', updateTravelClassFromStorage);
+
+        return () => {
+            window.removeEventListener('storage', updateTravelClassFromStorage);
+        };
+    }, [activeLegKey]);
+
+    // Cập nhật giá dịch vụ chọn ghế dựa trên hạng vé
+    useEffect(() => {
+        const basePrice = allowedTravelClass === 'First' ? 0 :
+            allowedTravelClass === 'Business' ? 120000 : 150000;
+        setSeatPricePerPerson(basePrice);
+    }, [allowedTravelClass]);
 
     useEffect(() => {
         writeToStorage('selectedBaggage', selectedBaggage);
@@ -675,6 +925,12 @@ export default function ChooseSeatPage() {
     const updateSeatSelection = (seatId: string) => {
         const seat = seats.find(s => s.id === seatId);
         if (!seat || seat.isOccupied) return;
+
+        // Kiểm tra xem ghế có thuộc hạng được phép không
+        if (seat.travelClass !== allowedTravelClass) {
+            setSeatLimitMessage(`Bạn chỉ có thể chọn ghế hạng ${allowedTravelClass} theo vé đã mua.`);
+            return;
+        }
 
         const isCurrentlySelected = seat.isSelected;
         const currentSelections = selectedSeatsByLeg[activeLegKey] || [];
@@ -1070,13 +1326,38 @@ export default function ChooseSeatPage() {
     }, [seatDetailsByLegText, seatRouteDetails]);
 
     useEffect(() => {
+        // Tính tổng giá ghế đã chọn
+        let totalSeatPrice = 0;
+
+        // Tính giá cho từng chặng
+        Object.entries(selectedSeatsByLeg).forEach(([legKey, seats]) => {
+            seats.forEach(seat => {
+                // Lấy hạng vé cho chặng này
+                const legClass = legKey === 'departure'
+                    ? getTravelClassFromBookingState(state.selectedDeparture, state.selectedReturn, 'departure')
+                    : getTravelClassFromBookingState(state.selectedDeparture, state.selectedReturn, 'return');
+
+                const layout = parseLayout(seatLayoutConfig?.[seat.travelClass] || defaultLayouts[seat.travelClass] || '');
+                const price = calculateSeatPrice(seat, legClass, layout.length > 0 ? layout : [3, 3, 3]);
+                totalSeatPrice += price;
+
+                console.log(`Seat ${seat.seatNumber} on ${legKey}: ${legClass} class, price: ${price}`);
+            });
+        });
+
+        console.log('Total seat price:', totalSeatPrice);
+
         setServices(prev =>
             prev.map(service => {
                 if (service.id !== 'seat-selection') return service;
-                return { ...service, details: seatServiceDetails };
+                return {
+                    ...service,
+                    details: seatServiceDetails,
+                    price: totalSeatPrice
+                };
             })
         );
-    }, [seatServiceDetails]);
+    }, [seatServiceDetails, selectedSeatsByLeg, seatLayoutConfig, state.selectedDeparture, state.selectedReturn]);
 
     const mealTotalQuantity = useMemo(() => {
         return Object.values(mealSelections).reduce((total, selection) => total + (selection?.quantity || 0), 0);
@@ -1724,7 +2005,15 @@ export default function ChooseSeatPage() {
                         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 flex-shrink-0 sticky top-0 bg-white z-10">
                             <div>
                                 <h3 className="text-xl font-bold text-gray-900">Chọn chỗ ngồi yêu thích</h3>
-                                <p className="text-sm text-gray-500 mt-1">Chọn tối đa {seatSelectionLimit} ghế cho hành khách người lớn và trẻ em</p>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-semibold">
+                                        Hạng {allowedTravelClass}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                        {allowedTravelClass === 'First' ? 'Miễn phí chọn ghế' :
+                                            allowedTravelClass === 'Business' ? 'Từ 80,000đ' : 'Từ 80,000đ'}
+                                    </span>
+                                </div>
                                 {seatFlightInfo && (
                                     <p className="text-xs text-gray-400 mt-1">
                                         {seatFlightInfo.flightNumber ? `Chuyến ${seatFlightInfo.flightNumber}` : null}
@@ -1828,15 +2117,39 @@ export default function ChooseSeatPage() {
                                                                                         );
                                                                                     }
 
+                                                                                    const seatLayout = parseLayout(seatLayoutConfig?.[seat.travelClass] || defaultLayouts[seat.travelClass] || '');
+                                                                                    const seatPrice = calculateSeatPrice(seat, allowedTravelClass, seatLayout.length > 0 ? seatLayout : [3, 3, 3]);
+                                                                                    const seatPosition = getSeatPosition(seat, seatLayout.length > 0 ? seatLayout : [3, 3, 3]);
+
+                                                                                    let tooltipText = '';
+                                                                                    if (seat.travelClass !== allowedTravelClass) {
+                                                                                        tooltipText = `Bạn chỉ có thể chọn hạng ${allowedTravelClass}`;
+                                                                                    } else if (seat.isOccupied) {
+                                                                                        tooltipText = `Ghế ${seat.seatNumber} đã có người`;
+                                                                                    } else {
+                                                                                        const positionText = seatPosition === 'window' ? 'Cửa sổ' : seatPosition === 'aisle' ? 'Lối đi' : 'Giữa';
+                                                                                        const priceText = seatPrice === 0 ? 'Miễn phí' : `${new Intl.NumberFormat('vi-VN').format(seatPrice)}đ`;
+                                                                                        tooltipText = `${positionText} ${priceText}`;
+                                                                                    }
+
                                                                                     return (
                                                                                         <button
                                                                                             key={seat.id}
                                                                                             type="button"
                                                                                             onClick={() => updateSeatSelection(seat.id)}
-                                                                                            disabled={seat.isOccupied}
-                                                                                            className={`plane-seat w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-2 text-xs sm:text-sm font-semibold flex items-center justify-center transition-all ${getSeatVisualClass(seat)} ${seat.isSelected ? 'plane-seat--selected' : ''}`}
+                                                                                            disabled={seat.isOccupied || seat.travelClass !== allowedTravelClass}
+                                                                                            className={`plane-seat w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-2 text-xs sm:text-sm font-semibold flex items-center justify-center transition-all ${seat.travelClass !== allowedTravelClass
+                                                                                                ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
+                                                                                                : getSeatVisualClass(seat)
+                                                                                                } ${seat.isSelected ? 'plane-seat--selected' : ''} hover:scale-105 relative group`}
+                                                                                            title={tooltipText}
                                                                                         >
                                                                                             {seat.column}
+                                                                                            {/* Tooltip hiển thị khi hover */}
+                                                                                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-black text-white text-sm font-semibold rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 pointer-events-none shadow-lg scale-95 group-hover:scale-100">
+                                                                                                {tooltipText}
+                                                                                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-black"></div>
+                                                                                            </div>
                                                                                         </button>
                                                                                     );
                                                                                 })}
@@ -1872,6 +2185,28 @@ export default function ChooseSeatPage() {
 
                             <div className="space-y-4 sticky top-6 self-start">
                                 <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                                    <h4 className="text-sm font-semibold text-gray-600 uppercase mb-3">Thông tin vé</h4>
+                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-4">
+                                        <div className="text-sm font-semibold text-blue-800 mb-1">Hạng vé hiện tại</div>
+                                        <div className="text-lg font-bold text-blue-900">{allowedTravelClass}</div>
+                                        <div className="text-xs text-blue-600 mt-1">
+                                            {allowedTravelClass === 'First' ? 'Miễn phí chọn ghế' :
+                                                allowedTravelClass === 'Business' ? 'Giá ghế từ 80,000 VNĐ' :
+                                                    'Giá ghế từ 80,000 VNĐ'}
+                                        </div>
+                                        {allowedTravelClass !== 'First' && (
+                                            <div className="text-xs text-blue-500 mt-2 pt-2 border-t border-blue-200">
+                                                • Ghế cửa sổ: 100,000đ<br />
+                                                • Ghế giữa: 80,000đ<br />
+                                                • Ghế lối đi: 100,000đ
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+
+
+                                <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
                                     <h4 className="text-sm font-semibold text-gray-600 uppercase mb-3">Chú thích</h4>
                                     <div className="space-y-3 text-sm text-gray-600">
                                         <div className="flex items-center gap-3 px-3 py-2 bg-white border border-gray-200 rounded-lg">
@@ -1886,18 +2221,11 @@ export default function ChooseSeatPage() {
                                             <span className="w-4 h-4 rounded bg-blue-600 border border-blue-600 block"></span>
                                             <span>Ghế đang chọn</span>
                                         </div>
-                                        <div className="flex items-center gap-3 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg">
-                                            <span className="w-4 h-4 rounded bg-purple-200 border border-purple-400 block"></span>
-                                            <span>Hạng First</span>
+                                        <div className="flex items-center gap-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                                            <span className="w-4 h-4 rounded bg-gray-200 border border-gray-400 block"></span>
+                                            <span>Ghế không được phép chọn</span>
                                         </div>
-                                        <div className="flex items-center gap-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-                                            <span className="w-4 h-4 rounded bg-amber-200 border border-amber-400 block"></span>
-                                            <span>Hạng Business</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg">
-                                            <span className="w-4 h-4 rounded bg-white border border-slate-300 block"></span>
-                                            <span>Hạng Economy</span>
-                                        </div>
+
                                     </div>
                                 </div>
 
@@ -1936,6 +2264,14 @@ export default function ChooseSeatPage() {
                         </div>
 
                         <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4 bg-gray-50 flex-shrink-0">
+                            <div className="text-sm text-gray-600 mr-auto">
+                                Hạng vé: <span className="font-semibold text-blue-600">{allowedTravelClass}</span>
+                                {currentSelectedSeats.length > 0 && (
+                                    <span className="ml-4">
+                                        Đã chọn: <span className="font-semibold">{currentSelectedSeats.length}</span> ghế
+                                    </span>
+                                )}
+                            </div>
                             <button
                                 type="button"
                                 onClick={handleSeatModalClose}
