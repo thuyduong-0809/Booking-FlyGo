@@ -4,6 +4,7 @@ import { BookingFlight } from 'src/booking-flights/entities/booking-flights.enti
 import { BookingsController } from 'src/bookings/bookings.controller';
 import { BookingsService } from 'src/bookings/bookings.service';
 import { Booking } from 'src/bookings/entities/bookings.entity';
+import { FlightSeat } from 'src/flight-seats/entities/flight-seats.entity';
 import { Flight } from 'src/flights/entities/flights.entity';
 import { Passenger } from 'src/passengers/entities/passengers.entity';
 import { Payment } from 'src/payments/entities/payments.entity';
@@ -12,7 +13,7 @@ import { Seat } from 'src/seats/entities/seats.entity';
 import { User } from 'src/users/entities/users.entity';
 
 @Module({
-     imports:[TypeOrmModule.forFeature([Booking,User,Passenger,Flight,Payment,BookingFlight,Seat,SeatAllocation])],
+     imports:[TypeOrmModule.forFeature([Booking,User,Passenger,Flight,Payment,BookingFlight,Seat,SeatAllocation,FlightSeat])],
      providers:[BookingsService],
      controllers:[BookingsController],
 })

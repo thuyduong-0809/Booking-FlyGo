@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   PresentationChartLineIcon,
   PlusIcon,
@@ -12,6 +12,7 @@ import {
   ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { Flight, Booking, User, Payment } from '../../types/database';
+import { requestApi } from '@/lib/api';
 
 interface ReportData {
   period: string;
@@ -205,6 +206,8 @@ export default function Reports({ activeSubTab = 'reports' }: ReportsProps) {
     }
   ];
 
+
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Scheduled': return 'text-blue-600 bg-blue-100';
@@ -236,6 +239,79 @@ export default function Reports({ activeSubTab = 'reports' }: ReportsProps) {
       default: return 'text-gray-600 bg-gray-100';
     }
   };
+
+  useEffect(()=>{
+    loadMonthReport()
+    loadWeekReport()
+    loadQuarterReport()
+    loadYearReport()
+  },[])
+
+  const getListData = () => {
+  switch(selectedPeriod) {
+    case 'week': return [weekData];
+    case 'month': return [monthData];
+    case 'quarter': return [quarterData];
+    case 'year': return [yearData];
+    default: return [];
+  }
+};
+
+  const [weekData, setWeekData] = useState<any>(null);
+  const [monthData, setMonthData] = useState<any>(null);
+  const [quarterData, setQuarterData] = useState<any>(null);
+  const [yearData, setYearData] = useState<any>(null);
+  const loadMonthReport = async()=>{
+    requestApi('bookings/reports/current-month-revenue','GET').then((res:any)=>{
+      // console.log('aaa',res)
+       if(res.success){
+         setMonthData(res)
+        //  console.log(res.data)
+       }else{
+    
+       }
+    }).catch((err:any)=>{
+        console.log(err)
+    })
+  } 
+
+    const loadWeekReport = async()=>{
+    requestApi('bookings/reports/current-week-revenue','GET').then((res:any)=>{
+      // console.log('week',res)
+       if(res.success){
+         setWeekData(res)
+       }
+    })
+  } 
+
+  const loadQuarterReport = async()=>{
+    requestApi('bookings/reports/current-quarter-revenue','GET').then((res:any)=>{
+      // console.log('quarter',res)
+       if(res.success){
+         setQuarterData(res)
+        //  console.log(res.data)
+       }else{
+    
+       }
+    }).catch((err:any)=>{
+        console.log(err)
+    })
+  } 
+
+  const loadYearReport = async()=>{
+    requestApi('bookings/reports/current-year-revenue','GET').then((res:any)=>{
+      // console.log('year',res)
+       if(res.success){
+         setYearData(res)
+        //  console.log(res.data)
+       }else{
+    
+       }
+    }).catch((err:any)=>{
+        console.log(err)
+    })
+  } 
+
 
   // Render content based on active sub-tab
   const renderSubContent = () => {
@@ -490,61 +566,66 @@ export default function Reports({ activeSubTab = 'reports' }: ReportsProps) {
           <div className="space-y-6">
             {/* Overview Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                    <CurrencyDollarIcon className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-md font-medium text-gray-600">Doanh thu tháng</p>
-                    <p className="text-2xl font-bold text-gray-900">₫2.95B</p>
-                    <p className="text-sm text-green-600">+10.1%</p>
-                  </div>
-                </div>
-              </div>
+            {getListData().map((report, idx) => (
+              <div key={idx} className="contents">
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                    <UserGroupIcon className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-md font-medium text-gray-600">Đặt chỗ</p>
-                    <p className="text-2xl font-bold text-gray-900">1,534</p>
-                    <p className="text-sm text-green-600">+9.8%</p>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                      <CurrencyDollarIcon className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-md font-medium text-gray-600">Doanh thu</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {report ? `₫${report.totalRevenue}` : 'Đang tải...'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                    <RocketLaunchIcon className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-md font-medium text-gray-600">Chuyến bay</p>
-                    <p className="text-2xl font-bold text-gray-900">192</p>
-                    <p className="text-sm text-green-600">+10.3%</p>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                      <UserGroupIcon className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-md font-medium text-gray-600">Đặt chỗ</p>
+                      <p className="text-2xl font-bold text-gray-900">{report ? `${report.totalBookings}` : 'Đang tải...'}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
-                    <ChartBarIcon className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-md font-medium text-gray-600">Tỷ lệ lấp đầy</p>
-                    <p className="text-2xl font-bold text-gray-900">91.8%</p>
-                    <p className="text-sm text-green-600">+2.3%</p>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                      <RocketLaunchIcon className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-md font-medium text-gray-600">Chuyến bay</p>
+                      <p className="text-2xl font-bold text-gray-900">{report ? `${report.flightsDeparted}` : 'Đang tải...'}</p>
+                    </div>
                   </div>
                 </div>
+
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
+                      <ChartBarIcon className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-md font-medium text-gray-600">Tỷ lệ lấp đầy</p>
+                      <p className="text-2xl font-bold text-gray-900">{report ? `${report.loadFactor}` : 'Đang tải...'}</p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
-            </div>
+            ))}
+          </div>
+
 
             {/* Recent Performance */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Hiệu suất gần đây</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -584,7 +665,7 @@ export default function Reports({ activeSubTab = 'reports' }: ReportsProps) {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </div> */}
 
             {/* Top Performing Flights */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -639,7 +720,7 @@ export default function Reports({ activeSubTab = 'reports' }: ReportsProps) {
         <div className="flex items-center space-x-4">
           <select 
             value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
+            onChange={(e) => {setSelectedPeriod(e.target.value)}}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           >
             <option value="week">Tuần này</option>
