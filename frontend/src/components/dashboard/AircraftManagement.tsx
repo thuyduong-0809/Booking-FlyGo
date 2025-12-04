@@ -792,7 +792,7 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
   });
 
   const generateAircraftCode = (airlineId: number, model: string) => {
-    // Tìm hãng hàng không tương ứng
+
     const selectedAirline: any = airlines.find((a: any) => a.airlineId === Number(airlineId));
     if (!selectedAirline) return "";
 
@@ -869,14 +869,9 @@ export default function AircraftManagement({ activeSubTab = 'aircraft' }: Aircra
   const performSeatUpdate = () => {
     setLoading(true)
 
-    // Log dữ liệu được gửi để debug
-    console.log('Updating seat data:', {
-      seatId: selectedSeatId,
-      seatData: seatDataUpdate
-    });
 
     requestApi(`seats/${String(selectedSeatId)}`, "PUT", seatDataUpdate).then((res: any) => {
-      console.log('Seat update response:', res);
+
 
       if (res.success) {
         // Hiển thị thông báo chi tiết về việc cập nhật

@@ -1,6 +1,7 @@
 import { Flight } from 'src/flights/entities/flights.entity';
 import { Seat } from 'src/seats/entities/seats.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Unique, JoinColumn } from 'typeorm';
+import { SeatAllocation } from 'src/seat-allocations/entities/seat-allocations.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, Unique, JoinColumn } from 'typeorm';
 
 @Entity('FlightSeats')
 @Unique(['flight', 'seat'])
@@ -23,5 +24,8 @@ export class FlightSeat {
     })
     @JoinColumn({ name: 'seatId' })
     seat: Seat;
+
+    @OneToMany(() => SeatAllocation, (seatAllocation) => seatAllocation.flightSeat)
+    seatAllocations: SeatAllocation[];
 }
 
