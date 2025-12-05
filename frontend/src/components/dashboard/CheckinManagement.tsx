@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { 
+import {
   UserGroupIcon,
   PlusIcon,
   PencilIcon,
@@ -110,17 +110,17 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
     }
   };
 
-  const filteredCheckins = checkins.filter((checkin:any) => {
+  const filteredCheckins = checkins.filter((checkin: any) => {
     const passengerName = checkin.passenger.firstName + checkin.passenger.lastName
     const matchesSearch = checkin.bookingFlight.bookingFlightId ||
-                         passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        checkin.passenger.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         checkin.bookingFlight.seatNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      checkin.passenger.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      checkin.bookingFlight.seatNumber.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || checkin.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-    const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -135,62 +135,61 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
   }, []);
 
 
-      const loadCheckins = async () => {
-      await requestApi("check-ins", "GET").then((res: any) => {
-        // console.log("res",res);
-        if (res.success) {
-           setCheckins(res.data)
-        }
-      }).catch((error: any) => {
-        console.error(error)
-      });
-    }
-
-
-    const [checkInData, setCheckInData] = useState({
-      bookingFlightId: 0, // ID chuyến bay trong booking
-      // passengerId: 0,
-
-      checkInType: "Airport", // hoặc "Online" — kiểu check-in
-      baggageCount: 0, // số kiện hành lý
-      baggageWeight: 0, // tổng trọng lượng (kg)
-
-      boardingStatus: "", // trạng thái: NotBoarded | Boarded | GateClosed
+  const loadCheckins = async () => {
+    await requestApi("check-ins", "GET").then((res: any) => {
+      if (res.success) {
+        setCheckins(res.data)
+      }
+    }).catch((error: any) => {
+      console.error(error)
     });
+  }
+
+
+  const [checkInData, setCheckInData] = useState({
+    bookingFlightId: 0, // ID chuyến bay trong booking
+    // passengerId: 0,
+
+    checkInType: "Airport", // hoặc "Online" — kiểu check-in
+    baggageCount: 0, // số kiện hành lý
+    baggageWeight: 0, // tổng trọng lượng (kg)
+
+    boardingStatus: "", // trạng thái: NotBoarded | Boarded | GateClosed
+  });
 
 
 
 
-  const clearData = () =>{
+  const clearData = () => {
     setCheckInData({
-      bookingFlightId: 0, 
+      bookingFlightId: 0,
 
       checkInType: "Airport",
 
-      baggageCount: 0, 
+      baggageCount: 0,
       baggageWeight: 0,
 
       boardingStatus: "",
     })
-     setErrors({})
-    
+    setErrors({})
+
   }
 
-  
 
-   const [checkInOnlineData, setCheckInOnlineData] = useState({
-      bookingFlightId: 0, // ID chuyến bay trong booking
-      // passengerId: 0,
 
-      checkInType: "Online", // hoặc "Online" — kiểu check-in
+  const [checkInOnlineData, setCheckInOnlineData] = useState({
+    bookingFlightId: 0, // ID chuyến bay trong booking
+    // passengerId: 0,
 
-      boardingStatus: "", // trạng thái: NotBoarded | Boarded | GateClosed
-    });
+    checkInType: "Online", // hoặc "Online" — kiểu check-in
 
-    
-  const clearDataOnline = () =>{
+    boardingStatus: "", // trạng thái: NotBoarded | Boarded | GateClosed
+  });
+
+
+  const clearDataOnline = () => {
     setCheckInOnlineData({
-      bookingFlightId: 0, 
+      bookingFlightId: 0,
 
       checkInType: "Airport",
 
@@ -199,25 +198,26 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
 
     setErrors({})
     // setBoardingUrl("")
-    
+
   }
 
 
   const [boardingUrl, setBoardingUrl] = useState<string | null>(null);
   const [errors, setErrors] = useState<any>({});
-   const validateCheckInInputs = () => {
-  const newErrors: { [key: string]: string } = {};
+  const validateCheckInInputs = () => {
+    const newErrors: { [key: string]: string } = {};
 
-  if (!checkInData.bookingFlightId) newErrors.bookingFlightId = "Vui lòng nhập mã vé";
-  if (!checkInData.checkInType) newErrors.checkInType = "Vui lòng chọn hình thức check-in";
-  if (!checkInData.boardingStatus) newErrors.boardingStatus = "Vui lòng chọn trạng thái lên máy bay";
+    if (!checkInData.bookingFlightId) newErrors.bookingFlightId = "Vui lòng nhập mã vé";
+    if (!checkInData.checkInType) newErrors.checkInType = "Vui lòng chọn hình thức check-in";
+    if (!checkInData.boardingStatus) newErrors.boardingStatus = "Vui lòng chọn trạng thái lên máy bay";
 
-  if (checkInData.baggageCount < 0)
-    newErrors.baggageCount = "Số kiện hành lý không được âm";
+    if (checkInData.baggageCount < 0)
+      newErrors.baggageCount = "Số kiện hành lý không được âm";
 
-  if (checkInData.baggageWeight < 0)
-    newErrors.baggageWeight = "Trọng lượng hành lý không được âm";
+    if (checkInData.baggageWeight < 0)
+      newErrors.baggageWeight = "Trọng lượng hành lý không được âm";
 
+<<<<<<< HEAD
   setErrors(newErrors);
   return Object.keys(newErrors).length === 0;
 };
@@ -330,38 +330,151 @@ const validateCheckInOnlineInputs = () => {
   const updateCheckinStatus = (id:number)=>{
      const payload = {
      boardingStatus: "Boarded"
+=======
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+>>>>>>> 68e16909ffc0bbf8f40226c9603d13208e21ef2f
   };
-      requestApi(`check-ins/${String(id)}`,'PUT',payload).then((res:any)=>{
-        if(res.success){
-          loadCheckins()
-        }else{
-          alert('update thất bại')
-          console.log(res.message)
-        }
-      }).catch((error:any)=>{
-        console.error(error)
-      })
+
+
+  const [errorsOnline, setErrorsOnline] = useState<any>({});
+
+  const validateCheckInOnlineInputs = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!checkInOnlineData.bookingFlightId) newErrors.bookingFlightId = "Vui lòng nhập mã vé";
+    if (!checkInOnlineData.checkInType) newErrors.checkInType = "Vui lòng chọn hình thức check-in";
+    if (!checkInOnlineData.boardingStatus) newErrors.boardingStatus = "Vui lòng chọn trạng thái lên máy bay";
+
+    setErrorsOnline(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+
+  const addCheckInAirport = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateCheckInInputs()) return
+
+    setLoading(true);
+    requestApi("check-ins", "POST", checkInData).then((res: any) => {
+      if (res.success) {
+        alert(`Tạo check-in tại sân bay thành công`)
+        setBoardingUrl(`http://localhost:3001${res.data.boardingPassUrl}`); //hiển thị link PDF
+        setShowAddModal(false)
+        clearData()
+        loadCheckins()
+        setLoading(false)
+
+      } else if (res.errorCode === 'BOOKINGFLIGHT_NOT_EXIST') {
+        setErrors((prev: any) => ({
+          ...prev,
+          bookingFlightId: "Mã vé không tồn tại",
+        }));
+      } else if (res.errorCode === 'PASSENGER_NOT_EXIST') {
+        setErrors((prev: any) => ({
+          ...prev,
+          passengerId: "Hành khách không tồn tại",
+        }));
+      } else if (res.errorCode === 'BOOKINGFLIGHT_DUPLICATE') {
+        setErrors((prev: any) => ({
+          ...prev,
+          bookingFlightId: "Vé này đã check-in,vui lòng nhập mã vé khác!",
+        }));
+      }
+      else {
+        alert('Thêm thất bại')
+      }
+    }).catch((err: any) => {
+      console.error(err)
+    }).finally(() => {
+      // chỉ tắt loading sau khi mọi thứ hoàn tất
+      setLoading(false);
+    });
   }
 
-    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-    const [checkinToDelete, setCheckinToDelete] = useState<number | null>(null);
-    const confirmDelete = (checkInId: number) => {
-      setCheckinToDelete(checkInId);
-      setIsDeleteConfirmOpen(true);
+
+
+  const [boardingUrlOnline, setBoardingUrlOnline] = useState<string | null>(null);
+  const addCheckInOnline = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateCheckInOnlineInputs()) return
+
+    setLoading(true);
+    requestApi("check-ins/online", "POST", checkInOnlineData).then((res: any) => {
+      if (res.success) {
+        alert('Tạo check-in trực tuyến thành công')
+        setBoardingUrlOnline(`http://localhost:3001${res.data.boardingPassUrl}`); //hiển thị link PDF
+        // window.open(`http://localhost:3001${res.data.boardingPassUrl}`, "_blank");
+        setShowAddModal(false)
+        //  setErrors({})
+        clearDataOnline()
+        loadCheckins()
+        setLoading(false)
+        loadCheckins()
+
+      } else if (res.errorCode === 'BOOKINGFLIGHT_NOT_EXIST') {
+        setErrorsOnline((prev: any) => ({
+          ...prev,
+          bookingFlightId: "Mã vé không tồn tại",
+        }));
+      } else if (res.errorCode === 'PASSENGER_NOT_EXIST') {
+        setErrorsOnline((prev: any) => ({
+          ...prev,
+          passengerId: "Hành khách không tồn tại",
+        }));
+      }
+      else if (res.errorCode === 'BOOKINGFLIGHT_DUPLICATE') {
+        setErrorsOnline((prev: any) => ({
+          ...prev,
+          bookingFlightId: "Vé này đã check-in,vui lòng nhập mã vé khác!",
+        }));
+      }
+      else {
+        alert('Thêm thất bại')
+      }
+    }).catch((err: any) => {
+      console.error(err)
+    }).finally(() => {
+      // chỉ tắt loading sau khi mọi thứ hoàn tất
+      setLoading(false);
+    });
+  }
+
+
+
+  const updateCheckinStatus = (id: number) => {
+    const payload = {
+      boardingStatus: "Boarded"
     };
+    requestApi(`check-ins/${String(id)}`, 'PUT', payload).then((res: any) => {
+      if (res.success) {
+        loadCheckins()
+      } else {
+        alert('update thất bại')
+      }
+    }).catch((error: any) => {
+      console.error(error)
+    })
+  }
 
-  const deleteCheckin = (id:number)=>{
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [checkinToDelete, setCheckinToDelete] = useState<number | null>(null);
+  const confirmDelete = (checkInId: number) => {
+    setCheckinToDelete(checkInId);
+    setIsDeleteConfirmOpen(true);
+  };
 
-      requestApi(`check-ins/${String(id)}`,'DELETE',).then((res:any)=>{
-        if(res.success){
-          loadCheckins()
-        }else{
-          alert('xóa thất bại')
-          console.log(res.message)
-        }
-      }).catch((error:any)=>{
-        console.error(error)
-      })
+  const deleteCheckin = (id: number) => {
+
+    requestApi(`check-ins/${String(id)}`, 'DELETE',).then((res: any) => {
+      if (res.success) {
+        loadCheckins()
+      } else {
+        alert('xóa thất bại')
+      }
+    }).catch((error: any) => {
+      console.error(error)
+    })
   }
 
   if (loading) {
@@ -375,7 +488,7 @@ const validateCheckInOnlineInputs = () => {
           <div className="space-y-6">
             {/* FORM CHECK-IN */}
             <form onSubmit={addCheckInAirport}>
-               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Tạo Check-in</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -388,15 +501,14 @@ const validateCheckInOnlineInputs = () => {
                     <input
                       type="number"
                       value={checkInData.bookingFlightId || ""}
-                      onChange={(e) =>{
-                         setCheckInData({ ...checkInData, bookingFlightId: Number(e.target.value) }),
-                         setErrors((prev: any) => ({ ...prev,bookingFlightId: "" }));
+                      onChange={(e) => {
+                        setCheckInData({ ...checkInData, bookingFlightId: Number(e.target.value) }),
+                          setErrors((prev: any) => ({ ...prev, bookingFlightId: "" }));
                       }
-                       
+
                       }
-                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
-                        errors.bookingFlightId ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${errors.bookingFlightId ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="VD: 12"
                     />
                     {errors.bookingFlightId && (
@@ -429,29 +541,28 @@ const validateCheckInOnlineInputs = () => {
                   </div> */}
 
                   {/* checkInType */}
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">
-                        Hình thức Check-in
-                      </label>
-                      <select
-                        value={checkInData.checkInType}
-                        onChange={(e) => {
-                          setCheckInData({ ...checkInData, checkInType: e.target.value });
-                          setErrors((prev: any) => ({ ...prev, checkInType: "" }));
-                        }}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
-                          errors.checkInType ? "border-red-500" : "border-gray-300"
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">
+                      Hình thức Check-in
+                    </label>
+                    <select
+                      value={checkInData.checkInType}
+                      onChange={(e) => {
+                        setCheckInData({ ...checkInData, checkInType: e.target.value });
+                        setErrors((prev: any) => ({ ...prev, checkInType: "" }));
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${errors.checkInType ? "border-red-500" : "border-gray-300"
                         }`}
-                      >
-                        <option value="">Chọn loại</option>
-                        <option value="Airport">Tại sân bay</option>
-                      </select>
-                      {errors.checkInType && (
-                        <p className="text-red-500 text-sm mt-1">{errors.checkInType}</p>
-                      )}
-                    </div>
+                    >
+                      <option value="">Chọn loại</option>
+                      <option value="Airport">Tại sân bay</option>
+                    </select>
+                    {errors.checkInType && (
+                      <p className="text-red-500 text-sm mt-1">{errors.checkInType}</p>
+                    )}
+                  </div>
 
-                 {/* boardingStatus */}
+                  {/* boardingStatus */}
                   <div>
                     <label className="block text-md font-medium text-gray-700 mb-1">
                       Trạng thái lên máy bay
@@ -462,9 +573,8 @@ const validateCheckInOnlineInputs = () => {
                         setCheckInData({ ...checkInData, boardingStatus: e.target.value });
                         setErrors((prev: any) => ({ ...prev, boardingStatus: "" }));
                       }}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
-                        errors.boardingStatus ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${errors.boardingStatus ? "border-red-500" : "border-gray-300"
+                        }`}
                     >
                       <option value="">Chọn trạng thái</option>
                       <option value="NotBoarded">Chưa lên máy bay</option>
@@ -489,9 +599,8 @@ const validateCheckInOnlineInputs = () => {
                         setCheckInData({ ...checkInData, baggageCount: Number(e.target.value) });
                         setErrors((prev: any) => ({ ...prev, baggageCount: "" }));
                       }}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
-                        errors.baggageCount ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${errors.baggageCount ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="VD: 2"
                     />
                     {errors.baggageCount && (
@@ -499,7 +608,7 @@ const validateCheckInOnlineInputs = () => {
                     )}
                   </div>
 
-               {/* baggageWeight */}
+                  {/* baggageWeight */}
                   <div>
                     <label className="block text-md font-medium text-gray-700 mb-1">
                       Tổng trọng lượng hành lý (kg)
@@ -513,32 +622,31 @@ const validateCheckInOnlineInputs = () => {
                         setCheckInData({ ...checkInData, baggageWeight: Number(e.target.value) });
                         setErrors((prev: any) => ({ ...prev, baggageWeight: "" }));
                       }}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
-                        errors.baggageWeight ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${errors.baggageWeight ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="VD: 23.5"
                     />
                     {errors.baggageWeight && (
                       <p className="text-red-500 text-sm mt-1">{errors.baggageWeight}</p>
                     )}
                   </div>
-                  <br/>
+                  <br />
 
-                {boardingUrl && (
-                  <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
-                    <p className="text-green-700 font-medium mb-2">
-                      ✅ Check-in thành công! Boarding Pass của bạn:
-                    </p>
-                    <a
-                      href={boardingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline font-semibold"
-                    >
-                      Xem / Tải Boarding Pass (PDF)
-                    </a>
-                  </div>
-                )}
+                  {boardingUrl && (
+                    <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
+                      <p className="text-green-700 font-medium mb-2">
+                        ✅ Check-in thành công! Boarding Pass của bạn:
+                      </p>
+                      <a
+                        href={boardingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline font-semibold"
+                      >
+                        Xem / Tải Boarding Pass (PDF)
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-6 flex justify-end space-x-3">
@@ -587,253 +695,250 @@ const validateCheckInOnlineInputs = () => {
 
         );
 
-      case 'checkin-online':
-        return (
-          <div className="space-y-6">
-            <form onSubmit={addCheckInOnline}>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Check-in trực tuyến</h3>
-              <div className="mb-4">
-                <label className="block text-md font-medium text-gray-700 mb-1">Tìm kiếm đặt chỗ</label>
-                <div className="flex space-x-4">
-                  <input
-                    type="text"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Nhập số đặt chỗ hoặc mã vé"
-                  />
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    Tìm kiếm
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 {/* bookingFlightId */}
-                  <div>
-                    <label className="block text-md font-medium text-gray-700 mb-1">
-                      Mã vé (bookingFlightId)
-                    </label>
-                    <input
-                      type="number"
-                      value={checkInOnlineData.bookingFlightId || ""}
-                      onChange={(e) =>{
-                         setCheckInOnlineData({ ...checkInOnlineData, bookingFlightId: Number(e.target.value) }),
-                         setErrorsOnline((prev: any) => ({ ...prev,bookingFlightId: "" }));
-                      }
-                       
-                      }
-                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
-                        errorsOnline.bookingFlightId ? "border-red-500" : "border-gray-300"
-                      }`}
-                      placeholder="VD: 12"
-                    />
-                    {errorsOnline.bookingFlightId && (
-                      <p className="text-red-500 text-sm mt-1">{errorsOnline.bookingFlightId}</p>
-                    )}
-                  </div>
-                  {/* checkInType */}
-                    <div>
-                      <label className="block text-md font-medium text-gray-700 mb-1">
-                        Hình thức Check-in
-                      </label>
-                      <select
-                        value={checkInOnlineData.checkInType}
-                        onChange={(e) => {
-                          setCheckInOnlineData({ ...checkInOnlineData, checkInType: e.target.value });
-                          setErrorsOnline((prev: any) => ({ ...prev, checkInType: "" }));
-                        }}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
-                          errorsOnline.checkInType ? "border-red-500" : "border-gray-300"
-                        }`}
-                      >
-                        {/* <option value="">Chọn loại</option> */}
-                        <option value="Online">Trực tuyến</option>
-                      </select>
-                      {errorsOnline.checkInType && (
-                        <p className="text-red-500 text-sm mt-1">{errorsOnline.checkInType}</p>
-                      )}
-                    </div>
+      // case 'checkin-online':
+      //   return (
+      //     <div className="space-y-6">
+      //       <form onSubmit={addCheckInOnline}>
+      //         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      //           <h3 className="text-lg font-semibold text-gray-900 mb-4">Check-in trực tuyến</h3>
+      //           <div className="mb-4">
+      //             <label className="block text-md font-medium text-gray-700 mb-1">Tìm kiếm đặt chỗ</label>
+      //             <div className="flex space-x-4">
+      //               <input
+      //                 type="text"
+      //                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+      //                 placeholder="Nhập số đặt chỗ hoặc mã vé"
+      //               />
+      //               <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+      //                 Tìm kiếm
+      //               </button>
+      //             </div>
+      //           </div>
+      //           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      //             {/* bookingFlightId */}
+      //             <div>
+      //               <label className="block text-md font-medium text-gray-700 mb-1">
+      //                 Mã vé (bookingFlightId)
+      //               </label>
+      //               <input
+      //                 type="number"
+      //                 value={checkInOnlineData.bookingFlightId || ""}
+      //                 onChange={(e) => {
+      //                   setCheckInOnlineData({ ...checkInOnlineData, bookingFlightId: Number(e.target.value) }),
+      //                     setErrorsOnline((prev: any) => ({ ...prev, bookingFlightId: "" }));
+      //                 }
 
-                 {/* boardingStatus */}
-                  <div>
-                    <label className="block text-md font-medium text-gray-700 mb-1">
-                      Trạng thái lên máy bay
-                    </label>
-                    <select
-                      value={checkInOnlineData.boardingStatus}
-                      onChange={(e) => {
-                        setCheckInOnlineData({ ...checkInOnlineData, boardingStatus: e.target.value });
-                        setErrorsOnline((prev: any) => ({ ...prev, boardingStatus: "" }));
-                      }}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${
-                        errorsOnline.boardingStatus ? "border-red-500" : "border-gray-300"
-                      }`}
-                    >
-                      <option value="">Chọn trạng thái</option>
-                      <option value="NotBoarded">Chưa lên máy bay</option>
-                      <option value="Boarded">Đã lên máy bay</option>
-                      <option value="GateClosed">Đã đóng cửa</option>
-                    </select>
-                    {errorsOnline.boardingStatus && (
-                      <p className="text-red-500 text-sm mt-1">{errorsOnline.boardingStatus}</p>
-                    )}
-                  </div>
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                onClick={()=>{clearDataOnline(),setBoardingUrlOnline("")}}>
-                  Hủy
-                </button>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                  Check-in trực tuyến
-                </button>
-              </div>
-                {boardingUrlOnline && (
-                  <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
-                    <p className="text-green-700 font-medium mb-2">
-                      ✅ Check-in thành công! Boarding Pass đã dược gửi về mail khách hàng:
-                    </p>
-                    <a
-                      href={boardingUrlOnline}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline font-semibold"
-                    >
-                      Xem / Tải Boarding Pass (PDF)
-                    </a>
-                  </div>
-                )}
-            </div>
-         </form>
-          {/* Check-ins List */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Check-in trực tuyến gần đây</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Số đặt chỗ
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Hành khách
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Chuyến bay
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Ghế
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Loại check-in
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Trạng thái
-                      </th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                        Thao tác
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {checkins.filter((c:any) => c.checkInType === 'Online').map((checkin:any) => (
-                      <tr key={checkin.checkInId} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                              <UserGroupIcon className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{checkin.bookingFlight.booking.bookingReference}</div>
-                              <div className="text-sm text-gray-500">#{checkin.checkInId}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
-                          {checkin.passenger.lastName} {checkin.passenger.firstName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-mdmd text-gray-900">
-                          {checkin.bookingFlight.flight.flightNumber}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
-                          {checkin.bookingFlight.seatNumber}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-mdmd text-gray-900">
-                          {checkin.checkInType}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.boardingStatus)}`}>
-                            {getStatusText(checkin.boardingStatus)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center space-x-2">
-                            {/* <button className="text-blue-600 hover:text-blue-900">
-                              <EyeIcon className="h-5 w-5" />
-                            </button> */}
-                            {/* <button className="text-green-600 hover:text-green-900">
-                              <PencilIcon className="h-5 w-5" />
-                            </button> */}
-                            <button className="text-red-600 hover:text-red-900"
-                            onClick={()=>confirmDelete(checkin.checkInId)}>
-                              <TrashIcon className="h-5 w-5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                  ))}
-                    <Dialog
-                          open={isDeleteConfirmOpen}
-                          onClose={() => setIsDeleteConfirmOpen(false)}
-                          className="relative z-50"
-                        >
-                          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-                          <div className="fixed inset-0 flex items-center justify-center p-4">
-                            <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
-                              <div className="flex justify-between items-center mb-3">
-                                <Dialog.Title className="text-lg font-semibold text-gray-800">
-                                  Xác nhận xóa
-                                </Dialog.Title>
-                                <button onClick={() => setIsDeleteConfirmOpen(false)}>
-                                  <XMarkIcon className="h-5 w-5 text-gray-500" />
-                                </button>
-                              </div>
-    
-                              <p className="text-gray-600 mb-5">
-                                Bạn có chắc muốn xóa check-in này không?
-                              </p>
-    
-                              <div className="flex justify-end space-x-3">
-                                <button
-                                  onClick={() => setIsDeleteConfirmOpen(false)}
-                                  className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-400"
-                                >
-                                  Hủy
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    if (checkinToDelete) {
-                                      deleteCheckin(checkinToDelete);
-                                      setIsDeleteConfirmOpen(false);
-                                      console.error('checkinToDelete',checkinToDelete)
-                                    }
-                                  }}
-                                  className="px-3 py-1 bg-red-600 text-white ``rounded hover:bg-red-700"
-                                >
-                                  Xóa
-                                </button>
-                              </div>
-                            </Dialog.Panel>
-                          </div>
-                        </Dialog>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-           
-          </div>
-        );
+      //                 }
+      //                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${errorsOnline.bookingFlightId ? "border-red-500" : "border-gray-300"
+      //                   }`}
+      //                 placeholder="VD: 12"
+      //               />
+      //               {errorsOnline.bookingFlightId && (
+      //                 <p className="text-red-500 text-sm mt-1">{errorsOnline.bookingFlightId}</p>
+      //               )}
+      //             </div>
+      //             {/* checkInType */}
+      //             <div>
+      //               <label className="block text-md font-medium text-gray-700 mb-1">
+      //                 Hình thức Check-in
+      //               </label>
+      //               <select
+      //                 value={checkInOnlineData.checkInType}
+      //                 onChange={(e) => {
+      //                   setCheckInOnlineData({ ...checkInOnlineData, checkInType: e.target.value });
+      //                   setErrorsOnline((prev: any) => ({ ...prev, checkInType: "" }));
+      //                 }}
+      //                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${errorsOnline.checkInType ? "border-red-500" : "border-gray-300"
+      //                   }`}
+      //               >
+      //                 {/* <option value="">Chọn loại</option> */}
+      //                 <option value="Online">Trực tuyến</option>
+      //               </select>
+      //               {errorsOnline.checkInType && (
+      //                 <p className="text-red-500 text-sm mt-1">{errorsOnline.checkInType}</p>
+      //               )}
+      //             </div>
+
+      //             {/* boardingStatus */}
+      //             <div>
+      //               <label className="block text-md font-medium text-gray-700 mb-1">
+      //                 Trạng thái lên máy bay
+      //               </label>
+      //               <select
+      //                 value={checkInOnlineData.boardingStatus}
+      //                 onChange={(e) => {
+      //                   setCheckInOnlineData({ ...checkInOnlineData, boardingStatus: e.target.value });
+      //                   setErrorsOnline((prev: any) => ({ ...prev, boardingStatus: "" }));
+      //                 }}
+      //                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${errorsOnline.boardingStatus ? "border-red-500" : "border-gray-300"
+      //                   }`}
+      //               >
+      //                 <option value="">Chọn trạng thái</option>
+      //                 <option value="NotBoarded">Chưa lên máy bay</option>
+      //                 <option value="Boarded">Đã lên máy bay</option>
+      //                 <option value="GateClosed">Đã đóng cửa</option>
+      //               </select>
+      //               {errorsOnline.boardingStatus && (
+      //                 <p className="text-red-500 text-sm mt-1">{errorsOnline.boardingStatus}</p>
+      //               )}
+      //             </div>
+      //           </div>
+      //           <div className="mt-6 flex justify-end space-x-3">
+      //             <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+      //               onClick={() => { clearDataOnline(), setBoardingUrlOnline("") }}>
+      //               Hủy
+      //             </button>
+      //             <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+      //               Check-in trực tuyến
+      //             </button>
+      //           </div>
+      //           {boardingUrlOnline && (
+      //             <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
+      //               <p className="text-green-700 font-medium mb-2">
+      //                 ✅ Check-in thành công! Boarding Pass đã dược gửi về mail khách hàng:
+      //               </p>
+      //               <a
+      //                 href={boardingUrlOnline}
+      //                 target="_blank"
+      //                 rel="noopener noreferrer"
+      //                 className="text-blue-600 hover:underline font-semibold"
+      //               >
+      //                 Xem / Tải Boarding Pass (PDF)
+      //               </a>
+      //             </div>
+      //           )}
+      //         </div>
+      //       </form>
+      //       {/* Check-ins List */}
+      //       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      //         <div className="px-6 py-4 border-b border-gray-200">
+      //           <h3 className="text-lg font-semibold text-gray-900">Check-in trực tuyến gần đây</h3>
+      //         </div>
+      //         <div className="overflow-x-auto">
+      //           <table className="w-full">
+      //             <thead className="bg-gray-50">
+      //               <tr>
+      //                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+      //                   Số đặt chỗ
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+      //                   Hành khách
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+      //                   Chuyến bay
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+      //                   Ghế
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+      //                   Loại check-in
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+      //                   Trạng thái
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+      //                   Thao tác
+      //                 </th>
+      //               </tr>
+      //             </thead>
+      //             <tbody className="bg-white divide-y divide-gray-200">
+      //               {checkins.filter((c: any) => c.checkInType === 'Online').map((checkin: any) => (
+      //                 <tr key={checkin.checkInId} className="hover:bg-gray-50">
+      //                   <td className="px-6 py-4 whitespace-nowrap">
+      //                     <div className="flex items-center">
+      //                       <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+      //                         <UserGroupIcon className="h-5 w-5 text-blue-600" />
+      //                       </div>
+      //                       <div>
+      //                         <div className="text-sm font-medium text-gray-900">{checkin.bookingFlight.booking.bookingReference}</div>
+      //                         <div className="text-sm text-gray-500">#{checkin.checkInId}</div>
+      //                       </div>
+      //                     </div>
+      //                   </td>
+      //                   <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
+      //                     {checkin.passenger.lastName} {checkin.passenger.firstName}
+      //                   </td>
+      //                   <td className="px-6 py-4 whitespace-nowrap text-mdmd text-gray-900">
+      //                     {checkin.bookingFlight.flight.flightNumber}
+      //                   </td>
+      //                   <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
+      //                     {checkin.bookingFlight.seatNumber}
+      //                   </td>
+      //                   <td className="px-6 py-4 whitespace-nowrap text-mdmd text-gray-900">
+      //                     {checkin.checkInType}
+      //                   </td>
+      //                   <td className="px-6 py-4 whitespace-nowrap">
+      //                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.boardingStatus)}`}>
+      //                       {getStatusText(checkin.boardingStatus)}
+      //                     </span>
+      //                   </td>
+      //                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+      //                     <div className="flex items-center space-x-2">
+      //                       {/* <button className="text-blue-600 hover:text-blue-900">
+      //                         <EyeIcon className="h-5 w-5" />
+      //                       </button> */}
+      //                       {/* <button className="text-green-600 hover:text-green-900">
+      //                         <PencilIcon className="h-5 w-5" />
+      //                       </button> */}
+      //                       <button className="text-red-600 hover:text-red-900"
+      //                         onClick={() => confirmDelete(checkin.checkInId)}>
+      //                         <TrashIcon className="h-5 w-5" />
+      //                       </button>
+      //                     </div>
+      //                   </td>
+      //                 </tr>
+      //               ))}
+      //               <Dialog
+      //                 open={isDeleteConfirmOpen}
+      //                 onClose={() => setIsDeleteConfirmOpen(false)}
+      //                 className="relative z-50"
+      //               >
+      //                 <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      //                 <div className="fixed inset-0 flex items-center justify-center p-4">
+      //                   <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
+      //                     <div className="flex justify-between items-center mb-3">
+      //                       <Dialog.Title className="text-lg font-semibold text-gray-800">
+      //                         Xác nhận xóa
+      //                       </Dialog.Title>
+      //                       <button onClick={() => setIsDeleteConfirmOpen(false)}>
+      //                         <XMarkIcon className="h-5 w-5 text-gray-500" />
+      //                       </button>
+      //                     </div>
+
+      //                     <p className="text-gray-600 mb-5">
+      //                       Bạn có chắc muốn xóa check-in này không?
+      //                     </p>
+
+      //                     <div className="flex justify-end space-x-3">
+      //                       <button
+      //                         onClick={() => setIsDeleteConfirmOpen(false)}
+      //                         className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-400"
+      //                       >
+      //                         Hủy
+      //                       </button>
+      //                       <button
+      //                         onClick={() => {
+      //                           if (checkinToDelete) {
+      //                             deleteCheckin(checkinToDelete);
+      //                             setIsDeleteConfirmOpen(false);
+      //                             console.error('checkinToDelete', checkinToDelete)
+      //                           }
+      //                         }}
+      //                         className="px-3 py-1 bg-red-600 text-white ``rounded hover:bg-red-700"
+      //                       >
+      //                         Xóa
+      //                       </button>
+      //                     </div>
+      //                   </Dialog.Panel>
+      //                 </div>
+      //               </Dialog>
+      //             </tbody>
+      //           </table>
+      //         </div>
+      //       </div>
+
+      //     </div>
+      //   );
 
       case 'checkin-baggage':
         return (
@@ -1010,7 +1115,7 @@ const validateCheckInOnlineInputs = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {checkins.map((checkin:any) => (
+                    {checkins.map((checkin: any) => (
                       <tr key={checkin.checkInId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {checkin.passenger.lastName} {checkin.passenger.firstName}
@@ -1025,8 +1130,8 @@ const validateCheckInOnlineInputs = () => {
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(checkin.boardingStatus)}`}>
                             {getStatusText(checkin.boardingStatus)}
                           </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           {checkin.boardingStatus === 'NotBoarded' && (
                             <button
                               className="text-blue-600 hover:text-blue-900"
@@ -1061,7 +1166,7 @@ const validateCheckInOnlineInputs = () => {
                     className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   />
                 </div>
-                <select 
+                <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
@@ -1108,7 +1213,7 @@ const validateCheckInOnlineInputs = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {checkins.map((checkin:any) => (
+                    {checkins.map((checkin: any) => (
                       <tr key={checkin.checkInId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -1147,57 +1252,57 @@ const validateCheckInOnlineInputs = () => {
                               <PencilIcon className="h-5 w-5" />
                             </button> */}
                             <button className="text-red-600 hover:text-red-900"
-                             onClick={()=>confirmDelete(checkin.checkInId)}>
+                              onClick={() => confirmDelete(checkin.checkInId)}>
                               <TrashIcon className="h-5 w-5" />
                             </button>
                           </div>
                         </td>
                       </tr>
                     ))}
-                                        <Dialog
-                          open={isDeleteConfirmOpen}
-                          onClose={() => setIsDeleteConfirmOpen(false)}
-                          className="relative z-50"
-                        >
-                          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-                          <div className="fixed inset-0 flex items-center justify-center p-4">
-                            <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
-                              <div className="flex justify-between items-center mb-3">
-                                <Dialog.Title className="text-lg font-semibold text-gray-800">
-                                  Xác nhận xóa
-                                </Dialog.Title>
-                                <button onClick={() => setIsDeleteConfirmOpen(false)}>
-                                  <XMarkIcon className="h-5 w-5 text-gray-500" />
-                                </button>
-                              </div>
-    
-                              <p className="text-gray-600 mb-5">
-                                Bạn có chắc muốn xóa check-in này không?
-                              </p>
-    
-                              <div className="flex justify-end space-x-3">
-                                <button
-                                  onClick={() => setIsDeleteConfirmOpen(false)}
-                                  className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-400"
-                                >
-                                  Hủy
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    if (checkinToDelete) {
-                                      deleteCheckin(checkinToDelete);
-                                      setIsDeleteConfirmOpen(false);
-                                      console.error('checkinToDelete',checkinToDelete)
-                                    }
-                                  }}
-                                  className="px-3 py-1 bg-red-600 text-white ``rounded hover:bg-red-700"
-                                >
-                                  Xóa
-                                </button>
-                              </div>
-                            </Dialog.Panel>
+                    <Dialog
+                      open={isDeleteConfirmOpen}
+                      onClose={() => setIsDeleteConfirmOpen(false)}
+                      className="relative z-50"
+                    >
+                      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+                      <div className="fixed inset-0 flex items-center justify-center p-4">
+                        <Dialog.Panel className="bg-white rounded-lg shadow-lg w-[320px] p-5">
+                          <div className="flex justify-between items-center mb-3">
+                            <Dialog.Title className="text-lg font-semibold text-gray-800">
+                              Xác nhận xóa
+                            </Dialog.Title>
+                            <button onClick={() => setIsDeleteConfirmOpen(false)}>
+                              <XMarkIcon className="h-5 w-5 text-gray-500" />
+                            </button>
                           </div>
-                        </Dialog>
+
+                          <p className="text-gray-600 mb-5">
+                            Bạn có chắc muốn xóa check-in này không?
+                          </p>
+
+                          <div className="flex justify-end space-x-3">
+                            <button
+                              onClick={() => setIsDeleteConfirmOpen(false)}
+                              className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-400"
+                            >
+                              Hủy
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (checkinToDelete) {
+                                  deleteCheckin(checkinToDelete);
+                                  setIsDeleteConfirmOpen(false);
+                                  console.error('checkinToDelete', checkinToDelete)
+                                }
+                              }}
+                              className="px-3 py-1 bg-red-600 text-white ``rounded hover:bg-red-700"
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        </Dialog.Panel>
+                      </div>
+                    </Dialog>
 
                   </tbody>
                 </table>
@@ -1215,17 +1320,17 @@ const validateCheckInOnlineInputs = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
             {activeSubTab === 'checkin-airport' ? 'Check-in tại sân bay' :
-             activeSubTab === 'checkin-online' ? 'Check-in trực tuyến' :
-             activeSubTab === 'checkin-baggage' ? 'Quản lý hành lý' :
-             activeSubTab === 'checkin-boarding' ? 'Quản lý lên máy bay' :
-             'Check-in & Boarding'}
+              // activeSubTab === 'checkin-online' ? 'Check-in trực tuyến' :
+                activeSubTab === 'checkin-baggage' ? 'Quản lý hành lý' :
+                  activeSubTab === 'checkin-boarding' ? 'Quản lý lên máy bay' :
+                    'Check-in & Boarding'}
           </h2>
           <p className="text-gray-600">
             {activeSubTab === 'checkin-airport' ? 'Check-in hành khách tại sân bay' :
-             activeSubTab === 'checkin-online' ? 'Check-in trực tuyến cho hành khách' :
-             activeSubTab === 'checkin-baggage' ? 'Quản lý hành lý của hành khách' :
-             activeSubTab === 'checkin-boarding' ? 'Quản lý quá trình lên máy bay' :
-             'Quản lý check-in và lên máy bay của hành khách'}
+              // activeSubTab === 'checkin-online' ? 'Check-in trực tuyến cho hành khách' :
+                activeSubTab === 'checkin-baggage' ? 'Quản lý hành lý của hành khách' :
+                  activeSubTab === 'checkin-boarding' ? 'Quản lý quá trình lên máy bay' :
+                    'Quản lý check-in và lên máy bay của hành khách'}
           </p>
         </div>
         {/* {activeSubTab === 'checkin' && (

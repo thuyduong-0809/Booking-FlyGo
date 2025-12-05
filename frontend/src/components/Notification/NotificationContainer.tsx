@@ -195,25 +195,33 @@ const NotificationItem: React.FC<{
     );
 };
 
+import { ConfirmModal } from './ConfirmModal';
+
 export const NotificationContainer: React.FC = () => {
     const { notifications, removeNotification } = useNotification();
 
     return (
-        <div className="fixed top-6 right-6 left-6 sm:left-auto z-[9999] flex flex-col items-end pointer-events-none max-w-2xl sm:max-w-2xl mx-auto sm:mx-0">
-            <div className="pointer-events-auto w-full">
-                {notifications.map(notification => (
-                    <NotificationItem
-                        key={notification.id}
-                        id={notification.id}
-                        type={notification.type}
-                        message={notification.message}
-                        details={notification.details}
-                        duration={notification.duration || 2000}
-                        onClose={removeNotification}
-                    />
-                ))}
+        <>
+            {/* Notification toasts */}
+            <div className="fixed top-6 right-6 left-6 sm:left-auto z-[9999] flex flex-col items-end pointer-events-none max-w-2xl sm:max-w-2xl mx-auto sm:mx-0">
+                <div className="pointer-events-auto w-full">
+                    {notifications.map(notification => (
+                        <NotificationItem
+                            key={notification.id}
+                            id={notification.id}
+                            type={notification.type}
+                            message={notification.message}
+                            details={notification.details}
+                            duration={notification.duration || 2000}
+                            onClose={removeNotification}
+                        />
+                    ))}
+                </div>
             </div>
-        </div>
+
+            {/* Confirm Modal */}
+            <ConfirmModal />
+        </>
     );
 };
 

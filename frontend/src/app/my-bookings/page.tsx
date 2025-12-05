@@ -77,6 +77,7 @@ const MyBookingsPage = () => {
     const [pendingDate, setPendingDate] = useState("");
     const [searchDate, setSearchDate] = useState("");
     const [hasMore, setHasMore] = useState(false);
+    const [expandedBookings, setExpandedBookings] = useState<Set<number>>(new Set());
     const router = useRouter();
     const { showNotification } = useNotification();
 
@@ -285,6 +286,18 @@ const MyBookingsPage = () => {
         setHasMore(updated.length < filteredBookings.length);
     };
 
+    const toggleBookingDetails = (bookingId: number) => {
+        setExpandedBookings((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(bookingId)) {
+                newSet.delete(bookingId);
+            } else {
+                newSet.add(bookingId);
+            }
+            return newSet;
+        });
+    };
+
     if (loading) {
         return (
             <div className="container mx-auto px-4 py-16">
@@ -364,7 +377,7 @@ const MyBookingsPage = () => {
                         {displayedBookings.map((booking) => (
                             <div key={booking.bookingId} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow">
                                 {/* Header */}
-                                <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-5">
+                                <div className="bg-blue-600 px-6 py-5">
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
@@ -389,7 +402,7 @@ const MyBookingsPage = () => {
 
                                 {/* Content */}
                                 <div className="p-6">
-                                    {booking.bookingFlights && booking.bookingFlights.length > 0 && (() => {
+                                    {expandedBookings.has(booking.bookingId) && booking.bookingFlights && booking.bookingFlights.length > 0 && (() => {
                                         const flightsWithData = booking.bookingFlights.filter(
                                             (bf) => bf && bf.flight && bf.flight.departureAirport && bf.flight.arrivalAirport
                                         );
@@ -557,7 +570,7 @@ const MyBookingsPage = () => {
                                                 {departureFlights.length > 0 && (
                                                     <div>
                                                         <h4 className="text-lg font-bold text-blue-700 mb-3 flex items-center gap-2">
-                                                            <span className="text-2xl">🛫</span> Chuyến đi ({departureFlights.length})
+                                                            <span className="text-2xl"></span> Chuyến đi ({departureFlights.length})
                                                         </h4>
                                                         <div className="space-y-4">
                                                             {departureFlights.map((bf) => renderFlightCard(bf, false))}
@@ -568,7 +581,7 @@ const MyBookingsPage = () => {
                                                 {returnFlights.length > 0 && (
                                                     <div>
                                                         <h4 className="text-lg font-bold text-green-700 mb-3 flex items-center gap-2">
-                                                            <span className="text-2xl">🛬</span> Chuyến về ({returnFlights.length})
+                                                            <span className="text-2xl"></span> Chuyến về ({returnFlights.length})
                                                         </h4>
                                                         <div className="space-y-4">
                                                             {returnFlights.map((bf) => renderFlightCard(bf, true))}
@@ -586,12 +599,18 @@ const MyBookingsPage = () => {
                                             <p className="text-3xl font-bold text-green-600">{formatVnd(booking.totalAmount)}</p>
                                         </div>
                                         <div className="flex gap-3">
+                                            <button
+                                                onClick={() => toggleBookingDetails(booking.bookingId)}
+                                                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
+                                            >
+                                                {expandedBookings.has(booking.bookingId) ? 'Ẩn chi tiết' : 'Xem chi tiết'}
+                                            </button>
                                             {(booking.bookingStatus === 'Completed' || booking.bookingStatus === 'Confirmed') && (
                                                 <Link
                                                     href={`/book-plane/payment/success?bookingId=${booking.bookingId}`}
-                                                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
+                                                    className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
                                                 >
-                                                    Xem chi tiết
+                                                    Xem hóa đơn
                                                 </Link>
                                             )}
                                             {booking.bookingStatus === 'Reserved' && booking.paymentStatus !== 'Paid' && (

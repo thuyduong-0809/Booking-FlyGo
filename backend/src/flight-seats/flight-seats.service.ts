@@ -45,7 +45,7 @@ export class FlightSeatsService {
             // Bước 2: Truy vấn toàn bộ Seats của máy bay tương ứng
             const seats = await this.seatRepository.find({
                 where: { aircraft: { aircraftId: flight.aircraft.aircraftId } },
-                order: { seatNumber: 'ASC' }, // Sắp xếp để dễ debug
+                order: { seatId: 'ASC' }, // Sắp xếp theo seatId để đảm bảo thứ tự tăng dần 1,2,3,...
             });
 
             if (seats.length === 0) {
@@ -102,7 +102,7 @@ export class FlightSeatsService {
         try {
             const flightSeats = await this.flightSeatRepository.find({
                 where: { flight: { flightId } },
-                relations: ['seat', 'flight'],
+                relations: ['seat', 'flight', 'flight.aircraft'],
             });
 
             response.success = true;
@@ -185,6 +185,36 @@ export class FlightSeatsService {
     }
 
     /**
+     * Cập nhật trạng thái isAvailable cho tất cả FlightSeats của một ghế cụ thể
+     * Được gọi khi cập nhật trạng thái hoạt động của ghế trong bảng Seats
+     */
+    async updateAvailabilityBySeat(
+        seatId: number,
+        isAvailable: boolean,
+    ): Promise<any> {
+        const response = { ...common_response };
+        try {
+            const updateResult = await this.flightSeatRepository.update(
+                { seat: { seatId } },
+                { isAvailable }
+            );
+
+            response.success = true;
+            response.message = `Updated availability for ${updateResult.affected || 0} flight seats`;
+            response.data = {
+                affectedFlightSeats: updateResult.affected || 0,
+                seatId,
+                isAvailable
+            };
+            return response;
+        } catch (error) {
+            response.success = false;
+            response.message = error.message || 'Error updating flight seats availability by seat';
+            return response;
+        }
+    }
+
+    /**
      * Lấy danh sách ghế available của một Flight theo travelClass
      */
     async findAvailableSeatsByClass(
@@ -211,6 +241,34 @@ export class FlightSeatsService {
             response.message = error.message || 'Error retrieving available seats';
             return response;
         }
+    }
+
+    /**
+     * Reset auto-increment của FlightSeatId về 1
+     */
+    async resetFlightSeatAutoIncrement(): Promise<any> {
+        const response = { ...common_response };
+        try {
+            const maxResult = await this.flightSeatRepository.manager.query(
+                'SELECT MAX(flightSeatId) AS maxId FROM FlightSeats',
+            );
+            const maxFlightSeatId = maxResult[0]?.maxId || 0;
+
+            await this.flightSeatRepository.manager.query(
+                'ALTER TABLE FlightSeats AUTO_INCREMENT = 1',
+            );
+
+            response.success = true;
+            response.message = 'Auto-increment của FlightSeats đã được reset về 1';
+            response.data = {
+                maxFlightSeatId,
+                newAutoIncrement: 1,
+            };
+        } catch (error) {
+            response.success = false;
+            response.message = error.message || 'Error while resetting FlightSeats auto-increment';
+        }
+        return response;
     }
 }
 

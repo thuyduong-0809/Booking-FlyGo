@@ -23,11 +23,11 @@ export class CheckInsController {
             return this. checkInsService.createCheckinAirport(createCheckInDto);
         }
 
-        @UsePipes(ValidationPipe)
-        @Post('online')
-        async createOnline(@Body() createCheckInDto: CreateCheckInDto): Promise<any> {
-            return this. checkInsService.createOnlineCheckin(createCheckInDto);
-        }
+        // @UsePipes(ValidationPipe)
+        // @Post('online')
+        // async createOnline(@Body() createCheckInDto: CreateCheckInDto): Promise<any> {
+        //     return this. checkInsService.createOnlineCheckin(createCheckInDto);
+        // }
 
 
         @UsePipes(ValidationPipe)
@@ -40,6 +40,11 @@ export class CheckInsController {
         @Delete(':id')
         async delete(@Param('id')id:string): Promise<any> {
             return this.checkInsService.delete(Number(id))
+        }
+
+        @Post('by-booking')
+        createCheckinByBooking(@Body('bookingReference') bookingReference: string) {
+        return this.checkInsService.createOnlineCheckinByBookingReference(bookingReference);
         }
     
 }

@@ -25,17 +25,10 @@ export class PaymentsController {
         @Param('id', ParseIntPipe) id: number,
         @Body() body: { status: string; transactionId?: string }
     ) {
-        console.log('🌐 Controller: Received updateStatus request');
-        console.log('   - Payment ID:', id);
-        console.log('   - New Status:', body.status);
-        console.log('   - Transaction ID:', body.transactionId);
-
         try {
             const result = await this.paymentsService.updatePaymentStatus(id, body.status, body.transactionId);
-            console.log('✅ Controller: Update successful:', result);
             return result;
         } catch (error) {
-            console.error('❌ Controller: Update failed:', error);
             throw error;
         }
     }
@@ -73,20 +66,16 @@ export class PaymentsController {
     // Endpoint để lấy bookingId từ momoOrderId
     @Get('momo/get-booking/:orderId')
     async getBookingByOrderId(@Param('orderId') orderId: string) {
-        console.log('🔍 Getting bookingId for momoOrderId:', orderId);
         try {
             const payments = await this.paymentsService.findPaymentByMoMoOrderId(orderId);
 
             if (payments && payments.length > 0) {
                 const bookingId = payments[0].booking?.bookingId || null;
-                console.log('✅ Found bookingId:', bookingId);
                 return { success: true, bookingId };
             }
 
-            console.warn('⚠️ No payment found for orderId');
             return { success: false, bookingId: null };
         } catch (error) {
-            console.error('❌ Error getting bookingId:', error);
             return { success: false, bookingId: null };
         }
     }
@@ -98,7 +87,6 @@ export class PaymentsController {
         @Query('amount') amount: string,
     ) {
         // This endpoint handles the redirect from MoMo after successful payment
-        console.log('🔄 MoMo redirect - orderId:', orderId, 'resultCode:', resultCode);
 
         // Nếu thanh toán thành công (resultCode = 0), tự động update payment và booking status
         if (resultCode === '0') {
@@ -115,10 +103,8 @@ export class PaymentsController {
                         'Completed'
                     );
 
-                    console.log('✅ Payment and booking status updated via MoMo redirect');
                 }
             } catch (error) {
-                console.error('❌ Error updating payment on MoMo redirect:', error);
             }
         }
 

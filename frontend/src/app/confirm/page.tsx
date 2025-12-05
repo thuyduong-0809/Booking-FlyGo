@@ -14,8 +14,6 @@ export default function ConfirmPage() {
     useEffect(() => {
         const bookingId = searchParams.get('bookingId');
 
-        console.log('🚀 Confirm page loaded with bookingId:', bookingId);
-
         if (bookingId) {
             fetchPaymentInfo(parseInt(bookingId));
         } else {
@@ -25,18 +23,15 @@ export default function ConfirmPage() {
 
     const fetchPaymentInfo = async (bookingId: number) => {
         try {
-            console.log('🔍 Fetching payment info for bookingId:', bookingId);
             setLoading(true);
 
             const payments = await paymentsService.getPaymentsByBooking(bookingId);
-            console.log('📋 All payments:', payments);
 
             if (payments && payments.length > 0) {
                 const latestPayment = payments.sort((a, b) =>
                     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
                 )[0];
 
-                console.log('📝 Latest payment:', latestPayment);
 
                 setPaymentData({
                     orderId: latestPayment.paymentDetails?.momoOrderId || 'N/A',
@@ -49,7 +44,6 @@ export default function ConfirmPage() {
 
             setLoading(false);
         } catch (error) {
-            console.error('❌ Error fetching payment info:', error);
             setLoading(false);
         }
     };

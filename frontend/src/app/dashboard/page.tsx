@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   HomeIcon,
   UserGroupIcon,
@@ -43,11 +43,14 @@ import Reports from '../../components/dashboard/Reports';
 import Button from '@/shared/Button';
 import { useAppDispatch } from 'stores/hookStore';
 import { logout } from 'stores/features/masterSlice';
+import { requestApi } from '@/lib/api';
+import { getCookie } from '@/utils/cookies';
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [isClient, setIsClient] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
   // Trạng thái mở/đóng cho từng nhóm navigation
   const [aircraftOpen, setAircraftOpen] = useState(false);
   const [flightsOpen, setFlightsOpen] = useState(false);
@@ -66,6 +69,37 @@ export default function DashboardPage() {
     document.cookie = "access_token=; path=/; max-age=0";
     // Nếu muốn redirect về trang login:
     window.location.href = "/login";
+  };
+
+  // Lấy thông tin tài khoản đang đăng nhập từ token
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = getCookie("access_token");
+        if (!token) return;
+
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userId = payload.userId;
+
+        if (!userId) return;
+
+        const response = await requestApi(`users/${userId}`, "GET");
+        if (response.success && response.data) {
+          setUserData(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const getInitials = () => {
+    if (userData?.firstName && userData?.lastName) {
+      return `${userData.firstName[0]}${userData.lastName[0]}`.toUpperCase();
+    }
+    return "U";
   };
   // Helper function để xử lý click navigation
   const handleNavClick = (tab: string, submenu?: string) => {
@@ -505,16 +539,6 @@ export default function DashboardPage() {
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                     Quản lý chỗ ngồi
                   </button>
-                  <button
-                    onClick={() => setActiveTab('aircraft-maintenance')}
-                    className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'aircraft-maintenance'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                  >
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                    Theo dõi bảo trì
-                  </button>
                 </div>
               )}
 
@@ -791,17 +815,27 @@ export default function DashboardPage() {
           {sidebarOpen ? (
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-md">AD</span>
+                <span className="text-white font-medium text-md">
+                  {getInitials()}
+                </span>
               </div>
               <div className="flex-1">
-                <p className="text-md font-medium text-gray-900">Admin User</p>
-                <p className="text-sm text-gray-500">admin@flygo.com</p>
+                <p className="text-md font-medium text-gray-900">
+                  {userData?.firstName && userData?.lastName
+                    ? `${userData.firstName} ${userData.lastName}`
+                    : "Người dùng"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {userData?.email || "Chưa cập nhật"}
+                </p>
               </div>
             </div>
           ) : (
             <div className="flex justify-center">
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-md">AD</span>
+                <span className="text-white font-medium text-md">
+                  {getInitials()}
+                </span>
               </div>
             </div>
           )}

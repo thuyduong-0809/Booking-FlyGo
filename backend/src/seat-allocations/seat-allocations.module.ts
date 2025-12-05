@@ -7,9 +7,10 @@ import { SeatAllocation } from 'src/seat-allocations/entities/seat-allocations.e
 import { SeatAllocationsController } from 'src/seat-allocations/seat-allocations.controller';
 import { SeatAllocationsService } from 'src/seat-allocations/seat-allocations.service';
 import { Seat } from 'src/seats/entities/seats.entity';
+import { FlightSeat } from 'src/flight-seats/entities/flight-seats.entity';
 
 @Module({
-    imports:[TypeOrmModule.forFeature([SeatAllocation,Seat,BookingFlight,Passenger,Flight])],
+    imports:[TypeOrmModule.forFeature([SeatAllocation, Seat, BookingFlight, Passenger, Flight, FlightSeat])],
     providers:[SeatAllocationsService],
     controllers:[SeatAllocationsController]
 })

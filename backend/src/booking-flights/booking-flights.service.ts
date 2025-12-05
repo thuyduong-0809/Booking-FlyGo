@@ -148,10 +148,9 @@ export class BookingFlightsService {
             if (!flightSeat) throw new Error(`Flight seat not found for seat ${seatNumber}`);
             if (!flightSeat.isAvailable) throw new Error(`Seat ${seatNumber} is already taken for this flight`);
           } else {
-            // chọn ghế trống đầu tiên trong cùng hạng (bắt đầu từ ghế thấp nhất: 01A, 02A...)
-            console.log(`🎫 Đang tìm ghế trống cho ${travelClass} trong flight ${flight.flightId}`);
-
+            // chọn ghế trống đầu tiên trong cùng hạng (bắt đầu từ ghế thấp nhất: E01A → E02A → ... → E09A → E10A → ... → E99A → E100A)
             // Tìm FlightSeat available cho flight này, cùng travelClass
+            // Sắp xếp theo seatId vì flightseat được tạo theo thứ tự seatId (E01A → E02A → ... → E09A → E10A → ... → E99A → E100A)
             // Sử dụng lock để tránh race condition khi nhiều người đặt cùng lúc
             flightSeat = await flightSeatRepo.findOne({
               where: {
@@ -163,7 +162,7 @@ export class BookingFlightsService {
                 isAvailable: true,
               },
               relations: ['seat'],
-              order: { seat: { seatNumber: 'ASC' } }, // Sắp xếp tăng dần: 01A, 02A, 03A...
+              order: { seat: { seatId: 'ASC' } }, // Sắp xếp theo seatId để đảm bảo thứ tự tuần tự (E01A → E02A → ... → E09A → E10A → ... → E99A → E100A)
               lock: { mode: 'pessimistic_write' }, // Lock để đảm bảo không bị double booking
             });
 
@@ -175,17 +174,15 @@ export class BookingFlightsService {
             }
 
             seat = flightSeat.seat;
-            console.log(`✅ Đã chọn ghế: ${seat.seatNumber} (FlightSeatId: ${flightSeat.flightSeatId})`);
           }
 
           // Bước 1: Tạo SeatAllocation (liên kết passenger với ghế)
           const newSeatAllocation = seatAllocationRepo.create({
-            seat,
+            flightSeat: flightSeat,
             bookingFlight: newBookingFlight,
             passenger,
           });
           await seatAllocationRepo.save(newSeatAllocation);
-          console.log(`✅ SeatAllocation created: Passenger ${passenger.passengerId} → Seat ${seat.seatNumber}`);
 
           // Bước 2: Cập nhật trạng thái ghế trong FlightSeat
           // QUAN TRỌNG: Cập nhật FlightSeat.isAvailable = false (chỉ cho chuyến bay này)
@@ -196,8 +193,6 @@ export class BookingFlightsService {
           // Lưu trong cùng transaction để đảm bảo atomicity
           await flightSeatRepo.save(flightSeat);
           await bookingFlightRepo.save(newBookingFlight);
-
-          console.log(`✅ FlightSeat updated: Seat ${seat.seatNumber} is now UNAVAILABLE for flight ${flight.flightNumber} (FlightSeatId: ${flightSeat.flightSeatId})`);
 
           // giảm availableSeats trong flight
           switch (travelClass) {
@@ -229,7 +224,7 @@ export class BookingFlightsService {
         };
       });
     } catch (error) {
-      console.error('❌ Transaction Error:', error);
+      console.error(' Transaction Error:', error);
       response.success = false;
       response.message = error.message || 'Error while creating BookingFlight and SeatAllocation';
     }

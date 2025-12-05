@@ -65,4 +65,28 @@ export class BookingsController {
         }
         return this.bookingsService.lookupGuestBooking(email, bookingReference);
     }
+    //reports
+    @Get("/reports/current-month-revenue")
+    getCurrentMonthRevenue() {
+    return this.bookingsService.getThisMonthRevenue();
+    }
+
+    @Get("/reports/current-week-revenue")
+    getCurrentWeekRevenue() {
+    return this.bookingsService.getThisWeekRevenue();
+    }
+
+    @Get("/reports/current-quarter-revenue")
+    getCurrentQuarterRevenue() {
+    return this.bookingsService.getThisQuarterRevenue();
+    }
+
+    @Get("/reports/current-year-revenue")
+    getCurrentYearRevenue() {
+    return this.bookingsService.getThisYearRevenue();
+    }
+
+    
+
+
 }

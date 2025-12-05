@@ -5,6 +5,9 @@ import { LoginLocalDto } from 'src/auth/dto/login-local.dto';
 import { RegisterLocalDto } from 'src/auth/dto/register-local.dto';
 import { SendOtpDto } from 'src/auth/dto/send-otp.dto';
 import { VerifyOtpDto } from 'src/auth/dto/verify-otp.dto';
+import { ForgotPasswordDto } from 'src/auth/dto/forgot-password.dto';
+import { VerifyResetOtpDto } from 'src/auth/dto/verify-reset-otp.dto';
+import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
 import { GoogleOAuthGuard } from 'src/auth/guards/google.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { LocalAuthGuard } from 'src/auth/guards/local-auth.guard';
@@ -30,6 +33,24 @@ export class AuthController {
     @UsePipes(ValidationPipe)
     async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
         return this.authService.verifyOtpAndRegister(verifyOtpDto);
+    }
+
+    @Post('forgot-password')
+    @UsePipes(ValidationPipe)
+    async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+        return this.authService.sendResetPasswordOtp(forgotPasswordDto);
+    }
+
+    @Post('verify-reset-otp')
+    @UsePipes(ValidationPipe)
+    async verifyResetOtp(@Body() verifyResetOtpDto: VerifyResetOtpDto) {
+        return this.authService.verifyResetPasswordOtp(verifyResetOtpDto);
+    }
+
+    @Post('reset-password')
+    @UsePipes(ValidationPipe)
+    async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+        return this.authService.resetPassword(resetPasswordDto);
     }
 
     // login dùng local strategy

@@ -54,22 +54,17 @@ export class PaymentsService {
     }
 
     async updatePaymentStatus(paymentId: number, status: string, transactionId?: string) {
-        console.log(`🔄 Backend: Updating payment ${paymentId} to status: ${status}`);
 
         const payment = await this.paymentRepository.findOne({
             where: { paymentId },
             relations: ['booking']
         });
-        console.log(`📋 Backend: Found payment:`, payment);
 
         if (!payment) {
-            console.error(`❌ Backend: Payment not found`);
             throw new NotFoundException('Payment not found');
         }
 
-        console.log(`📝 Backend: Old status: ${payment.paymentStatus}`);
         payment.paymentStatus = status;
-        console.log(`📝 Backend: New status: ${payment.paymentStatus}`);
 
         if (transactionId) {
             payment.transactionId = transactionId;
@@ -77,14 +72,12 @@ export class PaymentsService {
 
         if (status === 'Completed') {
             payment.paidAt = new Date();
-            console.log(`✅ Backend: Set paidAt to: ${payment.paidAt}`);
 
             // Update booking status when payment is completed
             if (payment.booking) {
                 payment.booking.bookingStatus = 'Completed';
                 payment.booking.paymentStatus = 'Paid';
                 await this.bookingRepository.save(payment.booking);
-                console.log(`✅ Backend: Booking status updated to Completed`);
 
                 // Send confirmation email
                 try {
@@ -103,28 +96,24 @@ export class PaymentsService {
                             payment.paymentMethod,
                             flightDetailsHtml
                         );
-                        console.log('✅ Email sent successfully to:', booking.contactEmail);
                     }
                 } catch (emailError) {
-                    console.error('❌ Error sending email:', emailError);
+                    console.error(' Error sending email:', emailError);
                     // Don't throw error, continue with payment update
                 }
             }
         }
 
         const result = await this.paymentRepository.save(payment);
-        console.log(`✅ Backend: Payment saved:`, result);
 
         return result;
     }
 
     async updateBookingStatus(bookingId: number, bookingStatus: string, paymentStatus: string) {
-        console.log(`🔄 Backend: Updating booking ${bookingId} - status: ${bookingStatus}, payment: ${paymentStatus}`);
 
         const booking = await this.bookingRepository.findOne({ where: { bookingId } });
 
         if (!booking) {
-            console.error(`❌ Backend: Booking not found`);
             throw new NotFoundException('Booking not found');
         }
 
@@ -132,7 +121,6 @@ export class PaymentsService {
         booking.paymentStatus = paymentStatus;
 
         const result = await this.bookingRepository.save(booking);
-        console.log(`✅ Backend: Booking saved:`, result);
 
         return result;
     }
@@ -145,13 +133,11 @@ export class PaymentsService {
     }
 
     async findPaymentByMoMoOrderId(momoOrderId: string): Promise<Payment[]> {
-        console.log('🔍 Searching for payment with momoOrderId:', momoOrderId);
         const payments = await this.paymentRepository
             .createQueryBuilder('payment')
             .leftJoinAndSelect('payment.booking', 'booking')
             .where('payment.paymentDetails->>"$.momoOrderId" = :momoOrderId', { momoOrderId })
             .getMany();
-        console.log('📋 Found payments:', payments);
         return payments;
     }
 
@@ -251,7 +237,6 @@ export class PaymentsService {
                 );
             }
         } catch (error) {
-            console.error('Error creating MoMo payment:', error);
             throw new BadRequestException(
                 `Failed to create MoMo payment: ${error.message}`,
             );
@@ -262,8 +247,6 @@ export class PaymentsService {
         try {
             const { orderId, resultCode, message, transId } = body;
 
-            console.log('🔄 MoMo callback received:', { orderId, resultCode, message, transId });
-
             // Find payment by orderId
             const payments = await this.paymentRepository
                 .createQueryBuilder('payment')
@@ -272,13 +255,10 @@ export class PaymentsService {
                 .getMany();
 
             if (payments.length === 0) {
-                console.error('❌ Payment not found for orderId:', orderId);
                 throw new NotFoundException('Payment not found');
             }
 
             const payment = payments[0];
-            console.log('📋 Found payment:', payment);
-
             // Update payment details
             payment.paymentDetails = {
                 ...payment.paymentDetails,
@@ -300,8 +280,6 @@ export class PaymentsService {
                     payment.booking.bookingStatus = 'Completed';
                     payment.booking.paymentStatus = 'Paid';
                     await this.bookingRepository.save(payment.booking);
-                    console.log('✅ Booking status updated to Completed');
-
                     // Send confirmation email to contact email
                     try {
                         const booking = await this.bookingRepository.findOne({
@@ -319,10 +297,8 @@ export class PaymentsService {
                                 payment.paymentMethod,
                                 flightDetailsHtml
                             );
-                            console.log('✅ Email sent successfully to:', booking.contactEmail);
                         }
                     } catch (emailError) {
-                        console.error('❌ Error sending email:', emailError);
                         // Don't throw error, continue with payment update
                     }
                 }
@@ -332,7 +308,6 @@ export class PaymentsService {
             }
 
             await this.paymentRepository.save(payment);
-            console.log('✅ Payment saved successfully');
 
             return {
                 success: true,
@@ -341,7 +316,6 @@ export class PaymentsService {
                 message,
             };
         } catch (error) {
-            console.error('Error handling MoMo callback:', error);
             throw new BadRequestException(
                 `Failed to handle MoMo callback: ${error.message}`,
             );

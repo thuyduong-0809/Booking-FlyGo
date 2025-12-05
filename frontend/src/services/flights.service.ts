@@ -4,6 +4,7 @@ export interface SearchFlightsParams {
     departureAirportCode?: string;
     arrivalAirportCode?: string;
     departureDate?: string;
+    minDepartureTime?: string; // Thời gian khởi hành tối thiểu (ISO string) - dùng để filter chuyến về sau thời gian đến của chuyến đi
     [key: string]: any;
 }
 
@@ -57,15 +58,14 @@ export const flightsService = {
         if (params.departureDate) {
             queryParams.append('departureDate', params.departureDate);
         }
+        if (params.minDepartureTime) {
+            queryParams.append('minDepartureTime', params.minDepartureTime);
+        }
 
         const queryString = queryParams.toString();
         const url = queryString ? `flights/search?${queryString}` : "flights";
 
-        console.log('🔍 Calling search endpoint:', url);
-
         const response = await requestApi(url, "GET");
-
-        console.log('✅ Search response:', response);
 
         return response;
     },

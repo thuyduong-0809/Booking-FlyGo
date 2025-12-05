@@ -8,11 +8,17 @@ import { common_response } from 'src/untils/common';
 import { User } from 'src/users/entities/users.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Flight } from 'src/flights/entities/flights.entity';
+import { FlightSeat } from 'src/flight-seats/entities/flight-seats.entity';
+import { BookingFlight } from 'src/booking-flights/entities/booking-flights.entity';
 
 @Injectable()
 export class BookingsService {
     constructor(@InjectRepository(Booking) private bookingRepository: Repository<Booking>,
         @InjectRepository(User) private userRepository: Repository<User>,
+        @InjectRepository(Flight) private flightRepository: Repository<Flight>,
+        @InjectRepository(FlightSeat) private flightSeatRepository: Repository<FlightSeat>,
+        @InjectRepository(BookingFlight) private bookingFlightRepository: Repository<BookingFlight>,
     ) { }
 
 
@@ -78,7 +84,8 @@ export class BookingsService {
                     'bookingFlights.flight.departureAirport',
                     'bookingFlights.flight.arrivalAirport',
                     'bookingFlights.seatAllocations',
-                    'bookingFlights.seatAllocations.seat',
+                    'bookingFlights.seatAllocations.flightSeat',
+                    'bookingFlights.seatAllocations.flightSeat.seat',
                     'bookingFlights.seatAllocations.passenger',
                 ],
             });
@@ -110,7 +117,7 @@ export class BookingsService {
                     travelClass: bf.travelClass,
                     baggage: bf.baggageAllowance,
                     seatAllocations: bf.seatAllocations.map((sa) => ({
-                        seatNumber: sa.seat?.seatNumber,
+                        seatNumber: sa.flightSeat?.seat?.seatNumber,
                         passengerName: `${sa.passenger?.firstName} ${sa.passenger?.lastName}`,
                         passengerType: sa.passenger?.passengerType,
                         passengerDob: sa.passenger?.dateOfBirth,
@@ -156,21 +163,13 @@ export class BookingsService {
                     'bookingFlights.flight.arrivalAirport',
                     'bookingFlights.flight.departureAirport',
                     'bookingFlights.seatAllocations',
+                    'bookingFlights.seatAllocations.flightSeat',
+                    'bookingFlights.seatAllocations.flightSeat.seat',
                     'bookingFlights.seatAllocations.passenger',
-                    'bookingFlights.seatAllocations.seat',
                     'passengers'
                 ],
                 order: { bookingId: 'DESC' }
             });
-            console.log('📋 Found bookings:', bookings.length);
-            if (bookings.length > 0) {
-                console.log('Booking 0 - bookingFlights count:', bookings[0].bookingFlights?.length);
-                console.log('Booking 0 - bookingFlights:', bookings[0].bookingFlights?.map(bf => ({
-                    bookingFlightId: bf.bookingFlightId,
-                    seatNumber: bf.seatNumber,
-                    seatAllocationsCount: bf.seatAllocations?.length
-                })));
-            }
             response.success = true;
             response.data = bookings;
             response.message = 'Successfully retrieved bookings for user';
@@ -462,7 +461,8 @@ export class BookingsService {
                     'bookingFlights.flight.departureAirport',
                     'bookingFlights.flight.arrivalAirport',
                     'bookingFlights.seatAllocations',
-                    'bookingFlights.seatAllocations.seat',
+                    'bookingFlights.seatAllocations.flightSeat',
+                    'bookingFlights.seatAllocations.flightSeat.seat',
                     'passengers',
                     'payments'
                 ]
@@ -512,8 +512,8 @@ export class BookingsService {
                     fare: bf.fare,
                     seatNumber: bf.seatNumber,
                     seats: bf.seatAllocations?.map(sa => ({
-                        seatNumber: sa.seat.seatNumber,
-                        travelClass: sa.seat.travelClass,
+                        seatNumber: sa.flightSeat?.seat?.seatNumber,
+                        travelClass: sa.flightSeat?.seat?.travelClass,
                     })) || [],
                 })),
 
@@ -544,6 +544,216 @@ export class BookingsService {
         }
         return response;
     }
+
+    //reports
+    async getRevenue(
+        type: "week" | "month" | "quarter" | "year" | "custom",
+        start?: Date,
+        end?: Date
+    ) {
+        const toLocal = (d: Date) =>
+            new Date(d.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+
+        const formatDateLocal = (date: Date) => {
+            const d = toLocal(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        };
+
+        const now = toLocal(new Date());
+
+        let from: Date;
+        let to: Date;
+
+        switch (type) {
+            case "week": {
+                const localNow = toLocal(now);
+                let day = localNow.getDay();
+                if (day === 0) day = 7; // Chủ Nhật = 7
+
+                // Thứ 2 đầu tuần
+                from = new Date(localNow);
+                from.setDate(localNow.getDate() - day + 1);
+
+                // To = Hôm nay (không set + 6 nữa)
+                to = localNow;
+                break;
+            }
+
+            case "month":
+                from = new Date(now.getFullYear(), now.getMonth(), 1);
+                to = now;
+                break;
+
+            case "quarter": {
+                const q = Math.floor(now.getMonth() / 3);
+                from = new Date(now.getFullYear(), q * 3, 1);
+                to = now;
+                break;
+            }
+
+            case "year":
+                from = new Date(now.getFullYear(), 0, 1);
+                to = now;
+                break;
+
+            case "custom":
+                from = toLocal(start!);
+                to = toLocal(end!);
+                break;
+        }
+
+        const fromDate = formatDateLocal(from);
+        const toDate = formatDateLocal(to);
+
+
+        // ─────────────────────────────────────────────
+        // 1) Tổng doanh thu
+        // ─────────────────────────────────────────────
+        const revenueResult = await this.bookingRepository
+            .createQueryBuilder("booking")
+            .select("SUM(booking.totalAmount)", "totalRevenue")
+            .where("booking.paymentStatus = :status", { status: "PAID" })
+            .andWhere("DATE(booking.bookedAt) BETWEEN :from AND :to", {
+                from: fromDate,
+                to: toDate,
+            })
+            .getRawOne();
+
+        const totalRevenue = Number(revenueResult?.totalRevenue || 0);
+
+        // ─────────────────────────────────────────────
+        // 2) Tổng số booking
+        // ─────────────────────────────────────────────
+        const totalBookings = await this.bookingRepository
+            .createQueryBuilder("booking")
+            .where("DATE(booking.bookedAt) BETWEEN :from AND :to", {
+                from: fromDate,
+                to: toDate,
+            })
+            .getCount();
+
+        // ─────────────────────────────────────────────
+        // 3) Số flight đã cất cánh (Departed)
+        // ─────────────────────────────────────────────
+
+        const flightsDeparted = await this.flightRepository
+            .createQueryBuilder("flight")
+            .where("flight.status = :status", { status: "Departed" })
+            .andWhere("DATE(flight.departureTime) BETWEEN :from AND :to", {
+                from: fromDate,
+                to: toDate,
+            })
+            .getCount();
+
+
+        // 4) Tính load factor (Tỉ lệ lấp đầy)
+        // ─────────────────────────────────────────────
+
+        // Tổng số ghế khả dụng của các flight trong khoảng thời gian
+        const totalSeatsResult = await this.flightRepository
+            .createQueryBuilder("f")
+            .select(
+                `SUM(
+                f.availableEconomySeats +
+                f.availableBusinessSeats +
+                f.availableFirstClassSeats
+            )`,
+                "totalSeats"
+            )
+            .where("DATE(f.departureTime) BETWEEN :from AND :to", {
+                from: fromDate,
+                to: toDate,
+            })
+            .getRawOne();
+        // console.log('total seat',totalSeatsResult)
+
+        const totalSeats = Number(totalSeatsResult?.totalSeats || 0);
+
+        // Tổng số ghế đã được đặt (bookingFlight)
+        const seatsBooked = await this.bookingFlightRepository
+            .createQueryBuilder("bf")
+            .innerJoin("bf.booking", "b")
+            .innerJoin("bf.flight", "f")
+            .where("b.paymentStatus = :status", { status: "PAID" })
+            .andWhere("DATE(f.departureTime) BETWEEN :from AND :to", {
+                from: fromDate,
+                to: toDate,
+            })
+            .getCount();
+
+        // console.log(seatsBooked)
+
+        const loadFactor =
+            totalSeats > 0
+                ? `${((seatsBooked / totalSeats) * 100).toFixed(2)}%`
+                : "0%";
+        return {
+            success: true,
+            from: fromDate,
+            to: toDate,
+            totalRevenue: this.formatNumberShort(totalRevenue),
+            totalBookings,
+            flightsDeparted,
+            loadFactor,
+        };
+    }
+
+
+    async getThisWeekRevenue() {
+        return this.getRevenue("week");
+    }
+
+    async getThisMonthRevenue() {
+        return this.getRevenue("month");
+    }
+
+    async getThisQuarterRevenue() {
+        return this.getRevenue("quarter");
+    }
+
+    async getThisYearRevenue() {
+        return this.getRevenue("year");
+    }
+
+    async getCustomRevenue(start: Date, end: Date) {
+        return this.getRevenue("custom", start, end);
+    }
+    formatNumberShort(value: number): string {
+        if (value >= 1_000_000_000_000) {
+            return (value / 1_000_000_000_000).toFixed(1).replace(/\.0$/, '') + 'T';
+        }
+        if (value >= 1_000_000_000) {
+            return (value / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+        }
+        if (value >= 1_000_000) {
+            return (value / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+        }
+        if (value >= 1_000) {
+            return (value / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+        }
+        return value.toString();
+    }
+
+    private toLocalDate(date: Date) {
+        const d = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+        return d;
+    }
+    private toLocalDateString(date: Date) {
+        const d = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+        return d.toISOString().split("T")[0];
+    }
+
+    private formatDateLocal(date: Date) {
+        const d = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;   // KHÔNG dùng toISOString()
+    }
+
 
 
 }

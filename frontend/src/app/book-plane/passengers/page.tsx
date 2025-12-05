@@ -201,8 +201,8 @@ export default function PassengersPage() {
       }
 
       // Kiểm tra tuổi
-      if (age < 18) {
-        return 'Người lớn phải từ 18 tuổi trở lên';
+      if (age < 12) {
+        return 'Người lớn phải từ 12 tuổi trở lên';
       }
       if (age > 100) {
         return 'Ngày sinh không hợp lệ (quá 100 tuổi)';
@@ -567,29 +567,9 @@ export default function PassengersPage() {
         await requestApi('passengers', 'POST', infantData);
       }
 
-      // Hiển thị thông báo thành công
-      const bookingRef = bookingResponse.data?.bookingReference;
 
-      if (!userId && bookingRef) {
-        // Khách vãng lai - hiển thị mã đặt chỗ và hướng dẫn tra cứu
-        showNotification(
-          'success',
-          `Đặt vé thành công! Mã đặt chỗ của bạn: ${bookingRef}`,
-          `Vui lòng lưu mã đặt chỗ và email để tra cứu đơn hàng. Bạn có thể tra cứu tại: /guest-booking-lookup`
-        );
+      router.push('/book-plane/choose-seat');
 
-        console.log('🎫 Thông tin đặt vé (Khách vãng lai):');
-        console.log('   📧 Email:', passengers[0].email);
-        console.log('   🔑 Mã đặt chỗ (PNR):', bookingRef);
-        console.log('   🔍 Link tra cứu: /guest-booking-lookup');
-      } else {
-        showNotification('success', 'Đặt chỗ thành công! Đang chuyển đến trang chọn ghế...');
-      }
-
-      // Chuyển sang trang choose-seat
-      setTimeout(() => {
-        router.push('/book-plane/choose-seat');
-      }, 2000); // Tăng thời gian chờ để khách vãng lai có thời gian lưu mã
     } catch (error: any) {
       console.error('Error creating booking:', error);
 
@@ -648,34 +628,8 @@ export default function PassengersPage() {
 
       return totalDeparture + totalReturn;
     }
-
-    // Debug log để kiểm tra
-    console.log('Passengers Page - Calculated Total:', {
-      depPricePerPerson,
-      depTaxPerPerson,
-      adultAndChildrenCount,
-      depAdultPrice,
-      depInfantPrice,
-      depTaxAmount,
-      totalDeparture,
-      departureFlight,
-      isOneWay
-    });
-
     return totalDeparture;
   }, [departureFlight, returnFlight, totalAdults, totalChildren, totalInfants, isOneWay]);
-
-  // Debug useEffect
-  useEffect(() => {
-    console.log('Passengers Page - Debug Info:', {
-      calculatedTotal,
-      departureFlight,
-      totalAdults,
-      totalChildren,
-      totalInfants,
-      state
-    });
-  }, [calculatedTotal, departureFlight, totalAdults, totalChildren, totalInfants, state]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">

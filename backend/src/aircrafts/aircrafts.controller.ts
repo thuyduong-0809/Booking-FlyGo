@@ -5,37 +5,42 @@ import { UpdateAircraftDto } from 'src/aircrafts/dto/update-aicrafts.dto';
 
 @Controller('aircrafts')
 export class AircraftsController {
-    constructor(private aircraftsService: AircraftsService) {}
+    constructor(private aircraftsService: AircraftsService) { }
 
-        @Get()
-        findAll() {
-            return this.aircraftsService.findAll();
-        }
-        
-        @UsePipes(ValidationPipe)
-        @Post()
-        create(@Body() createAircraftDto:CreateAircraftDto) {
-            return this.aircraftsService.create(createAircraftDto);
-        }
-    
-        @Get(':id')
-        findOne(@Param('id') id:string) {
-            return this.aircraftsService.findOne(Number(id));
-        }
+    @Get()
+    findAll() {
+        return this.aircraftsService.findAll();
+    }
 
-        @Get('airline/:id')
-        findByAirlineId(@Param('id') id:string) {
-            return this.aircraftsService.findByAirlineId(Number(id));
-        }
-        
-        @UsePipes(ValidationPipe)
-        @Put(':id')
-        update(@Param('id') id:string, @Body() updateAircraftDto:UpdateAircraftDto) {
-            return this.aircraftsService.update(Number(id), updateAircraftDto);
-        }
-    
-        @Delete(':id')
-        delete(@Param('id') id:string) {
-            return this.aircraftsService.delete(Number(id));
-        }
+    @UsePipes(ValidationPipe)
+    @Post()
+    create(@Body() createAircraftDto: CreateAircraftDto) {
+        return this.aircraftsService.create(createAircraftDto);
+    }
+
+    @Post('reset-auto-increment')
+    resetAircraftIdAutoIncrement() {
+        return this.aircraftsService.resetAircraftIdAutoIncrement();
+    }
+
+    @Get('airline/:id')
+    findByAirlineId(@Param('id') id: string) {
+        return this.aircraftsService.findByAirlineId(Number(id));
+    }
+
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+        return this.aircraftsService.findOne(Number(id));
+    }
+
+    @UsePipes(ValidationPipe)
+    @Put(':id')
+    update(@Param('id') id: string, @Body() updateAircraftDto: UpdateAircraftDto) {
+        return this.aircraftsService.update(Number(id), updateAircraftDto);
+    }
+
+    @Delete(':id')
+    delete(@Param('id') id: string) {
+        return this.aircraftsService.delete(Number(id));
+    }
 }

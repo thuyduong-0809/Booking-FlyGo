@@ -20,7 +20,6 @@ export default function PaymentSuccessPage() {
         const amount = searchParams.get('amount');
         const bookingId = searchParams.get('bookingId');
 
-        console.log('🚀 Success page loaded with params:', { orderId, resultCode, amount, bookingId });
 
         // Nếu có query params từ MoMo redirect
         if (orderId && resultCode) {
@@ -32,15 +31,12 @@ export default function PaymentSuccessPage() {
 
             // Nếu thanh toán thành công (resultCode === '0')
             if (resultCode === '0') {
-                console.log('✅ Payment successful from MoMo');
 
                 if (bookingId) {
                     // Có bookingId trong URL → update trực tiếp
-                    console.log('📌 bookingId from URL:', bookingId);
                     updatePaymentStatus(parseInt(bookingId));
                 } else {
                     // Không có bookingId → lấy từ orderId
-                    console.log('🔍 No bookingId in URL, getting from orderId:', orderId);
                     getBookingAndUpdateStatus(orderId);
                 }
             } else {
@@ -49,7 +45,6 @@ export default function PaymentSuccessPage() {
         }
         // Nếu chỉ có bookingId → tự động update status
         else if (bookingId) {
-            console.log('🔄 Auto-updating payment status for bookingId:', bookingId);
             updatePaymentStatusWhenBookingIdOnly(parseInt(bookingId));
         }
         else {
@@ -59,12 +54,10 @@ export default function PaymentSuccessPage() {
 
     const getBookingAndUpdateStatus = async (orderId: string) => {
         try {
-            console.log('🔍 Getting bookingId from orderId:', orderId);
             setLoading(true);
 
             // Lấy bookingId từ orderId
             const bookingId = await paymentsService.getBookingByOrderId(orderId);
-            console.log('📌 Found bookingId:', bookingId);
 
             if (bookingId) {
                 // Update status với bookingId này và redirect
@@ -73,34 +66,27 @@ export default function PaymentSuccessPage() {
                 setLoading(false);
             }
         } catch (error) {
-            console.error('❌ Error getting booking and updating:', error);
             setLoading(false);
         }
     };
 
     const updatePaymentStatusWhenBookingIdOnly = async (bookingId: number) => {
         try {
-            console.log('🔄 Auto-updating payment status for bookingId:', bookingId);
             setLoading(true);
 
             // Lấy payments theo bookingId
             const payments = await paymentsService.getPaymentsByBooking(bookingId);
-            console.log('📋 Found payments:', payments);
 
             if (payments && payments.length > 0) {
                 // Tìm payment đang pending
                 const pendingPayment = payments.find(p => p.paymentStatus === 'Pending');
-                console.log('⏳ Pending payment:', pendingPayment);
 
                 if (pendingPayment && pendingPayment.paymentId) {
-                    console.log(`✅ Updating payment ${pendingPayment.paymentId} to Completed`);
-
                     // Update status
                     const result = await paymentsService.updatePaymentStatus(
                         pendingPayment.paymentId,
                         'Completed'
                     );
-                    console.log('✅ Payment status updated successfully:', result);
 
                     // Set payment data
                     setPaymentData({
@@ -111,7 +97,6 @@ export default function PaymentSuccessPage() {
                 } else {
                     // Không có pending payment, lấy latest
                     const latestPayment = payments[payments.length - 1];
-                    console.log('ℹ️ No pending payment, using latest:', latestPayment);
                     setPaymentData({
                         orderId: latestPayment.paymentDetails?.momoOrderId || 'N/A',
                         resultCode: latestPayment.paymentStatus === 'Completed' ? 0 : -1,
@@ -122,8 +107,34 @@ export default function PaymentSuccessPage() {
 
             setLoading(false);
         } catch (error) {
-            console.error('❌ Error updating payment status:', error);
             setLoading(false);
+        }
+    };
+
+    // Hàm tính baggageAllowance dựa trên travelClass
+    // Theo yêu cầu: eco là 7kg, business là 14kg, firstclass là 16kg
+    const getBaggageAllowance = (travelClass: 'Economy' | 'Business' | 'First'): number => {
+        switch (travelClass) {
+            case 'First':
+                return 16; // 16kg cho First Class (theo yêu cầu)
+            case 'Business':
+                return 14; // 14kg cho Business
+            case 'Economy':
+                return 7; // 7kg cho Economy
+            default:
+                return 7; // Mặc định 7kg
+        }
+    };
+
+    // Hàm map travelClass từ fare name sang database enum
+    const mapTravelClass = (travelClassName: string): 'Economy' | 'Business' | 'First' => {
+        const className = travelClassName?.toUpperCase();
+        if (className === 'FIRST CLASS' || className === 'FIST CLASS') {
+            return 'First';
+        } else if (className === 'BUSSINESS' || className === 'BUSINESS') {
+            return 'Business';
+        } else {
+            return 'Economy';
         }
     };
 
@@ -161,40 +172,57 @@ export default function PaymentSuccessPage() {
                 return;
             }
 
-            // 3. Kiểm tra travelClass - map từ fare name sang database enum
-            let travelClass: 'Economy' | 'Business' | 'First' = 'Economy';
-            const travelClassName = depFlight.travelClass?.toUpperCase();
-            if (travelClassName === 'FIRST CLASS' || travelClassName === 'FIST CLASS') {
-                travelClass = 'First';
-            } else if (travelClassName === 'BUSSINESS' || travelClassName === 'BUSINESS') {
-                travelClass = 'Business';
-            } else {
-                travelClass = 'Economy';
+            // 3. Kiểm tra travelClass cho chuyến đi - map từ fare name sang database enum
+            const departureTravelClass = mapTravelClass(depFlight.travelClass || '');
+            const departureBaggageAllowance = getBaggageAllowance(departureTravelClass);
+            // 4. Lấy ghế đã chọn từ localStorage (nếu có)
+            let selectedSeats: { departure?: Array<{ seatNumber: string; flightId: number }>, return?: Array<{ seatNumber: string; flightId: number }> } = {};
+            try {
+                const savedSeats = localStorage.getItem('selectedSeats');
+                if (savedSeats) {
+                    const parsedSeats = JSON.parse(savedSeats);
+                    if (parsedSeats && typeof parsedSeats === 'object') {
+                        selectedSeats = {
+                            departure: parsedSeats.departure || [],
+                            return: parsedSeats.return || []
+                        };
+                    }
+                }
+            } catch (error) {
             }
-            // 4. Tạo bookingFlight cho mỗi passenger cho chuyến đi
+
+
+            // 4a. Tạo bookingFlight cho mỗi passenger cho chuyến đi
+            const departureSeats = selectedSeats.departure || [];
             for (let i = 0; i < passengers.length; i++) {
                 const passenger = passengers[i];
 
                 try {
+                    // Lấy ghế đã chọn cho passenger này (theo thứ tự)
+                    // Nếu có ghế đã chọn và flightId khớp, sử dụng ghế đó
+                    // Nếu không, để backend tự động chọn
+                    let seatNumber: string | undefined = undefined;
+                    if (departureSeats.length > i && departureSeats[i].flightId === Number(depFlight.flightId)) {
+                        seatNumber = departureSeats[i].seatNumber;
+                    } else {
+                    }
 
                     // Tạo bookingFlight với passengerId để backend tự động tạo seatAllocation
-                    // Backend sẽ:
-                    // 1. Tìm FlightSeat available cho flight này (sử dụng FlightSeats thay vì Seat.isAvailable)
-                    // 2. Tự động chọn ghế trống đầu tiên trong cùng hạng (01A, 02A, 03A...)
-                    // 3. Tạo SeatAllocation liên kết passenger với ghế đã chọn
-                    // 4. Cập nhật FlightSeat.isAvailable = false (không cập nhật Seat.isAvailable)
+                    // Nếu có seatNumber, backend sẽ sử dụng ghế đó (và kiểm tra available)
+                    // Nếu không có seatNumber, backend sẽ tự động chọn ghế trống đầu tiên
                     const bookingFlightData = {
                         bookingId: bookingId,
                         flightId: Number(depFlight.flightId), // Đảm bảo là number
-                        travelClass: travelClass,
-                        baggageAllowance: 0,
-                        // KHÔNG truyền seatNumber - để backend tự động chọn ghế từ FlightSeats available
-                        // passengerId để backend tự động tạo seatAllocation
+                        travelClass: departureTravelClass,
+                        baggageAllowance: departureBaggageAllowance,
+                        seatNumber: seatNumber, // Truyền ghế đã chọn (nếu có)
                         passengerId: passenger.passengerId
                     };
 
                     // GỌI API TẠO BOOKING FLIGHT
-                    // Backend sẽ tự động xử lý việc chọn ghế và tạo SeatAllocation
+                    // Backend sẽ:
+                    // - Nếu có seatNumber: Kiểm tra ghế đó có available không, nếu có thì sử dụng
+                    // - Nếu không có seatNumber: Tự động chọn ghế trống đầu tiên
                     await bookingFlightsService.create(bookingFlightData);
 
                 } catch (error) {
@@ -204,31 +232,46 @@ export default function PaymentSuccessPage() {
 
             // 4b. Nếu có chuyến về → tạo tiếp bookingFlight cho chuyến về
             if (retFlight && retFlight.flightId) {
+                // Kiểm tra travelClass cho chuyến về - map từ fare name sang database enum
+                const returnTravelClass = mapTravelClass(retFlight.travelClass || depFlight.travelClass || '');
+                const returnBaggageAllowance = getBaggageAllowance(returnTravelClass);
+
+                const returnSeats = selectedSeats.return || [];
                 for (let i = 0; i < passengers.length; i++) {
                     const passenger = passengers[i];
                     try {
+                        // Lấy ghế đã chọn cho passenger này (theo thứ tự)
+                        // Nếu có ghế đã chọn và flightId khớp, sử dụng ghế đó
+                        // Nếu không, để backend tự động chọn
+                        let seatNumber: string | undefined = undefined;
+                        if (returnSeats.length > i && returnSeats[i].flightId === Number(retFlight.flightId)) {
+                            seatNumber = returnSeats[i].seatNumber;
+                        }
+
                         // Tạo bookingFlight cho chuyến về
-                        // Backend sẽ tự động chọn ghế từ FlightSeats của chuyến về (độc lập với chuyến đi)
+                        // Nếu có seatNumber, backend sẽ sử dụng ghế đó
+                        // Nếu không, backend sẽ tự động chọn ghế từ FlightSeats của chuyến về (độc lập với chuyến đi)
                         const bookingFlightData = {
                             bookingId: bookingId,
                             flightId: Number(retFlight.flightId),
-                            travelClass: travelClass,
-                            baggageAllowance: 0,
+                            travelClass: returnTravelClass,
+                            baggageAllowance: returnBaggageAllowance,
+                            seatNumber: seatNumber, // Truyền ghế đã chọn (nếu có)
                             passengerId: passenger.passengerId
                         };
                         // GỌI API TẠO BOOKING FLIGHT cho chuyến về
                         // Mỗi chuyến bay có FlightSeats riêng, không bị ảnh hưởng lẫn nhau
                         await bookingFlightsService.create(bookingFlightData);
                     } catch (error) {
-                        console.error(`Error creating booking flight for return flight - passenger ${passenger.passengerId}:`, error);
                     }
                 }
             }
 
-            // 5. Xóa flight data khỏi localStorage sau khi đã sử dụng
+            // 5. Xóa flight data và ghế đã chọn khỏi localStorage sau khi đã sử dụng
             localStorage.removeItem('selectedFlight');
             localStorage.removeItem('selectedDepartureFlight');
             localStorage.removeItem('selectedReturnFlight');
+            localStorage.removeItem('selectedSeats'); // Xóa ghế đã chọn sau khi đã áp dụng
 
         } catch (error) {
         }
@@ -236,8 +279,6 @@ export default function PaymentSuccessPage() {
 
     const updatePaymentStatus = async (bookingId: number) => {
         try {
-            console.log('🔄 Updating payment status for bookingId:', bookingId);
-
             // Lấy payments theo bookingId
             const payments = await paymentsService.getPaymentsByBooking(bookingId);
 

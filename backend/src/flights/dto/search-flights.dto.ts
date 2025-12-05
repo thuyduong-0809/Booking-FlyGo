@@ -12,5 +12,9 @@ export class SearchFlightsDto {
     @IsOptional()
     @IsDateString()
     departureDate?: string;
+
+    @IsOptional()
+    @IsDateString()
+    minDepartureTime?: string; // Thời gian khởi hành tối thiểu (dùng để filter chuyến về sau thời gian đến của chuyến đi)
 }
 

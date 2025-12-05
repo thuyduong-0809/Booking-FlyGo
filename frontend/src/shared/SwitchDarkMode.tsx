@@ -8,15 +8,12 @@ export interface SwitchDarkModeProps {
   className?: string;
 }
 const SwitchDarkMode: React.FC<SwitchDarkModeProps> = ({ className = "" }) => {
-  const { _toogleDarkMode, isDarkMode, toDark, toLight } = useThemeMode();
+  const { _toogleDarkMode, isDarkMode } = useThemeMode();
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("🌙 Dark mode button clicked! Current mode:", isDarkMode ? "dark" : "light");
-    console.log("🔄 Toggling dark mode...");
     _toogleDarkMode();
-    console.log("✅ Toggle complete! New mode:", !isDarkMode ? "dark" : "light");
   };
 
   return (
