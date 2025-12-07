@@ -9,10 +9,18 @@ import { useNotification } from "@/components/Notification";
 
 interface SeatAllocation {
     allocationId: number;
-    seat: {
+    seat?: {
         seatId: number;
         seatNumber: string;
         travelClass: string;
+    };
+    flightSeat?: {
+        flightSeatId: number;
+        seat: {
+            seatId: number;
+            seatNumber: string;
+            travelClass: string;
+        };
     };
     passenger: {
         passengerId: number;
@@ -547,13 +555,14 @@ const MyBookingsPage = () => {
                                                                                         </p>
                                                                                     </div>
                                                                                 </div>
-                                                                                {allocation.seat && allocation.seat.seatNumber && (
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <div className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-semibold">
-                                                                                            Ghế: {allocation.seat.seatNumber}
+                                                                                {((allocation.flightSeat && allocation.flightSeat.seat && allocation.flightSeat.seat.seatNumber) ||
+                                                                                    (allocation.seat && allocation.seat.seatNumber)) && (
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <div className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-semibold">
+                                                                                                Ghế: {allocation.flightSeat?.seat?.seatNumber || allocation.seat?.seatNumber}
+                                                                                            </div>
                                                                                         </div>
-                                                                                    </div>
-                                                                                )}
+                                                                                    )}
                                                                             </div>
                                                                         </div>
                                                                     )

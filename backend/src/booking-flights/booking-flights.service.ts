@@ -178,7 +178,7 @@ export class BookingFlightsService {
 
           // Bước 1: Tạo SeatAllocation (liên kết passenger với ghế)
           const newSeatAllocation = seatAllocationRepo.create({
-            seat,
+            flightSeat: flightSeat,
             bookingFlight: newBookingFlight,
             passenger,
           });

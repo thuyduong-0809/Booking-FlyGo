@@ -2,14 +2,14 @@ import { requestApi } from "@/lib/api";
 
 export interface CreateSeatAllocationData {
     bookingFlightId: number;
-    seatId?: number;
+    flightSeatId: number;
     passengerId: number;
 }
 
 export interface SeatAllocation {
     allocationId: number;
     bookingFlightId: number;
-    seatId: number;
+    flightSeatId: number;
     passengerId: number;
 }
 

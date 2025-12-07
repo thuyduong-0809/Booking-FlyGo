@@ -12,7 +12,8 @@ type SeatLegKey = 'departure' | 'return';
 
 interface Seat {
     id: string;
-    seatId?: number;
+    flightSeatId?: number;  // ✅ ID duy nhất của ghế trên chuyến bay cụ thể
+    seatId?: number;        // ID ghế vật lý (để hiển thị thông tin)
     seatNumber: string;
     row: number;
     column: string;
@@ -852,10 +853,11 @@ export default function ChooseSeatPage() {
                         const parsed = parseSeatNumber(item.seat?.seatNumber);
                         if (!parsed) return null;
 
-                        const seatId = `${item.seat?.seatId ?? item.flightSeatId}`;
+                        const seatId = `${item.flightSeatId}`; // Sử dụng flightSeatId làm unique ID
                         return {
                             id: seatId,
-                            seatId: item.seat?.seatId,
+                            flightSeatId: item.flightSeatId,  // ✅ Lưu flightSeatId
+                            seatId: item.seat?.seatId,        // Lưu seatId để hiển thị
                             seatNumber: item.seat?.seatNumber || '',
                             row: parsed.row,
                             column: parsed.column,
