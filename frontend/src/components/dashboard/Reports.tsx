@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Flight, Booking, User, Payment } from '../../types/database';
 import { requestApi } from '@/lib/api';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface ReportData {
   period: string;
@@ -311,6 +312,23 @@ export default function Reports({ activeSubTab = 'reports' }: ReportsProps) {
         console.log(err)
     })
   } 
+  const selectedReportData = getListData()[0];
+
+  const chartData = [
+  {
+    name: "Đặt chỗ",
+    value: selectedReportData?.totalBookings || 0
+  },
+  {
+    name: "Chuyến bay",
+    value: selectedReportData?.flightsDeparted || 0
+  },
+  {
+    name: "Lấp đầy (%)",
+    value: selectedReportData?.loadFactor || 0
+  }
+];
+
 
 
   // Render content based on active sub-tab
@@ -669,34 +687,21 @@ export default function Reports({ activeSubTab = 'reports' }: ReportsProps) {
 
             {/* Top Performing Flights */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Chuyến bay hiệu suất cao</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Hiệu Suất Đặt Chỗ và Chuyến Bay</h3>
               <div className="space-y-4">
-                {flightReports.slice(0, 3).map((flight, index) => (
-                  <div key={flight.FlightID} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                        <span className="text-sm font-bold text-blue-600">#{index + 1}</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{flight.FlightNumber} - {flight.route}</p>
-                        <p className="text-sm text-gray-600">
-                          {flight.passengers} hành khách • {flight.occupancyRate}% lấp đầy
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">₫{(flight.revenue / 1000000).toFixed(0)}M</p>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(flight.Status)}`}>
-                        {flight.Status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+               <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#4F46E5" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
               </div>
             </div>
           </div>
-        );
-    }
+          );
+        }
   };
 
   return (
