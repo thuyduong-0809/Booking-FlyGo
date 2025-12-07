@@ -45,6 +45,7 @@ import { useAppDispatch } from 'stores/hookStore';
 import { logout } from 'stores/features/masterSlice';
 import { requestApi } from '@/lib/api';
 import { getCookie } from '@/utils/cookies';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -59,6 +60,14 @@ export default function DashboardPage() {
   const [loyaltyOpen, setLoyaltyOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
   const dispatch = useAppDispatch();
+
+  useEffect(()=>{
+    loadMonthReport()
+    loadWeekReport()
+    loadQuarterReport()
+    loadYearReport()
+  },[])
+
 
   // Đảm bảo component render nhất quán
   React.useEffect(() => {
@@ -93,7 +102,93 @@ export default function DashboardPage() {
     };
 
     fetchUserData();
+    
   }, []);
+
+    const [weekData, setWeekData] = useState<any>(null);
+
+    const [quarterData, setQuarterData] = useState<any>(null);
+    const [yearData, setYearData] = useState<any>(null);
+    const [monthData, setMonthData] = useState<any>(null);
+    const loadMonthReport = async()=>{
+      requestApi('bookings/reports/current-month-revenue','GET').then((res:any)=>{
+        console.log('aaa',res)
+         if(res.success){
+           setMonthData(res)
+          //  console.log(res.data)
+         }else{
+      
+         }
+      }).catch((err:any)=>{
+          console.log(err)
+      })
+    } 
+
+        const loadWeekReport = async()=>{
+        requestApi('bookings/reports/current-week-revenue','GET').then((res:any)=>{
+          // console.log('week',res)
+           if(res.success){
+             setWeekData(res)
+           }
+        })
+      } 
+    
+      const loadQuarterReport = async()=>{
+        requestApi('bookings/reports/current-quarter-revenue','GET').then((res:any)=>{
+          // console.log('quarter',res)
+           if(res.success){
+             setQuarterData(res)
+            //  console.log(res.data)
+           }else{
+        
+           }
+        }).catch((err:any)=>{
+            console.log(err)
+        })
+      } 
+    
+      const loadYearReport = async()=>{
+        requestApi('bookings/reports/current-year-revenue','GET').then((res:any)=>{
+          // console.log('year',res)
+           if(res.success){
+             setYearData(res)
+            //  console.log(res.data)
+           }else{
+        
+           }
+        }).catch((err:any)=>{
+            console.log(err)
+        })
+      } 
+  const extractNumber = (value: string) => {
+    if (!value) return 0;
+    const match = value.match(/[\d.]+/);
+    return match ? Number(match[0]) : 0; // lấy phần số
+  };
+
+    const chartData = [
+      {
+        name: "Tuần",
+        revenueLabel: weekData?.totalRevenue,   // 89.2M
+        revenueValue: extractNumber(weekData?.totalRevenue) // 89.2
+      },
+      {
+        name: "Tháng",
+        revenueLabel: monthData?.totalRevenue,
+        revenueValue: extractNumber(monthData?.totalRevenue)
+      },
+      {
+        name: "Quý",
+        revenueLabel: quarterData?.totalRevenue,
+        revenueValue: extractNumber(quarterData?.totalRevenue)
+      },
+      {
+        name: "Năm",
+        revenueLabel: yearData?.totalRevenue,
+        revenueValue: extractNumber(yearData?.totalRevenue)
+      },
+    ];
+
 
   const getInitials = () => {
     if (userData?.firstName && userData?.lastName) {
@@ -287,100 +382,85 @@ export default function DashboardPage() {
           <div>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {flightStats.map((stat) => (
-                <div key={stat.title} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
+       
+              <div className="contents">
+
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                      <CurrencyDollarIcon className="h-6 w-6 text-blue-600" />
+                    </div>
                     <div>
-                      <p className="text-md font-medium text-gray-600 mb-1">{stat.title}</p>
-                      <p className="text-4xl font-bold text-gray-900">{stat.value}</p>
+                      <p className="text-md font-medium text-gray-600">Doanh thu tháng này</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {monthData ? `₫${monthData.totalRevenue}` : 'Đang tải...'}
+                      </p>
                     </div>
-                    <div className={`p-3 rounded-lg ${getStatIconColor(stat.color)}`}>
-                      <stat.icon className="h-7 w-7" />
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center">
-                    {stat.changeType === 'increase' ? (
-                      <ArrowUpIcon className="h-5 w-5 text-green-500 mr-1" />
-                    ) : (
-                      <ArrowDownIcon className="h-5 w-5 text-red-500 mr-1" />
-                    )}
-                    <span className={`text-md font-medium ${stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                      {stat.change}
-                    </span>
-                    <span className="text-md text-gray-500 ml-2">so với tháng trước</span>
                   </div>
                 </div>
-              ))}
+
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                      <UserGroupIcon className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-md font-medium text-gray-600">Đặt chỗ</p>
+                      <p className="text-2xl font-bold text-gray-900">{monthData ? `${monthData.totalBookings}` : 'Đang tải...'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                      <RocketLaunchIcon className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-md font-medium text-gray-600">Chuyến bay</p>
+                      <p className="text-2xl font-bold text-gray-900">{monthData ? `${monthData.flightsDeparted}` : 'Đang tải...'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
+                      <ChartBarIcon className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-md font-medium text-gray-600">Tỷ lệ lấp đầy</p>
+                      <p className="text-2xl font-bold text-gray-900">{monthData ? `${monthData.loadFactor}` : 'Đang tải...'}</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+  
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Recent Flights */}
-              <div className="lg:col-span-2">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-gray-900">Chuyến bay gần đây</h3>
-                    <button className="text-blue-600 hover:text-blue-700 text-md font-medium">
-                      Xem tất cả
-                    </button>
-                  </div>
-                  <div className="space-y-4">
-                    {recentFlights.map((flight) => (
-                      <div key={flight.flightNumber} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <RocketLaunchIcon className="h-7 w-7 text-blue-600" />
-                          </div>
-                          <div>
-                            <p className="text-md font-semibold text-gray-900">{flight.flightNumber}</p>
-                            <p className="text-md text-gray-600">{flight.route}</p>
-                            <p className="text-sm text-gray-500">{flight.time}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium ${getStatusColor(flight.status)}`}>
-                            {flight.status}
-                          </span>
-                          <p className="text-md text-gray-600 mt-1">{flight.passengers} hành khách</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {/* Main Content Grid */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Doanh thu qua các kỳ</h3>
+                      <div className="space-y-4">
+                      <ResponsiveContainer width="100%" height={350}>
+                      <BarChart data={chartData} barCategoryGap="40%">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
 
-              {/* Popular Routes */}
-              <div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-gray-900">Tuyến phổ biến</h3>
-                    <MapPinIcon className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="space-y-4">
-                    {popularRoutes.map((route, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div>
-                          <p className="text-md font-medium text-gray-900">{route.route}</p>
-                          <p className="text-md text-gray-600">{route.bookings} vé</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-md font-semibold text-gray-900">{route.revenue}</p>
-                          <div className="flex items-center mt-1">
-                            <div className="w-16 bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-blue-600 h-2 rounded-full"
-                                style={{ width: `${(route.bookings / 1247) * 100}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        </div>
+                        <YAxis tickFormatter={(v) => `${v}`} />
+
+                        <Tooltip formatter={(value, name, props) => {
+                          return [props.payload.revenueLabel, "Doanh thu"];
+                        }}/>
+
+                        <Bar dataKey="revenueValue" fill="#4F46E5" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+                    </div>
+
 
             {/* Quick Actions */}
             <div className="mt-8">
@@ -851,7 +931,7 @@ export default function DashboardPage() {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-md text-gray-600">Chào mừng trở lại, Admin!</p>
+                <p className="text-md text-gray-600">Chào mừng trở lại, {userData?.lastName || "Admin"}!</p>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="relative">
