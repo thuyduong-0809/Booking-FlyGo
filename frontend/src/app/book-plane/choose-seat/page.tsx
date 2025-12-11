@@ -158,17 +158,12 @@ const getTravelClassFromFare = (fare?: SelectedFare): SeatCabin => {
 
 // Lấy hạng vé từ thông tin đặt chỗ (state booking)
 const getTravelClassFromBookingState = (departureFare?: SelectedFare, returnFare?: SelectedFare, legKey?: SeatLegKey): SeatCabin => {
-    console.log('Getting travel class from booking state:');
-    console.log('departureFare:', departureFare);
-    console.log('returnFare:', returnFare);
-    console.log('legKey:', legKey);
 
     // Nếu có legKey cụ thể, ưu tiên lấy theo chặng đó
     if (legKey) {
         const targetFare = legKey === 'departure' ? departureFare : returnFare;
         if (targetFare?.fareName) {
             const mappedClass = fareClassToSeatCabin[targetFare.fareName] || 'Economy';
-            console.log(`Travel class for ${legKey}: ${targetFare.fareName} -> ${mappedClass}`);
             return mappedClass;
         }
     }
@@ -184,7 +179,6 @@ const getTravelClassFromBookingState = (departureFare?: SelectedFare, returnFare
     };
 
     const finalClass = classHierarchy[returnClass] > classHierarchy[departureClass] ? returnClass : departureClass;
-    console.log(`Final travel class from booking state: ${finalClass}`);
     return finalClass;
 };
 
@@ -209,7 +203,6 @@ const getTravelClassFromLocalStorage = (): SeatCabin => {
                 const parsed = JSON.parse(flightData);
                 if (parsed?.travelClass) {
                     const travelClass = parsed.travelClass;
-                    console.log(`Travel class from ${key}:`, travelClass);
                     const mappedClass = fareClassToSeatCabin[travelClass] || 'Economy';
 
                     // Chọn hạng cao nhất
@@ -220,7 +213,6 @@ const getTravelClassFromLocalStorage = (): SeatCabin => {
             }
         }
 
-        console.log('Final travel class selected:', highestClass);
         return highestClass;
     } catch (error) {
         console.error('Không thể đọc dữ liệu flight từ localStorage:', error);
@@ -247,8 +239,6 @@ const getTravelClassForLeg = (legKey: SeatLegKey): SeatCabin => {
                 if (parsed?.travelClass) {
                     const travelClass = parsed.travelClass;
                     const mappedClass = fareClassToSeatCabin[travelClass] || 'Economy';
-                    console.log(`Travel class for ${legKey} from ${key}: '${travelClass}' -> '${mappedClass}'`);
-                    console.log('Available mappings:', Object.keys(fareClassToSeatCabin));
                     return mappedClass;
                 }
             }
@@ -257,7 +247,6 @@ const getTravelClassForLeg = (legKey: SeatLegKey): SeatCabin => {
         console.error(`Không thể đọc dữ liệu flight cho ${legKey} từ localStorage:`, error);
     }
 
-    console.log(`No travel class found for ${legKey}, defaulting to Economy`);
     return 'Economy';
 };
 

@@ -142,8 +142,6 @@ export class SeatsService {
                 return response;
             }
 
-            console.log(`Force syncing FlightSeats for seat ${seatId} with isAvailable: ${seat.isAvailable}`);
-
             // Cập nhật trực tiếp tất cả FlightSeats
             const updateResult = await this.flightSeatRepository.update(
                 { seat: { seatId } },
@@ -321,20 +319,14 @@ export class SeatsService {
                 let syncResult: any = null;
 
                 if (isAvailableChanged) {
-                    console.log(`Syncing flight seats for seat ${id}: ${currentSeat.isAvailable} -> ${updateSeatDto.isAvailable}`);
-
                     // Kiểm tra xem có FlightSeats nào cho ghế này không
                     const existingFlightSeats = await this.flightSeatRepository.find({
                         where: { seat: { seatId: id } },
                         relations: ['flight', 'seat']
                     });
-
-                    console.log(`Found ${existingFlightSeats.length} existing flight seats for seat ${id}`);
-
                     // Đảm bảo isAvailable không undefined
                     const newAvailabilityValue = updateSeatDto.isAvailable!; // Non-null assertion vì đã check isAvailableChanged
                     syncResult = await this.syncFlightSeatsAvailability(id, newAvailabilityValue);
-                    console.log(`Flight seats sync completed:`, syncResult);
                 }
 
                 response.success = true;
@@ -365,7 +357,6 @@ export class SeatsService {
                 response.message = 'Seat not found or no changes made';
             }
         } catch (error) {
-            console.error('Error in seats update:', error);
             response.success = false;
             response.message = error.message || 'Error while updating seat';
         }
@@ -394,8 +385,6 @@ export class SeatsService {
                 where: { aircraft: { aircraftId: seat.aircraft.aircraftId } }
             });
 
-            console.log(`Found ${flights.length} flights for aircraft ${seat.aircraft.aircraftId}`);
-
             let totalUpdatedFlightSeats = 0;
             let totalCreatedFlightSeats = 0;
 
@@ -418,10 +407,8 @@ export class SeatsService {
                     });
                     await this.flightSeatRepository.save(flightSeat);
                     totalCreatedFlightSeats++;
-                    console.log(`Created FlightSeat for flight ${flight.flightId}, seat ${seatId} with isAvailable: ${isAvailable}`);
                 } else {
                     // Cập nhật FlightSeat đã tồn tại - sử dụng update thay vì save để đảm bảo
-                    console.log(`Updating FlightSeat ${flightSeat.flightSeatId}: current isAvailable = ${flightSeat.isAvailable}, new = ${isAvailable}`);
 
                     const updateResult = await this.flightSeatRepository.update(
                         flightSeat.flightSeatId,
@@ -430,9 +417,6 @@ export class SeatsService {
 
                     if (updateResult.affected && updateResult.affected > 0) {
                         totalUpdatedFlightSeats++;
-                        console.log(`Successfully updated FlightSeat ${flightSeat.flightSeatId} for flight ${flight.flightId}, seat ${seatId} to isAvailable: ${isAvailable}`);
-                    } else {
-                        console.log(`No update needed for FlightSeat ${flightSeat.flightSeatId} - already has isAvailable: ${isAvailable}`);
                     }
                 }
             }

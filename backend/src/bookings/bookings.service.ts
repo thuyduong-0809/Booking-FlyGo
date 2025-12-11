@@ -790,7 +790,7 @@ export class BookingsService {
                 to: toDate,
             })
             .getRawOne();
-        // console.log('total seat',totalSeatsResult)
+
 
         const totalSeats = Number(totalSeatsResult?.totalSeats || 0);
 
