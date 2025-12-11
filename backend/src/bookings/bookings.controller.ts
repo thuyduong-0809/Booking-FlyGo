@@ -49,8 +49,15 @@ export class BookingsController {
     }
 
     @Delete(':id')
-    delete(@Param('id') id: string) {
-        return this.bookingsService.delete(Number(id));
+    delete(@Param('id') id: string, @Body() cancellationData?: {
+        reason?: string;
+        cancellationFee?: number;
+        refundAmount?: number;
+        contactInfo?: string;
+        passengerName?: string;
+        documents?: string;
+    }) {
+        return this.bookingsService.delete(+id, cancellationData);
     }
 
     // Tra cứu đơn hàng cho khách vãng lai
@@ -68,25 +75,25 @@ export class BookingsController {
     //reports
     @Get("/reports/current-month-revenue")
     getCurrentMonthRevenue() {
-    return this.bookingsService.getThisMonthRevenue();
+        return this.bookingsService.getThisMonthRevenue();
     }
 
     @Get("/reports/current-week-revenue")
     getCurrentWeekRevenue() {
-    return this.bookingsService.getThisWeekRevenue();
+        return this.bookingsService.getThisWeekRevenue();
     }
 
     @Get("/reports/current-quarter-revenue")
     getCurrentQuarterRevenue() {
-    return this.bookingsService.getThisQuarterRevenue();
+        return this.bookingsService.getThisQuarterRevenue();
     }
 
     @Get("/reports/current-year-revenue")
     getCurrentYearRevenue() {
-    return this.bookingsService.getThisYearRevenue();
+        return this.bookingsService.getThisYearRevenue();
     }
 
-    
+
 
 
 }

@@ -11,6 +11,8 @@ import * as bcrypt from 'bcrypt';
 import { Flight } from 'src/flights/entities/flights.entity';
 import { FlightSeat } from 'src/flight-seats/entities/flight-seats.entity';
 import { BookingFlight } from 'src/booking-flights/entities/booking-flights.entity';
+import { SeatAllocation } from 'src/seat-allocations/entities/seat-allocations.entity';
+import { CancelHistory } from 'src/cancel-history/entities/cancel-history.entity';
 
 @Injectable()
 export class BookingsService {
@@ -19,6 +21,7 @@ export class BookingsService {
         @InjectRepository(Flight) private flightRepository: Repository<Flight>,
         @InjectRepository(FlightSeat) private flightSeatRepository: Repository<FlightSeat>,
         @InjectRepository(BookingFlight) private bookingFlightRepository: Repository<BookingFlight>,
+        @InjectRepository(SeatAllocation) private seatAllocationRepository: Repository<SeatAllocation>,
     ) { }
 
 
@@ -286,6 +289,10 @@ export class BookingsService {
                     'bookingFlights.flight.arrivalAirport',
                     'bookingFlights.flight.departureAirport',
                     'bookingFlights.flight.airline',
+                    'bookingFlights.seatAllocations',
+                    'bookingFlights.seatAllocations.flightSeat',
+                    'bookingFlights.seatAllocations.flightSeat.seat',
+                    'bookingFlights.seatAllocations.passenger',
                     'passengers'
                 ],
             });
@@ -329,20 +336,135 @@ export class BookingsService {
         return response;
     }
 
-    async delete(id: number): Promise<any> {
+    async delete(id: number, cancellationData?: { reason?: string; cancellationFee?: number; refundAmount?: number }): Promise<any> {
         let response = { ...common_response };
+
         try {
-            const deleteResult = await this.bookingRepository.delete({ bookingId: id });
-            if (deleteResult.affected && deleteResult.affected > 0) {
+            // Sử dụng transaction để đảm bảo tất cả các thay đổi được thực hiện hoặc rollback
+            await this.bookingRepository.manager.transaction(async (manager) => {
+                const bookingRepo = manager.getRepository(Booking);
+                const flightSeatRepo = manager.getRepository(FlightSeat);
+                const seatAllocationRepo = manager.getRepository(SeatAllocation);
+                const bookingFlightRepo = manager.getRepository(BookingFlight);
+                const flightRepo = manager.getRepository(Flight);
+
+                // 1️⃣ Lấy thông tin booking đầy đủ
+                const booking = await bookingRepo.findOne({
+                    where: { bookingId: id },
+                    relations: [
+                        'bookingFlights',
+                        'bookingFlights.flight',
+                        'bookingFlights.seatAllocations',
+                        'bookingFlights.seatAllocations.flightSeat',
+                        'bookingFlights.seatAllocations.flightSeat.seat',
+                    ],
+                });
+
+                if (!booking) {
+                    throw new Error('Booking not found');
+                }
+
+                // 2️⃣ Kiểm tra điều kiện hủy
+                const bookingStatus = booking.bookingStatus?.toLowerCase();
+                const paymentStatus = booking.paymentStatus?.toLowerCase();
+
+                // Đã hủy rồi
+                if (bookingStatus === 'cancelled') {
+                    throw new Error('Vé này đã được hủy trước đó.');
+                }
+
+                // Đã refunded
+                if (paymentStatus === 'refunded') {
+                    throw new Error('Vé này đã được hoàn tiền trước đó.');
+                }
+
+                // Kiểm tra thời gian trước giờ bay
+                const now = new Date();
+                let earliestDeparture: Date | null = null;
+
+                for (const bf of booking.bookingFlights) {
+                    const departureTime = new Date(bf.flight.departureTime);
+                    if (!earliestDeparture || departureTime < earliestDeparture) {
+                        earliestDeparture = departureTime;
+                    }
+                }
+
+                if (earliestDeparture) {
+                    const hoursUntilDeparture = (earliestDeparture.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+                    // Kiểm tra xem chuyến bay đã khởi hành chưa
+                    if (hoursUntilDeparture < 0) {
+                        throw new Error('Chuyến bay đã khởi hành. Không thể hủy vé.');
+                    }
+
+                    // Không cho hủy trong vòng 2 giờ trước giờ khởi hành
+                    if (hoursUntilDeparture < 2) {
+                        throw new Error('Không thể hủy vé trong vòng 2 giờ trước giờ khởi hành.');
+                    }
+                }
+
+                // 3️⃣ Giải phóng ghế và cập nhật flight
+                for (const bookingFlight of booking.bookingFlights) {
+                    const seatAllocations = bookingFlight.seatAllocations || [];
+
+                    for (const allocation of seatAllocations) {
+                        const flightSeat = allocation.flightSeat;
+                        if (flightSeat) {
+                            // Set ghế về available
+                            flightSeat.isAvailable = true;
+                            await flightSeatRepo.save(flightSeat);
+
+                            // Tăng số ghế available của flight
+                            const flight = bookingFlight.flight;
+                            const travelClass = flightSeat.seat?.travelClass?.toLowerCase();
+
+                            if (travelClass === 'economy') {
+                                flight.availableEconomySeats = (flight.availableEconomySeats || 0) + 1;
+                            } else if (travelClass === 'business') {
+                                flight.availableBusinessSeats = (flight.availableBusinessSeats || 0) + 1;
+                            } else if (travelClass === 'first') {
+                                flight.availableFirstClassSeats = (flight.availableFirstClassSeats || 0) + 1;
+                            }
+
+                            await flightRepo.save(flight);
+                        }
+
+                        // Xóa seat allocation
+                        await seatAllocationRepo.remove(allocation);
+                    }
+
+                    // Xóa seatNumber trong bookingFlight
+                    bookingFlight.seatNumber = '';
+                    await bookingFlightRepo.save(bookingFlight);
+                }
+
+                // 4️⃣ Cập nhật booking status
+                booking.bookingStatus = 'Cancelled';
+
+                await bookingRepo.save(booking);
+
+                // 5️⃣ Ghi log vào CancelHistory
+                await manager.getRepository(CancelHistory).save({
+                    booking: booking,
+                    bookingReference: booking.bookingReference,
+                    cancellationFee: cancellationData?.cancellationFee || 0,
+                    refundAmount: cancellationData?.refundAmount || 0,
+                    totalAmount: booking.totalAmount,
+                    reason: cancellationData?.reason || 'User requested cancellation',
+                });
+
                 response.success = true;
-                response.message = 'Booking deleted successfully';
-            } else {
-                response.success = false;
-                response.message = 'Booking not found';
-            }
+                response.message = 'Booking cancelled successfully';
+                response.data = {
+                    bookingId: booking.bookingId,
+                    bookingReference: booking.bookingReference,
+                    status: booking.bookingStatus,
+                    refundAmount: cancellationData?.refundAmount || 0,
+                };
+            });
         } catch (error) {
             response.success = false;
-            response.message = error.message || 'Error while deleting aircraft';
+            response.message = error.message || 'Error while cancelling booking';
         }
         return response;
     }

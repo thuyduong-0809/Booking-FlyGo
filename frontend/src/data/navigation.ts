@@ -91,6 +91,20 @@ const otherServicesMegaMenu: MegamenuItem[] = [
       },
       {
         id: ncNanoId(),
+        href: "/cancel-seat",
+        name: "Hủy đặt vé hoàn tiền",
+        isNew: true,
+        description: "Hủy vé máy bay và hoàn tiền nhanh chóng, dễ dàng chỉ với mã đặt chỗ",
+      },
+      {
+        id: ncNanoId(),
+        href: "/request-refund" as Route,
+        name: "Yêu cầu hoàn tiền",
+        isNew: true,
+        description: "Gửi yêu cầu hoàn tiền cho đặt chỗ của bạn với quy trình đơn giản và nhanh chóng",
+      },
+      {
+        id: ncNanoId(),
         href: "#",
         name: "Liên hệ hỗ trợ",
         description: "Đội ngũ chăm sóc khách hàng 24/7 sẵn sàng hỗ trợ bạn",

@@ -61,12 +61,12 @@ export default function DashboardPage() {
   const [reportsOpen, setReportsOpen] = useState(false);
   const dispatch = useAppDispatch();
 
-  useEffect(()=>{
+  useEffect(() => {
     loadMonthReport()
     loadWeekReport()
     loadQuarterReport()
     loadYearReport()
-  },[])
+  }, [])
 
 
   // Đảm bảo component render nhất quán
@@ -102,92 +102,92 @@ export default function DashboardPage() {
     };
 
     fetchUserData();
-    
+
   }, []);
 
-    const [weekData, setWeekData] = useState<any>(null);
+  const [weekData, setWeekData] = useState<any>(null);
 
-    const [quarterData, setQuarterData] = useState<any>(null);
-    const [yearData, setYearData] = useState<any>(null);
-    const [monthData, setMonthData] = useState<any>(null);
-    const loadMonthReport = async()=>{
-      requestApi('bookings/reports/current-month-revenue','GET').then((res:any)=>{
-        console.log('aaa',res)
-         if(res.success){
-           setMonthData(res)
-          //  console.log(res.data)
-         }else{
-      
-         }
-      }).catch((err:any)=>{
-          console.log(err)
-      })
-    } 
+  const [quarterData, setQuarterData] = useState<any>(null);
+  const [yearData, setYearData] = useState<any>(null);
+  const [monthData, setMonthData] = useState<any>(null);
+  const loadMonthReport = async () => {
+    requestApi('bookings/reports/current-month-revenue', 'GET').then((res: any) => {
+      console.log('aaa', res)
+      if (res.success) {
+        setMonthData(res)
+        //  console.log(res.data)
+      } else {
 
-        const loadWeekReport = async()=>{
-        requestApi('bookings/reports/current-week-revenue','GET').then((res:any)=>{
-          // console.log('week',res)
-           if(res.success){
-             setWeekData(res)
-           }
-        })
-      } 
-    
-      const loadQuarterReport = async()=>{
-        requestApi('bookings/reports/current-quarter-revenue','GET').then((res:any)=>{
-          // console.log('quarter',res)
-           if(res.success){
-             setQuarterData(res)
-            //  console.log(res.data)
-           }else{
-        
-           }
-        }).catch((err:any)=>{
-            console.log(err)
-        })
-      } 
-    
-      const loadYearReport = async()=>{
-        requestApi('bookings/reports/current-year-revenue','GET').then((res:any)=>{
-          // console.log('year',res)
-           if(res.success){
-             setYearData(res)
-            //  console.log(res.data)
-           }else{
-        
-           }
-        }).catch((err:any)=>{
-            console.log(err)
-        })
-      } 
+      }
+    }).catch((err: any) => {
+      console.log(err)
+    })
+  }
+
+  const loadWeekReport = async () => {
+    requestApi('bookings/reports/current-week-revenue', 'GET').then((res: any) => {
+      // console.log('week',res)
+      if (res.success) {
+        setWeekData(res)
+      }
+    })
+  }
+
+  const loadQuarterReport = async () => {
+    requestApi('bookings/reports/current-quarter-revenue', 'GET').then((res: any) => {
+      // console.log('quarter',res)
+      if (res.success) {
+        setQuarterData(res)
+        //  console.log(res.data)
+      } else {
+
+      }
+    }).catch((err: any) => {
+      console.log(err)
+    })
+  }
+
+  const loadYearReport = async () => {
+    requestApi('bookings/reports/current-year-revenue', 'GET').then((res: any) => {
+      // console.log('year',res)
+      if (res.success) {
+        setYearData(res)
+        //  console.log(res.data)
+      } else {
+
+      }
+    }).catch((err: any) => {
+      console.log(err)
+    })
+  }
   const extractNumber = (value: string) => {
     if (!value) return 0;
     const match = value.match(/[\d.]+/);
     return match ? Number(match[0]) : 0; // lấy phần số
   };
 
-    const chartData = [
-      {
-        name: "Tuần",
-        revenueLabel: weekData?.totalRevenue,   // 89.2M
-        revenueValue: extractNumber(weekData?.totalRevenue) // 89.2
-      },
-      {
-        name: "Tháng",
-        revenueLabel: monthData?.totalRevenue,
-        revenueValue: extractNumber(monthData?.totalRevenue)
-      },
-      {
-        name: "Quý",
-        revenueLabel: quarterData?.totalRevenue,
-        revenueValue: extractNumber(quarterData?.totalRevenue)
-      },
-      {
-        name: "Năm",
-        revenueLabel: yearData?.totalRevenue,
-        revenueValue: extractNumber(yearData?.totalRevenue)
-      },
-    ];
+  const chartData = [
+    {
+      name: "Tuần",
+      revenueLabel: weekData?.totalRevenue,   // 89.2M
+      revenueValue: extractNumber(weekData?.totalRevenue) // 89.2
+    },
+    {
+      name: "Tháng",
+      revenueLabel: monthData?.totalRevenue,
+      revenueValue: extractNumber(monthData?.totalRevenue)
+    },
+    {
+      name: "Quý",
+      revenueLabel: quarterData?.totalRevenue,
+      revenueValue: extractNumber(quarterData?.totalRevenue)
+    },
+    {
+      name: "Năm",
+      revenueLabel: yearData?.totalRevenue,
+      revenueValue: extractNumber(yearData?.totalRevenue)
+    },
+  ];
 
 
   const getInitials = () => {
@@ -382,7 +382,7 @@ export default function DashboardPage() {
           <div>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-       
+
               <div className="contents">
 
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -436,30 +436,30 @@ export default function DashboardPage() {
                 </div>
 
               </div>
-  
+
             </div>
 
-          {/* Main Content Grid */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Doanh thu qua các kỳ</h3>
-                      <div className="space-y-4">
-                      <ResponsiveContainer width="100%" height={350}>
-                      <BarChart data={chartData} barCategoryGap="40%">
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
+            {/* Main Content Grid */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Doanh thu qua các kỳ</h3>
+              <div className="space-y-4">
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={chartData} barCategoryGap="40%">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
 
-                        <YAxis tickFormatter={(v) => `${v}`} />
+                    <YAxis tickFormatter={(v) => `${v}`} />
 
-                        <Tooltip formatter={(value, name, props) => {
-                          return [props.payload.revenueLabel, "Doanh thu"];
-                        }}/>
+                    <Tooltip formatter={(value, name, props) => {
+                      return [props.payload.revenueLabel, "Doanh thu"];
+                    }} />
 
-                        <Bar dataKey="revenueValue" fill="#4F46E5" radius={[8, 8, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <Bar dataKey="revenueValue" fill="#4F46E5" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
 
-                      </div>
-                    </div>
+              </div>
+            </div>
 
 
             {/* Quick Actions */}
@@ -926,7 +926,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="bg-white shadow-sm border-b border-gray-200 relative z-10">
           <div className="px-6 py-4">
             <div className="flex justify-between items-center">
               <div>

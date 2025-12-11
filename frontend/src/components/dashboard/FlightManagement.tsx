@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ClockIcon,
   PlusIcon,
@@ -36,6 +37,11 @@ interface FlightManagementProps { activeSubTab?: string }
 export default function FlightManagement({ activeSubTab = 'flights' }: FlightManagementProps) {
 
   const { showNotification } = useNotification();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [flightData, setFlightData] = useState<any>({
     flightNumber: "",
     airlineId: "",
@@ -1719,8 +1725,8 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
       {renderSubContent()}
 
       {/* Add Flight Modal - only show for main flights tab */}
-      {activeSubTab === 'flights' && showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {activeSubTab === 'flights' && showAddModal && mounted && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
           <div className=" bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh]">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm chuyến bay mới</h3>
             <form onSubmit={async (e) => {
@@ -2072,11 +2078,12 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
 
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showUpdateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {showUpdateModal && mounted && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
           <div className=" bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh]">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Cập nhật chuyến bay</h3>
             <form className="grid grid-cols-1 md:grid-cols-2 gap-4"
@@ -2285,7 +2292,8 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

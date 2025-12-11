@@ -1,4 +1,4 @@
 import { Module } from '@nestjs/common';
 
 @Module({})
-export class FareHistoryModule {}
+export class FareHistoryModule { }

@@ -14,6 +14,17 @@ import { CheckoutScreen, PayDoneScreen } from './screens/CheckoutScreens';
 import { AccountScreen, AboutScreen, ContactScreen } from './screens/StaticScreens';
 import SettingsScreen from './screens/SettingsScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import StoreProvider from './stores/providers';
+import Toast from 'react-native-toast-message';
+
+// New screens for enhanced functionality
+import FlightListingScreen from './screens/booking/FlightListingScreen';
+import SeatSelectionScreen from './screens/booking/SeatSelectionScreen';
+import PassengerInfoScreen from './screens/booking/PassengerInfoScreen';
+import PaymentScreen from './screens/booking/PaymentScreen';
+import BookingConfirmationScreen from './screens/booking/BookingConfirmationScreen';
+import MyBookingsScreen from './screens/user/MyBookingsScreen';
+import ProfileScreen from './screens/user/ProfileScreen';
 
 enableScreens(true);
 
@@ -40,25 +51,50 @@ function HomeTabs() {
         headerShown: false,
         headerStyle: { backgroundColor: theme.colors.background },
         headerTintColor: theme.colors.text,
-        tabBarStyle: { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border },
+        tabBarStyle: {
+          backgroundColor: theme.colors.card,
+          borderTopColor: theme.colors.border,
+          paddingBottom: 8,
+          height: 65,
+        },
         tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarIcon: ({ color, size, focused }) => {
-          const m = {
+          const iconMap = {
             HomeTab: focused ? 'home' : 'home-outline',
             Flights: focused ? 'airplane' : 'airplane-outline',
+            Bookings: focused ? 'calendar' : 'calendar-outline',
             Account: focused ? 'person' : 'person-outline',
-            Settings: focused ? 'settings' : 'settings-outline',
           };
-          const name = m[route.name] || 'ellipse-outline';
-          return <Ionicons name={name} size={size} color={color} />;
+          const iconName = iconMap[route.name] || 'ellipse-outline';
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
         },
       })}
     >
-      <Tabs.Screen name="HomeTab" options={{ title: 'Trang chủ' }} component={HomeScreen} />
-      <Tabs.Screen name="Flights" options={{ title: 'Chuyến bay' }} component={FlightsScreen} />
-      <Tabs.Screen name="Account" options={{ title: 'Tài khoản' }} component={AccountScreen} />
-      <Tabs.Screen name="Settings" options={{ title: 'Cài đặt' }} component={SettingsScreen} />
+      <Tabs.Screen
+        name="HomeTab"
+        options={{ title: 'Trang chủ' }}
+        component={HomeScreen}
+      />
+      <Tabs.Screen
+        name="Flights"
+        options={{ title: 'Chuyến bay' }}
+        component={FlightsScreen}
+      />
+      <Tabs.Screen
+        name="Bookings"
+        options={{ title: 'Đặt chỗ' }}
+        component={MyBookingsScreen}
+      />
+      <Tabs.Screen
+        name="Account"
+        options={{ title: 'Tài khoản' }}
+        component={AccountScreen}
+      />
     </Tabs.Navigator>
   );
 }
@@ -66,28 +102,147 @@ function HomeTabs() {
 function AppInner() {
   const { theme } = useThemeMode();
   return (
-    <NavigationContainer theme={theme}>
-      <Stack.Navigator>
-        <Stack.Screen name="Root" component={HomeTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="Login" options={{ title: 'Đăng nhập' }} component={LoginScreen} />
-        <Stack.Screen name="Signup" options={{ title: 'Đăng ký' }} component={SignupScreen} />
-        <Stack.Screen name="FlightDetail" options={{ title: 'Chi tiết chuyến bay' }} component={FlightDetailScreen} />
-        <Stack.Screen name="Checkout" options={{ title: 'Thanh toán' }} component={CheckoutScreen} />
-        <Stack.Screen name="PayDone" options={{ title: 'Hoàn tất' }} component={PayDoneScreen} />
-        <Stack.Screen name="About" options={{ title: 'Giới thiệu' }} component={AboutScreen} />
-        <Stack.Screen name="Contact" options={{ title: 'Liên hệ' }} component={ContactScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <>
+      <NavigationContainer theme={theme}>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: { backgroundColor: theme.colors.background },
+            headerTintColor: theme.colors.text,
+            headerTitleStyle: { fontWeight: '600' },
+          }}
+        >
+          {/* Main tab navigation */}
+          <Stack.Screen
+            name="Root"
+            component={HomeTabs}
+            options={{ headerShown: false }}
+          />
+
+          {/* Authentication screens */}
+          <Stack.Screen
+            name="Login"
+            options={{
+              title: 'Đăng nhập',
+              headerBackTitle: 'Quay lại',
+            }}
+            component={LoginScreen}
+          />
+          <Stack.Screen
+            name="Signup"
+            options={{
+              title: 'Đăng ký',
+              headerBackTitle: 'Quay lại',
+            }}
+            component={SignupScreen}
+          />
+
+          {/* Flight booking flow */}
+          <Stack.Screen
+            name="FlightListing"
+            options={{
+              title: 'Chọn chuyến bay',
+              headerBackTitle: 'Quay lại',
+            }}
+            component={FlightListingScreen}
+          />
+          <Stack.Screen
+            name="FlightDetail"
+            options={{
+              title: 'Chi tiết chuyến bay',
+              headerBackTitle: 'Quay lại',
+            }}
+            component={FlightDetailScreen}
+          />
+          <Stack.Screen
+            name="SeatSelection"
+            options={{
+              title: 'Chọn chỗ ngồi',
+              headerBackTitle: 'Quay lại',
+            }}
+            component={SeatSelectionScreen}
+          />
+          <Stack.Screen
+            name="PassengerInfo"
+            options={{
+              title: 'Thông tin hành khách',
+              headerBackTitle: 'Quay lại',
+            }}
+            component={PassengerInfoScreen}
+          />
+          <Stack.Screen
+            name="Payment"
+            options={{
+              title: 'Thanh toán',
+              headerBackTitle: 'Quay lại',
+            }}
+            component={PaymentScreen}
+          />
+          <Stack.Screen
+            name="BookingConfirmation"
+            options={{
+              title: 'Xác nhận đặt chỗ',
+              headerLeft: () => null, // Disable back button
+            }}
+            component={BookingConfirmationScreen}
+          />
+
+          {/* Legacy screens - keeping for compatibility */}
+          <Stack.Screen
+            name="Checkout"
+            options={{ title: 'Thanh toán' }}
+            component={CheckoutScreen}
+          />
+          <Stack.Screen
+            name="PayDone"
+            options={{ title: 'Hoàn tất' }}
+            component={PayDoneScreen}
+          />
+
+          {/* User management screens */}
+          <Stack.Screen
+            name="Profile"
+            options={{
+              title: 'Thông tin cá nhân',
+              headerBackTitle: 'Quay lại',
+            }}
+            component={ProfileScreen}
+          />
+          <Stack.Screen
+            name="Settings"
+            options={{
+              title: 'Cài đặt',
+              headerBackTitle: 'Quay lại',
+            }}
+            component={SettingsScreen}
+          />
+
+          {/* Static screens */}
+          <Stack.Screen
+            name="About"
+            options={{ title: 'Giới thiệu' }}
+            component={AboutScreen}
+          />
+          <Stack.Screen
+            name="Contact"
+            options={{ title: 'Liên hệ' }}
+            component={ContactScreen}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+      <Toast />
+    </>
   );
 }
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <SafeAreaProvider>
-        <AppInner />
-      </SafeAreaProvider>
-    </ThemeProvider>
+    <StoreProvider>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <AppInner />
+        </SafeAreaProvider>
+      </ThemeProvider>
+    </StoreProvider>
   );
 }
 

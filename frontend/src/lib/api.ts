@@ -2,7 +2,7 @@
 import axios, { Method } from "axios";
 
 const api = axios.create({
-    baseURL: "https://flight-backend.congcucuatoi.com",
+    baseURL: "http://localhost:3001",
 });
 
 // Helper function để lấy cookie
