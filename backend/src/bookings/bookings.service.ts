@@ -336,7 +336,7 @@ export class BookingsService {
         return response;
     }
 
-    async delete(id: number, cancellationData?: { reason?: string; cancellationFee?: number; refundAmount?: number }): Promise<any> {
+    async delete(id: number, cancellationData?: { reason?: string; cancellationFee?: number; refundAmount?: number; cancelledBy?: string }): Promise<any> {
         let response = { ...common_response };
 
         try {
@@ -451,6 +451,7 @@ export class BookingsService {
                     refundAmount: cancellationData?.refundAmount || 0,
                     totalAmount: booking.totalAmount,
                     reason: cancellationData?.reason || 'User requested cancellation',
+                    cancelledBy: cancellationData?.cancelledBy || 'Unknown',
                 });
 
                 response.success = true;

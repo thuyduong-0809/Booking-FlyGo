@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { requestApi } from '@/lib/api';
 import { useNotification } from '@/components/Notification';
+import { getCookie } from '@/utils/cookies';
 
 interface BookingInfo {
     bookingId: string;
@@ -69,6 +70,40 @@ const RequestRefundPage = () => {
     const [bookingInfo, setBookingInfo] = useState<BookingInfo | null>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [refundAmount, setRefundAmount] = useState(0);
+    const [userData, setUserData] = useState<any>(null);
+
+    // Tự động điền thông tin user khi đã đăng nhập
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const token = getCookie("access_token");
+                if (!token) return;
+
+                const payload = JSON.parse(atob(token.split(".")[1]));
+                const userId = payload.userId;
+
+                if (!userId) return;
+
+                const response = await requestApi(`users/${userId}`, "GET");
+                if (response.success && response.data) {
+                    setUserData(response.data);
+                    // Tự động điền email
+                    if (response.data.email) {
+                        setEmail(response.data.email);
+                    }
+                    // Tự động điền tên hành khách
+                    const fullName = `${response.data.firstName || ''} ${response.data.lastName || ''}`.trim();
+                    if (fullName) {
+                        setPassengerName(fullName);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     const calculateRefund = (booking: BookingInfo) => {
         const now = new Date();
@@ -216,21 +251,6 @@ const RequestRefundPage = () => {
                 return;
             }
 
-            // Auto-fill passenger name from booking
-            // If user is logged in → auto-fill (but still editable)
-            // If guest booking → leave empty for manual input
-            let passengerFullName = '';
-
-            if (bookingDetail.user?.firstName || bookingDetail.user?.lastName) {
-                // User is logged in - auto-fill their name (editable)
-                const firstName = bookingDetail.user?.firstName || '';
-                const lastName = bookingDetail.user?.lastName || '';
-                passengerFullName = `${firstName} ${lastName}`.trim();
-            }
-            // For guest bookings, leave empty for manual input
-
-            setPassengerName(passengerFullName);
-
             setBookingInfo(bookingDetail);
 
             // Validate if booking is eligible for refund
@@ -322,13 +342,23 @@ const RequestRefundPage = () => {
             // Determine final reason (use custom reason if OTHER is selected)
             const finalReason = refundReason === 'OTHER' ? customReason : refundReason;
 
+            // Determine requestedBy: use logged-in user if available, otherwise use passengerName
+            let requestedByName = passengerName; // Default to passenger name from input
+            if (userData) {
+                // If user is logged in, use their full name
+                const userFullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+                if (userFullName) {
+                    requestedByName = userFullName;
+                }
+            }
+
             // Call the new refund-history API
             const refundRes = await requestApi('refund-history', 'POST', {
                 bookingId: Number(bookingInfo.bookingId),
                 bookingReference: bookingInfo.bookingReference,
                 refundReason: finalReason,
                 refundAmount,
-                passengerName,
+                passengerName: requestedByName,
                 email,
                 documents: documentsJson,
             });

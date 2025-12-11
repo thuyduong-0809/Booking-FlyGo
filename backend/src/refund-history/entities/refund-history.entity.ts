@@ -1,5 +1,4 @@
 import { Booking } from 'src/bookings/entities/bookings.entity';
-import { User } from 'src/users/entities/users.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('RefundHistory')
@@ -57,9 +56,9 @@ export class RefundHistory {
     @UpdateDateColumn({ nullable: true })
     processedAt: Date;
 
-    @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
-    @JoinColumn({ name: 'processedBy' })
-    processedBy?: User;
+    // Tên người duyệt (Admin)
+    @Column({ length: 255, nullable: true })
+    processedBy?: string;
 
     @Column({ type: 'text', nullable: true })
     adminNotes: string; // Notes from admin when processing

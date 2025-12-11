@@ -118,7 +118,7 @@ export class RefundHistoryService {
     async findAll(): Promise<any> {
         try {
             const refunds = await this.refundHistoryRepository.find({
-                relations: ['booking', 'booking.user', 'processedBy'],
+                relations: ['booking', 'booking.user'],
                 order: { requestedAt: 'DESC' }
             });
 
@@ -135,7 +135,7 @@ export class RefundHistoryService {
         try {
             const refunds = await this.refundHistoryRepository.find({
                 where: { booking: { bookingId } },
-                relations: ['booking', 'processedBy'],
+                relations: ['booking'],
                 order: { requestedAt: 'DESC' }
             });
 
@@ -152,7 +152,7 @@ export class RefundHistoryService {
         try {
             const refund = await this.refundHistoryRepository.findOne({
                 where: { refundHistoryId: id },
-                relations: ['booking', 'booking.user', 'processedBy']
+                relations: ['booking', 'booking.user']
             });
 
             if (!refund) {

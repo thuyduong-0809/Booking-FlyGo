@@ -55,6 +55,7 @@ export class BookingsController {
         refundAmount?: number;
         contactInfo?: string;
         passengerName?: string;
+        cancelledBy?: string; // Tên người hủy
         documents?: string;
     }) {
         return this.bookingsService.delete(+id, cancellationData);

@@ -5,5 +5,5 @@ export class CreateCancelHistoryDto {
     refundAmount: number;
     totalAmount: number;
     reason?: string;
-    cancelledBy?: number;
+    cancelledBy?: string; // Tên người hủy
 }

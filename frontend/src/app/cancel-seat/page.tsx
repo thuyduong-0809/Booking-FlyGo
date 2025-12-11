@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { requestApi } from '@/lib/api';
 import { useNotification } from '@/components/Notification';
+import { getCookie } from '@/utils/cookies';
 
 interface BookingInfo {
   bookingId: string;
@@ -87,6 +88,40 @@ const CancelSeatPage = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [cancellationFee, setCancellationFee] = useState(0);
   const [refundAmount, setRefundAmount] = useState(0);
+  const [userData, setUserData] = useState<any>(null);
+
+  // Tự động điền thông tin user khi đã đăng nhập
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = getCookie("access_token");
+        if (!token) return;
+
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userId = payload.userId;
+
+        if (!userId) return;
+
+        const response = await requestApi(`users/${userId}`, "GET");
+        if (response.success && response.data) {
+          setUserData(response.data);
+          // Tự động điền email
+          if (response.data.email) {
+            setEmail(response.data.email);
+          }
+          // Tự động điền tên hành khách
+          const fullName = `${response.data.firstName || ''} ${response.data.lastName || ''}`.trim();
+          if (fullName) {
+            setPassengerName(fullName);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const validateCancellation = (booking: BookingInfo) => {
     const now = new Date();
@@ -303,8 +338,41 @@ const CancelSeatPage = () => {
     try {
       const finalReason = selectedReason === 'other' ? customReason : selectedReason;
 
+      // SCENARIO 1: User đã đăng nhập → dùng userData
+      // SCENARIO 2: User chưa đăng nhập → dùng passengerName từ input
+      let cancelledByName: string;
+
+      if (userData && userData.firstName && userData.lastName) {
+        // User đã đăng nhập (có token) → ưu tiên dùng tên từ userData
+        cancelledByName = `${userData.firstName} ${userData.lastName}`.trim();
+      } else if (passengerName && passengerName.trim()) {
+        // User chưa đăng nhập HOẶC userData chưa có → dùng tên từ input
+        cancelledByName = passengerName.trim();
+      } else {
+        // Fallback: nếu không có gì cả → dùng email hoặc 'Unknown'
+        cancelledByName = email.trim() || 'Unknown User';
+      }
+
+      // Validation: đảm bảo cancelledBy không null/empty
+      if (!cancelledByName || cancelledByName === '') {
+        const errorMsg = 'Không xác định được người hủy vé. Vui lòng nhập tên hành khách.';
+        setError(errorMsg);
+        showNotification('error', errorMsg);
+        return;
+      }
+
+      console.log('🔍 Cancellation Info:', {
+        hasToken: !!getCookie("access_token"),
+        userData: userData ? { firstName: userData.firstName, lastName: userData.lastName } : null,
+        passengerNameInput: passengerName,
+        emailInput: email,
+        finalCancelledBy: cancelledByName,
+        finalReason
+      });
+
       const cancelRes = await requestApi(`bookings/${bookingInfo.bookingId}`, 'DELETE', {
         reason: finalReason,
+        cancelledBy: cancelledByName,
         cancellationFee,
         refundAmount,
       });
@@ -451,7 +519,7 @@ const CancelSeatPage = () => {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
-                    <strong>Lưu ý:</strong> Nhập mã đặt vé + email, hoặc chỉ tên hành khách
+                    <strong>Lưu ý:</strong> Nhập mã đặt vé + email
                   </p>
                 </div>
 

@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { requestApi } from '@/lib/api';
-import { MagnifyingGlassIcon, PlusIcon, XMarkIcon, CheckIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, CheckIcon, XMarkIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '@/components/Notification';
+import { createPortal } from 'react-dom';
+import { getCookie } from '@/utils/cookies';
 
 interface RefundRequest {
     refundHistoryId: number;
@@ -34,7 +35,7 @@ const REFUND_REASON_LABELS: Record<string, string> = {
     'OTHER': 'Lý do khác',
 };
 
-export function RefundManagementTab() {
+export default function RefundRequestsList() {
     const { showNotification, showConfirmModal } = useNotification();
     const [refundRequests, setRefundRequests] = useState<RefundRequest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -50,29 +51,39 @@ export function RefundManagementTab() {
     const [sortField, setSortField] = useState<string>('requestedAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-    // Create modal
-    const [showCreateModal, setShowCreateModal] = useState(false);
+    // Reject modal
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [selectedRefundId, setSelectedRefundId] = useState<number | null>(null);
     const [rejectReason, setRejectReason] = useState('');
     const [processingAction, setProcessingAction] = useState(false);
-
-    // Create form
-    const [createForm, setCreateForm] = useState({
-        bookingReference: '',
-        refundReason: '',
-        refundAmount: '',
-        passengerName: '',
-        email: '',
-        customReason: '', // For OTHER reason
-    });
-    const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
     const [mounted, setMounted] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
     useEffect(() => {
         setMounted(true);
         loadRefundRequests();
+        fetchCurrentUser();
     }, []);
+
+    // Lấy thông tin user đang đăng nhập
+    const fetchCurrentUser = async () => {
+        try {
+            const token = getCookie("access_token");
+            if (!token) return;
+
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            const userId = payload.userId;
+
+            if (!userId) return;
+
+            const response = await requestApi(`users/${userId}`, "GET");
+            if (response.success && response.data) {
+                setCurrentUser(response.data);
+            }
+        } catch (error) {
+            console.error("Error fetching current user:", error);
+        }
+    };
 
     const loadRefundRequests = async () => {
         setLoading(true);
@@ -89,58 +100,6 @@ export function RefundManagementTab() {
         }
     };
 
-    const handleCreateRefund = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setCreateErrors({});
-
-        // Validation
-        const errors: Record<string, string> = {};
-        if (!createForm.bookingReference) errors.bookingReference = 'Vui lòng nhập mã đặt chỗ';
-        if (!createForm.refundReason) errors.refundReason = 'Vui lòng chọn lý do';
-        if (createForm.refundReason === 'OTHER' && !createForm.customReason.trim()) {
-            errors.customReason = 'Vui lòng nhập lý do cụ thể';
-        }
-        if (!createForm.refundAmount) errors.refundAmount = 'Vui lòng nhập số tiền';
-        if (!createForm.passengerName) errors.passengerName = 'Vui lòng nhập tên hành khách';
-        if (!createForm.email) errors.email = 'Vui lòng nhập email';
-
-        if (Object.keys(errors).length > 0) {
-            setCreateErrors(errors);
-            return;
-        }
-
-        setProcessingAction(true);
-        try {
-            const res = await requestApi('refund-history', 'POST', {
-                bookingReference: createForm.bookingReference,
-                refundReason: createForm.refundReason,
-                refundAmount: Number(createForm.refundAmount),
-                passengerName: createForm.passengerName,
-                email: createForm.email,
-            });
-
-            if (res?.success) {
-                showNotification('success', 'Tạo yêu cầu hoàn tiền thành công!');
-                setShowCreateModal(false);
-                setCreateForm({
-                    bookingReference: '',
-                    refundReason: '',
-                    refundAmount: '',
-                    passengerName: '',
-                    email: '',
-                    customReason: '',
-                });
-                loadRefundRequests();
-            } else {
-                showNotification('error', res?.message || 'Có lỗi xảy ra');
-            }
-        } catch (error: any) {
-            showNotification('error', error?.message || 'Có lỗi xảy ra khi tạo yêu cầu');
-        } finally {
-            setProcessingAction(false);
-        }
-    };
-
     const handleApprove = async (refundHistoryId: number) => {
         showConfirmModal({
             title: 'Xác nhận duyệt',
@@ -151,8 +110,15 @@ export function RefundManagementTab() {
             onConfirm: async () => {
                 setProcessingAction(true);
                 try {
+                    // Get current user's full name
+                    const processedByName = currentUser
+                        ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim()
+                        : 'Admin';
+
                     const res = await requestApi(`refund-history/${refundHistoryId}`, 'PATCH', {
                         status: 'Approved',
+                        processedBy: processedByName,
+                        processedAt: new Date().toISOString(),
                     });
                     if (res?.success) {
                         showNotification('success', 'Đã duyệt yêu cầu hoàn tiền');
@@ -183,9 +149,16 @@ export function RefundManagementTab() {
 
         setProcessingAction(true);
         try {
+            // Get current user's full name
+            const processedByName = currentUser
+                ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim()
+                : 'Admin';
+
             const res = await requestApi(`refund-history/${selectedRefundId}`, 'PATCH', {
                 status: 'Rejected',
                 adminNotes: rejectReason,
+                processedBy: processedByName,
+                processedAt: new Date().toISOString(),
             });
             if (res?.success) {
                 showNotification('success', 'Đã từ chối yêu cầu hoàn tiền');
@@ -314,18 +287,6 @@ export function RefundManagementTab() {
 
     return (
         <div className="space-y-6">
-            {/* Header with Create Button */}
-            <div className="flex justify-between items-center">
-
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                    <PlusIcon className="h-5 w-5 mr-2" />
-                    Tạo yêu cầu hoàn tiền
-                </button>
-            </div>
-
             {/* Advanced Filters */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -543,111 +504,6 @@ export function RefundManagementTab() {
                 </div>
             </div>
 
-            {/* Create Refund Modal */}
-            {showCreateModal && mounted && createPortal(
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
-                    <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto relative z-[100000]">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold text-gray-900">Tạo yêu cầu hoàn tiền</h3>
-                            <button onClick={() => setShowCreateModal(false)}>
-                                <XMarkIcon className="h-6 w-6 text-gray-500" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleCreateRefund} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Mã đặt chỗ *</label>
-                                    <input
-                                        type="text"
-                                        value={createForm.bookingReference}
-                                        onChange={(e) => setCreateForm({ ...createForm, bookingReference: e.target.value })}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${createErrors.bookingReference ? 'border-red-500' : 'border-gray-300'}`}
-                                        placeholder="Nhập mã đặt chỗ (VD: BK1A2B3C4D)"
-                                    />
-                                    {createErrors.bookingReference && <p className="text-red-500 text-sm mt-1">{createErrors.bookingReference}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Lý do hoàn tiền *</label>
-                                    <select
-                                        value={createForm.refundReason}
-                                        onChange={(e) => setCreateForm({ ...createForm, refundReason: e.target.value })}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${createErrors.refundReason ? 'border-red-500' : 'border-gray-300'}`}
-                                    >
-                                        <option value="">Chọn lý do</option>
-                                        {Object.entries(REFUND_REASON_LABELS).map(([key, label]) => (
-                                            <option key={key} value={key}>{label}</option>
-                                        ))}
-                                    </select>
-                                    {createErrors.refundReason && <p className="text-red-500 text-sm mt-1">{createErrors.refundReason}</p>}
-                                </div>
-                                {/* Custom Reason Textarea - Only show when OTHER is selected */}
-                                {createForm.refundReason === 'OTHER' && (
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Lý do cụ thể *</label>
-                                        <textarea
-                                            value={createForm.customReason}
-                                            onChange={(e) => setCreateForm({ ...createForm, customReason: e.target.value })}
-                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${createErrors.customReason ? 'border-red-500' : 'border-gray-300'}`}
-                                            rows={3}
-                                            placeholder="Nhập lý do cụ thể cho yêu cầu hoàn tiền..."
-                                        />
-                                        {createErrors.customReason && <p className="text-red-500 text-sm mt-1">{createErrors.customReason}</p>}
-                                    </div>
-                                )}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Số tiền hoàn (₫) *</label>
-                                    <input
-                                        type="number"
-                                        value={createForm.refundAmount}
-                                        onChange={(e) => setCreateForm({ ...createForm, refundAmount: e.target.value })}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${createErrors.refundAmount ? 'border-red-500' : 'border-gray-300'}`}
-                                    />
-                                    {createErrors.refundAmount && <p className="text-red-500 text-sm mt-1">{createErrors.refundAmount}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tên hành khách *</label>
-                                    <input
-                                        type="text"
-                                        value={createForm.passengerName}
-                                        onChange={(e) => setCreateForm({ ...createForm, passengerName: e.target.value })}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${createErrors.passengerName ? 'border-red-500' : 'border-gray-300'}`}
-                                    />
-                                    {createErrors.passengerName && <p className="text-red-500 text-sm mt-1">{createErrors.passengerName}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                                    <input
-                                        type="email"
-                                        value={createForm.email}
-                                        onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-black ${createErrors.email ? 'border-red-500' : 'border-gray-300'}`}
-                                    />
-                                    {createErrors.email && <p className="text-red-500 text-sm mt-1">{createErrors.email}</p>}
-                                </div>
-                            </div>
-                            <div className="flex justify-end space-x-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                                    disabled={processingAction}
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                                    disabled={processingAction}
-                                >
-                                    {processingAction ? 'Đang xử lý...' : 'Tạo yêu cầu'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>,
-                document.body
-            )}
-
             {/* Reject Modal */}
             {showRejectModal && mounted && createPortal(
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
@@ -690,3 +546,4 @@ export function RefundManagementTab() {
         </div>
     );
 }
+

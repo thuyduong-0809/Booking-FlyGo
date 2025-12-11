@@ -35,7 +35,7 @@ import {
 // Import các component dashboard
 import AircraftManagement from '../../components/dashboard/AircraftManagement';
 import FlightManagement from '../../components/dashboard/FlightManagement';
-import BookingManagement from '../../components/dashboard/BookingManagement';
+import BookingManagement from '../../components/dashboard/BookingManagement/BookingManagement';
 import CheckinManagement from '../../components/dashboard/CheckinManagement';
 import CustomerManagement from '../../components/dashboard/CustomerManagement';
 import LoyaltyProgram from '../../components/dashboard/LoyaltyProgram';

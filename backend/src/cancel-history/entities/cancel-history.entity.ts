@@ -1,5 +1,4 @@
 import { Booking } from 'src/bookings/entities/bookings.entity';
-import { User } from 'src/users/entities/users.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 
 @Entity('CancelHistory')
@@ -32,7 +31,7 @@ export class CancelHistory {
     @CreateDateColumn()
     cancelledAt: Date;
 
-    @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
-    @JoinColumn({ name: 'cancelledBy' })
-    cancelledBy?: User;
+    // Tên người hủy (string)
+    @Column({ length: 255, nullable: true })
+    cancelledBy?: string;
 }
