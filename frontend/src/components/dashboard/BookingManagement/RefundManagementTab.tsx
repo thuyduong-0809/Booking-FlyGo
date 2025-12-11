@@ -257,8 +257,7 @@ export function RefundManagementTab() {
             const matchesSearch =
                 req.bookingReference.toLowerCase().includes(search) ||
                 req.passengerName.toLowerCase().includes(search) ||
-                req.email.toLowerCase().includes(search) ||
-                req.phone.includes(search);
+                req.email.toLowerCase().includes(search)
             if (!matchesSearch) return false;
         }
 
