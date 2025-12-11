@@ -363,7 +363,7 @@ export default function DashboardPage() {
       case 'checkin-airport':
       case 'checkin-baggage':
       case 'checkin-boarding':
-        return <CheckinManagement activeSubTab={activeTab} />;
+      // return <CheckinManagement activeSubTab={activeTab} />;
       case 'customers':
         return <CustomerManagement />;
       case 'loyalty':
@@ -525,7 +525,7 @@ export default function DashboardPage() {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                 <RocketLaunchIcon className="h-7 w-7 text-white" />
               </div>
               {sidebarOpen && (
@@ -709,10 +709,10 @@ export default function DashboardPage() {
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                     Tìm kiếm đặt chỗ
                   </button>
-                  <button onClick={() => setActiveTab('bookings-create')} className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'bookings-create' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  {/* <button onClick={() => setActiveTab('bookings-create')} className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'bookings-create' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                     Tạo đặt chỗ
-                  </button>
+                  </button> */}
                   <button onClick={() => setActiveTab('bookings-cancel')} className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'bookings-cancel' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                     Hủy đặt chỗ
@@ -724,7 +724,7 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <button
+              {/* <button
                 onClick={() => handleNavClick('checkin', 'checkin')}
                 className={`w-full flex items-center ${sidebarOpen ? 'px-3 py-2' : 'px-2 py-2'} text-md font-medium rounded-lg transition-colors ${activeTab === 'checkin'
                   ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
@@ -733,10 +733,10 @@ export default function DashboardPage() {
               >
                 <UserGroupIcon className={`${sidebarOpen ? 'h-6 w-6 mr-3' : 'h-7 w-7 mx-auto'}`} />
                 {sidebarOpen && 'Check-in & Boarding'}
-              </button>
+              </button> */}
 
               {/* Check-in Sub-menu */}
-              {checkinOpen && sidebarOpen && (
+              {/* {checkinOpen && sidebarOpen && (
                 <div className="ml-4 space-y-1">
                   <button onClick={() => setActiveTab('checkin-airport')} className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'checkin-airport' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
@@ -755,7 +755,7 @@ export default function DashboardPage() {
                     Lên máy bay
                   </button>
                 </div>
-              )}
+              )} */}
 
               <button
                 onClick={() => handleNavClick('customers')}
@@ -768,7 +768,7 @@ export default function DashboardPage() {
                 {sidebarOpen && 'Quản lý khách hàng'}
               </button>
 
-              <button
+              {/* <button
                 onClick={() => handleNavClick('loyalty', 'loyalty')}
                 className={`w-full flex items-center ${sidebarOpen ? 'px-3 py-2' : 'px-2 py-2'} text-md font-medium rounded-lg transition-colors ${activeTab === 'loyalty'
                   ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
@@ -777,10 +777,10 @@ export default function DashboardPage() {
               >
                 <CurrencyDollarIcon className={`${sidebarOpen ? 'h-6 w-6 mr-3' : 'h-7 w-7 mx-auto'}`} />
                 {sidebarOpen && 'Chương trình khuyến mãi'}
-              </button>
+              </button> */}
 
               {/* Loyalty Sub-menu */}
-              {loyaltyOpen && sidebarOpen && (
+              {/* {loyaltyOpen && sidebarOpen && (
                 <div className="ml-4 space-y-1">
                   <button onClick={() => setActiveTab('loyalty-earn')} className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'loyalty-earn' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
@@ -795,7 +795,7 @@ export default function DashboardPage() {
                     Xem trạng thái
                   </button>
                 </div>
-              )}
+              )} */}
 
               <button
                 onClick={() => handleNavClick('reports', 'reports')}
@@ -811,7 +811,7 @@ export default function DashboardPage() {
               {/* Reports Sub-menu */}
               {reportsOpen && sidebarOpen && (
                 <div className="ml-4 space-y-1">
-                  <button onClick={() => setActiveTab('reports-by-date')} className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'reports-by-date' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  {/* <button onClick={() => setActiveTab('reports-by-date')} className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'reports-by-date' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                     Thống kê theo ngày/tháng/năm
                   </button>
@@ -822,7 +822,7 @@ export default function DashboardPage() {
                   <button onClick={() => setActiveTab('reports-revenue')} className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'reports-revenue' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                     Thống kê doanh thu
-                  </button>
+                  </button> */}
                 </div>
               )}
             </div>
@@ -836,7 +836,7 @@ export default function DashboardPage() {
                 <h3 className="px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">
                   Hệ thống
                 </h3>
-                <button
+                {/* <button
                   onClick={() => setActiveTab('user-management')}
                   className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'user-management'
                     ? 'bg-blue-50 text-blue-700'
@@ -865,8 +865,8 @@ export default function DashboardPage() {
                 >
                   <BellIcon className="h-6 w-6 mr-3" />
                   Thông báo hệ thống
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => setActiveTab('support')}
                   className={`w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors ${activeTab === 'support'
                     ? 'bg-blue-50 text-blue-700'
@@ -875,7 +875,7 @@ export default function DashboardPage() {
                 >
                   <ChatBubbleLeftRightIcon className="h-6 w-6 mr-3" />
                   Hỗ trợ khách hàng
-                </button>
+                </button> */}
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center px-3 py-2 text-md rounded-lg transition-colors text-gray-700 hover:bg-gray-100"
@@ -894,7 +894,7 @@ export default function DashboardPage() {
         <div className="mt-auto p-4 border-t border-gray-200">
           {sidebarOpen ? (
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-400 rounded-full flex items-center justify-center">
                 <span className="text-white font-medium text-md">
                   {getInitials()}
                 </span>
@@ -933,7 +933,7 @@ export default function DashboardPage() {
                 <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
                 <p className="text-md text-gray-600">Chào mừng trở lại, {userData?.lastName || "Admin"}!</p>
               </div>
-              <div className="flex items-center space-x-4">
+              {/* <div className="flex items-center space-x-4">
                 <div className="relative">
                   <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
@@ -945,7 +945,7 @@ export default function DashboardPage() {
                 <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
                   <BellIcon className="h-6 w-6 text-gray-600" />
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

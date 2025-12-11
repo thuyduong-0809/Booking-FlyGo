@@ -109,54 +109,54 @@ const otherServicesMegaMenu: MegamenuItem[] = [
         name: "Liên hệ hỗ trợ",
         description: "Đội ngũ chăm sóc khách hàng 24/7 sẵn sàng hỗ trợ bạn",
       },
-      {
-        id: ncNanoId(),
-        href: "#",
-        name: "Câu hỏi thường gặp",
-        description: "Tìm câu trả lời cho các thắc mắc phổ biến",
-      },
-      {
-        id: ncNanoId(),
-        href: "#",
-        name: "Hướng dẫn đặt vé",
-        description: "Hướng dẫn chi tiết từng bước đặt vé máy bay",
-      },
+      // {
+      //   id: ncNanoId(),
+      //   href: "#",
+      //   name: "Câu hỏi thường gặp",
+      //   description: "Tìm câu trả lời cho các thắc mắc phổ biến",
+      // },
+      // {
+      //   id: ncNanoId(),
+      //   href: "#",
+      //   name: "Hướng dẫn đặt vé",
+      //   description: "Hướng dẫn chi tiết từng bước đặt vé máy bay",
+      // },
     ],
   },
-  {
-    id: ncNanoId(),
-    image:
-      "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
-    title: "Thanh toán & Tài chính",
-    items: [
-      {
-        id: ncNanoId(),
-        href: "#",
-        name: "Bay trước, thanh toán sau",
-        isNew: true,
-        description: "Mua vé máy bay trả góp với thời hạn cho vay đến 6 tháng",
-      },
-      {
-        id: ncNanoId(),
-        href: "#",
-        name: "Mua ngoại tệ",
-        isNew: true,
-        description: "Tỷ giá hấp dẫn, nhận tiền trong ngày!",
-      },
-      {
-        id: ncNanoId(),
-        href: "#",
-        name: "Bảo hiểm du lịch",
-        description: "Bảo vệ chuyến đi của bạn với các gói bảo hiểm linh hoạt",
-      },
-      {
-        id: ncNanoId(),
-        href: "#",
-        name: "Chính sách hoàn vé",
-        description: "Thông tin chi tiết về hoàn hủy và đổi vé",
-      },
-    ],
-  },
+  // {
+  //   id: ncNanoId(),
+  //   image:
+  //     "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+  //   title: "Thanh toán & Tài chính",
+  //   items: [
+  //     {
+  //       id: ncNanoId(),
+  //       href: "#",
+  //       name: "Bay trước, thanh toán sau",
+  //       isNew: true,
+  //       description: "Mua vé máy bay trả góp với thời hạn cho vay đến 6 tháng",
+  //     },
+  //     {
+  //       id: ncNanoId(),
+  //       href: "#",
+  //       name: "Mua ngoại tệ",
+  //       isNew: true,
+  //       description: "Tỷ giá hấp dẫn, nhận tiền trong ngày!",
+  //     },
+  //     {
+  //       id: ncNanoId(),
+  //       href: "#",
+  //       name: "Bảo hiểm du lịch",
+  //       description: "Bảo vệ chuyến đi của bạn với các gói bảo hiểm linh hoạt",
+  //     },
+  //     {
+  //       id: ncNanoId(),
+  //       href: "#",
+  //       name: "Chính sách hoàn vé",
+  //       description: "Thông tin chi tiết về hoàn hủy và đổi vé",
+  //     },
+  //   ],
+  // },
 ];
 
 const flightServicesMegaMenu: MegamenuItem[] = [

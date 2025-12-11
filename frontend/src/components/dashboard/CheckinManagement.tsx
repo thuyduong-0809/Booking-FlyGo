@@ -1311,8 +1311,7 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
 
     return (
       <div className="space-y-6">
-        {/* Header */}
-        {/* <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
               {activeSubTab === 'checkin-airport' ? 'Check-in tại sân bay' :
@@ -1328,8 +1327,8 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
                   activeSubTab === 'checkin-boarding' ? 'Quản lý quá trình lên máy bay' :
                     'Quản lý check-in và lên máy bay của hành khách'}
             </p>
-          </div> */}
-        {/* {activeSubTab === 'checkin' && (
+          </div>
+          {/* {activeSubTab === 'checkin' && (
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -1338,89 +1337,89 @@ export default function CheckinManagement({ activeSubTab = 'checkin' }: CheckinM
             Thêm check-in
           </button>
         )} */}
-      </div>
-
-        {/* Render sub-content */ }
-    { renderSubContent() }
-
-    {/* Add Check-in Modal - only show for main checkin tab */ }
-    {
-      activeSubTab === 'checkin' && showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm check-in mới</h3>
-            <form className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Số đặt chỗ</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="FG240115001"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Chuyến bay</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="">Chọn chuyến bay</option>
-                    <option value="FG001">FG001 - SGN → HAN</option>
-                    <option value="FG002">FG002 - HAN → DAD</option>
-                    <option value="FG003">FG003 - DAD → SGN</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Tên hành khách</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Nguyễn Văn A"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="12A"
-                  />
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Loại check-in</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
-                    <option value="Online">Trực tuyến</option>
-                    <option value="Airport">Tại sân bay</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-md font-medium text-gray-700 mb-1">Trọng lượng hành lý (kg)</label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="20"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Thêm check-in
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
-      )
-    }
+
+        {/* Render sub-content */}
+        {renderSubContent()}
+
+        {/* Add Check-in Modal - only show for main checkin tab */}
+        {
+          activeSubTab === 'checkin' && showAddModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm check-in mới</h3>
+                <form className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Số đặt chỗ</label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        placeholder="FG240115001"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Chuyến bay</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
+                        <option value="">Chọn chuyến bay</option>
+                        <option value="FG001">FG001 - SGN → HAN</option>
+                        <option value="FG002">FG002 - HAN → DAD</option>
+                        <option value="FG003">FG003 - DAD → SGN</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Tên hành khách</label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        placeholder="Nguyễn Văn A"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Số ghế</label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        placeholder="12A"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Loại check-in</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
+                        <option value="Online">Trực tuyến</option>
+                        <option value="Airport">Tại sân bay</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-md font-medium text-gray-700 mb-1">Trọng lượng hành lý (kg)</label>
+                      <input
+                        type="number"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        placeholder="20"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Thêm check-in
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )
+        }
       </div >
     );
-}
+  }
 }
