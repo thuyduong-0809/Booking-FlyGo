@@ -18,7 +18,7 @@ export class CancelHistoryService {
         cancellationFee: number;
         refundAmount: number;
         totalAmount: number;
-        cancelledBy?: any;
+        cancelledBy?: string;
     }): Promise<CancelHistory> {
         const cancelHistory = this.cancelHistoryRepository.create({
             booking: data.booking,
@@ -50,7 +50,7 @@ export class CancelHistoryService {
                 'booking.bookingFlights.flight',
                 'booking.bookingFlights.flight.departureAirport',
                 'booking.bookingFlights.flight.arrivalAirport',
-                'cancelledBy'
+                // 'cancelledBy'
             ],
             order: { cancelledAt: 'DESC' },
         });

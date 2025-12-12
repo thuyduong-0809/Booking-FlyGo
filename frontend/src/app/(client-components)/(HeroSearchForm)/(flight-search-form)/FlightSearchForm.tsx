@@ -552,16 +552,6 @@ const FlightSearchForm: FC<FlightSearchFormProps> = ({ variant = "default" }) =>
               </div>
             </div>
 
-            <label className="flex items-center gap-3 text-sm font-medium text-white/90">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-white/40 bg-transparent text-[#ffbc00] focus:outline-none focus:ring-0 accent-[#ffbc00]"
-                checked={findCheapest}
-                onChange={(event) => setFindCheapest(event.target.checked)}
-              />
-              Tìm vé rẻ nhất
-            </label>
-
             <button
               type="submit"
               disabled={isSearching}
