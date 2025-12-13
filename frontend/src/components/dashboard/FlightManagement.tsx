@@ -1,1594 +1,2300 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useBooking } from '@/app/book-plane/BookingContext';
-import { useSearch } from '@/app/book-plane/SearchContext';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  ClockIcon,
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  EyeIcon,
+  MagnifyingGlassIcon,
+  MapPinIcon,
+  RocketLaunchIcon
+} from '@heroicons/react/24/outline';
+import { Flight, Aircraft, Airline, Airport, Terminal, FlightWithDetails } from '../../types/database';
 import { requestApi } from '@/lib/api';
-import { getCookie } from '@/utils/cookies';
 import { useNotification } from '@/components/Notification';
 
-interface Passenger {
-  id: number;
-  gender: 'male' | 'female' | 'other';
-  lastName: string;
-  firstName: string;
-  dateOfBirth: string;
-  phoneNumber: string;
-  email: string;
-  country: string;
-  idNumber: string;
-  currentResidence: string;
-  skyjoyMemberCode: string;
-  buyForMe: boolean;
-  ottPreference: 'none' | 'zalo' | 'whatsapp';
-  rememberDetails: boolean;
+// Extended interfaces for local state management
+interface ExtendedFlight extends Flight {
+  route: string;
+  departureTime: string;
+  arrivalTime: string;
+  durationText: string;
 }
 
-interface ChildPassenger {
-  id: number;
-  gender: 'male' | 'female' | 'other';
-  lastName: string;
-  firstName: string;
-  dateOfBirth: string;
-  accompaniedBy: string;
+interface ExtendedAircraft extends Aircraft {
+  name: string;
+  type: string;
+  registrationNumber: string;
+  manufacturer: string;
+  yearOfManufacture: number;
 }
 
-interface InfantPassenger {
-  id: number;
-  gender: 'male' | 'female' | 'other';
-  lastName: string;
-  firstName: string;
-  dateOfBirth: string;
-  accompaniedBy: string;
-}
+interface FlightManagementProps { activeSubTab?: string }
 
-interface ValidationErrors {
-  [passengerId: string]: {
-    lastName?: string;
-    firstName?: string;
-    dateOfBirth?: string;
-    phoneNumber?: string;
-    email?: string;
-    idNumber?: string;
-    skyjoyMemberCode?: string;
-  };
-}
+export default function FlightManagement({ activeSubTab = 'flights' }: FlightManagementProps) {
 
-export default function PassengersPage() {
-  const router = useRouter();
-  const { state, grandTotal } = useBooking();
-  const { searchData } = useSearch();
   const { showNotification } = useNotification();
+  const [mounted, setMounted] = useState(false);
 
-  // State để tránh hydration error
-  const [isClient, setIsClient] = useState(false);
-
-  // State cho số lượng hành khách
-  const [totalAdults, setTotalAdults] = useState(1);
-  const [totalChildren, setTotalChildren] = useState(0);
-  const [totalInfants, setTotalInfants] = useState(0);
-
-  // Kiểm tra loại chuyến bay - Ưu tiên lấy từ BookingContext
-  const isOneWay = state.tripType === 'oneway';
-
-  // Đánh dấu đã render ở client
   useEffect(() => {
-    setIsClient(true);
+    setMounted(true);
   }, []);
+  const [flightData, setFlightData] = useState<any>({
+    flightNumber: "",
+    airlineId: "",
+    departureAirportId: "",
+    arrivalAirportId: "",
+    departureTerminalId: "",
+    arrivalTerminalId: "",
+    aircraftId: "",
+    departureTime: "",
+    arrivalTime: "",
+    duration: "",
+    status: "Scheduled",
+    economyPrice: 0.0 || null,
+    businessPrice: 0.0 || null,
+    firstClassPrice: 0.0 || null,
+    availableEconomySeats: 0 || null,
+    availableBusinessSeats: 0 || null,
+    availableFirstClassSeats: 0 || null,
+  });
 
-  // Load số lượng hành khách từ searchData hoặc localStorage
-  useEffect(() => {
-    if (!isClient) return;
 
-    // Lấy số lượng người từ localStorage trước (vì nó được lưu từ select-flight)
-    let counts = { adults: 1, children: 0, infants: 0 };
+  const [flightUpdateData, setFlightUpdateData] = useState<any>({
+    flightNumber: "",
+    departureTime: "",
+    arrivalTime: "",
+    duration: "",
+    status: "Scheduled",
+    economyPrice: "",
+    businessPrice: "",
+    firstClassPrice: "",
+    availableEconomySeats: "",
+    availableBusinessSeats: "",
+    availableFirstClassSeats: "",
+  });
 
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('passengerCounts');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          counts = {
-            adults: Math.max(1, parsed.adults || 1),
-            children: Math.max(0, parsed.children || 0),
-            infants: Math.max(0, parsed.infants || 0)
-          };
-          console.log('Loaded passenger counts from localStorage:', counts);
-        } catch (e) {
-          console.error('Error parsing passenger counts:', e);
-        }
-      }
-    }
 
-    // Nếu searchData.passengers có và khác với localStorage, ưu tiên searchData
-    if (searchData.passengers && typeof searchData.passengers.adults === 'number' && searchData.passengers.adults > 0) {
-      const searchCounts = {
-        adults: Math.max(1, searchData.passengers.adults || 1),
-        children: Math.max(0, searchData.passengers.children || 0),
-        infants: Math.max(0, searchData.passengers.infants || 0)
-      };
 
-      // Chỉ cập nhật nếu searchData khác với localStorage
-      if (searchCounts.adults !== counts.adults ||
-        searchCounts.children !== counts.children ||
-        searchCounts.infants !== counts.infants) {
-        counts = searchCounts;
-        console.log('Loaded passenger counts from searchData (overriding localStorage):', counts);
 
-        // Lưu lại vào localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('passengerCounts', JSON.stringify(counts));
-        }
-      }
-    }
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('Scheduled');
+  const [isCreatingFlight, setIsCreatingFlight] = useState(false);
 
-    // Đảm bảo ít nhất có 1 người lớn
-    if (counts.adults < 1) {
-      counts.adults = 1;
-    }
+  const currencyFormatter = new Intl.NumberFormat('en-US');
 
-    console.log('Final passenger counts:', counts);
-    setTotalAdults(counts.adults);
-    setTotalChildren(counts.children);
-    setTotalInfants(counts.infants);
-  }, [isClient, searchData.passengers]);
-
-  const [surveyChecked, setSurveyChecked] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const { setBookingId } = useBooking();
-
-  // State cho passengers - sẽ được cập nhật khi totalAdults thay đổi
-  const [passengers, setPassengers] = useState<Passenger[]>([]);
-  const [childPassengers, setChildPassengers] = useState<ChildPassenger[]>([]);
-  const [infantPassengers, setInfantPassengers] = useState<InfantPassenger[]>([]);
-
-  // Cập nhật passenger arrays khi số lượng thay đổi
-  useEffect(() => {
-    if (!isClient) return;
-
-    // Đảm bảo có ít nhất 1 người lớn
-    const safeAdults = Math.max(1, totalAdults);
-    const safeChildren = Math.max(0, totalChildren);
-    const safeInfants = Math.max(0, totalInfants);
-
-    console.log('Updating passenger arrays:', { totalAdults: safeAdults, totalChildren: safeChildren, totalInfants: safeInfants });
-
-    // Cập nhật passengers người lớn - giữ lại dữ liệu đã nhập nếu có
-    setPassengers(prev => {
-      const newPassengers = Array.from({ length: safeAdults }, (_, index) => {
-        // Nếu đã có dữ liệu cho index này, giữ lại
-        const existing = prev.find(p => p.id === index + 1);
-        if (existing) {
-          return existing;
-        }
-        // Nếu không, tạo mới
-        return {
-          id: index + 1,
-          gender: 'male' as const,
-          lastName: ``,
-          firstName: ``,
-          dateOfBirth: '',
-          phoneNumber: ``,
-          email: ``,
-          country: 'Việt Nam',
-          idNumber: '',
-          currentResidence: '',
-          skyjoyMemberCode: '',
-          buyForMe: false,
-          ottPreference: 'none' as const,
-          rememberDetails: false,
-        };
-      });
-      return newPassengers;
-    });
-
-    // Cập nhật child passengers - giữ lại dữ liệu đã nhập nếu có
-    setChildPassengers(prev => {
-      const newChildren = Array.from({ length: safeChildren }, (_, index) => {
-        const existing = prev.find(p => p.id === index + 1);
-        if (existing) {
-          return existing;
-        }
-        return {
-          id: index + 1,
-          gender: 'male' as const,
-          lastName: ``,
-          firstName: ``,
-          dateOfBirth: '',
-          accompaniedBy: '',
-        };
-      });
-      return newChildren;
-    });
-
-    // Cập nhật infant passengers - giữ lại dữ liệu đã nhập nếu có
-    setInfantPassengers(prev => {
-      const newInfants = Array.from({ length: safeInfants }, (_, index) => {
-        const existing = prev.find(p => p.id === index + 1);
-        if (existing) {
-          return existing;
-        }
-        return {
-          id: index + 1,
-          gender: 'female' as const,
-          lastName: ``,
-          firstName: ``,
-          dateOfBirth: '',
-          accompaniedBy: '',
-        };
-      });
-      return newInfants;
-    });
-  }, [totalAdults, totalChildren, totalInfants, isClient]);
-
-  // Hàm validate email
-  const validateEmail = (email: string): string | null => {
-    if (!email.trim()) {
-      return 'Email là bắt buộc';
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return 'Email không hợp lệ';
-    }
-    return null;
+  const formatCurrencyDisplay = (value: number | string | null) => {
+    if (value === null || value === '' || value === undefined) return '';
+    const numericValue = typeof value === 'number' ? value : Number(value);
+    if (Number.isNaN(numericValue)) return '';
+    return currencyFormatter.format(numericValue);
   };
 
-  // Hàm validate số điện thoại VN
-  const validatePhoneNumber = (phone: string): string | null => {
-    if (!phone.trim()) {
-      return 'Số điện thoại là bắt buộc';
-    }
-    // Số điện thoại VN: 10 số, bắt đầu bằng 0
-    const phoneRegex = /^0[0-9]{9}$/;
-    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
-      return 'Số điện thoại phải có 10 số và bắt đầu bằng 0';
-    }
-    return null;
+  const parseCurrencyInput = (input: string): number | '' => {
+    const sanitized = input.replace(/[^\d]/g, '');
+    if (!sanitized) return '';
+    return Number(sanitized);
   };
 
-  // Hàm validate tên (chỉ chữ cái và khoảng trắng)
-  const validateName = (name: string, fieldName: string): string | null => {
-    if (!name.trim()) {
-      return `${fieldName} là bắt buộc`;
-    }
-    const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/;
-    if (!nameRegex.test(name)) {
-      return `${fieldName} chỉ được chứa chữ cái và khoảng trắng`;
-    }
-    if (name.trim().length < 2) {
-      return `${fieldName} phải có ít nhất 2 ký tự`;
-    }
-    return null;
-  };
-
-  // Hàm validate ngày sinh (phải >= 18 tuổi, <= 100 tuổi)
-  const validateDateOfBirth = (dateStr: string): string | null => {
-    if (!dateStr) {
-      return 'Ngày sinh là bắt buộc';
-    }
-
-    try {
-      const dob = new Date(dateStr);
-      const today = new Date();
-
-      // Kiểm tra ngày hợp lệ
-      if (isNaN(dob.getTime())) {
-        return 'Ngày sinh không hợp lệ';
-      }
-
-      // Kiểm tra không được trong tương lai
-      if (dob > today) {
-        return 'Ngày sinh không được trong tương lai';
-      }
-
-      // Tính tuổi
-      let age = today.getFullYear() - dob.getFullYear();
-      const monthDiff = today.getMonth() - dob.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--;
-      }
-
-      // Kiểm tra tuổi
-      if (age < 12) {
-        return 'Người lớn phải từ 12 tuổi trở lên';
-      }
-      if (age > 100) {
-        return 'Ngày sinh không hợp lệ (quá 100 tuổi)';
-      }
-
-      return null;
-    } catch (error) {
-      return 'Ngày sinh không hợp lệ';
-    }
-  };
-
-  // Hàm validate ngày sinh cho trẻ em (2-12 tuổi)
-  const validateChildDateOfBirth = (dateStr: string): string | null => {
-    if (!dateStr) {
-      return 'Ngày sinh là bắt buộc';
-    }
-
-    try {
-      const dob = new Date(dateStr);
-      const today = new Date();
-
-      // Kiểm tra ngày hợp lệ
-      if (isNaN(dob.getTime())) {
-        return 'Ngày sinh không hợp lệ';
-      }
-
-      // Kiểm tra không được trong tương lai
-      if (dob > today) {
-        return 'Ngày sinh không được trong tương lai';
-      }
-
-      // Tính tuổi
-      let age = today.getFullYear() - dob.getFullYear();
-      const monthDiff = today.getMonth() - dob.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--;
-      }
-
-      // Kiểm tra tuổi trẻ em (2-11 tuổi)
-      if (age < 2) {
-        return 'Trẻ em phải từ 2 tuổi trở lên';
-      }
-      if (age >= 12) {
-        return 'Trẻ em phải dưới 12 tuổi';
-      }
-
-      return null;
-    } catch (error) {
-      return 'Ngày sinh không hợp lệ';
-    }
-  };
-
-  // Hàm validate ngày sinh cho em bé (dưới 2 tuổi)
-  const validateInfantDateOfBirth = (dateStr: string): string | null => {
-    if (!dateStr) {
-      return 'Ngày sinh là bắt buộc';
-    }
-
-    try {
-      const dob = new Date(dateStr);
-      const today = new Date();
-
-      // Kiểm tra ngày hợp lệ
-      if (isNaN(dob.getTime())) {
-        return 'Ngày sinh không hợp lệ';
-      }
-
-      // Kiểm tra không được trong tương lai
-      if (dob > today) {
-        return 'Ngày sinh không được trong tương lai';
-      }
-
-      // Tính tuổi
-      let age = today.getFullYear() - dob.getFullYear();
-      const monthDiff = today.getMonth() - dob.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--;
-      }
-
-      // Kiểm tra tuổi em bé (dưới 2 tuổi)
-      if (age >= 2) {
-        return 'Em bé phải dưới 2 tuổi';
-      }
-
-      return null;
-    } catch (error) {
-      return 'Ngày sinh không hợp lệ';
-    }
-  };
-
-  // Hàm validate CCCD/Passport (BẮT BUỘC)
-  const validateIdNumber = (idNumber: string): string | null => {
-    if (!idNumber.trim()) {
-      return 'CCCD/Hộ chiếu là bắt buộc'; // BẮT BUỘC NHẬP
-    }
-
-    // CCCD: 12 số
-    const cccdRegex = /^[0-9]{12}$/;
-    // Passport: 8-9 ký tự chữ và số
-    const passportRegex = /^[A-Z0-9]{8,9}$/i;
-
-    if (!cccdRegex.test(idNumber) && !passportRegex.test(idNumber)) {
-      return 'CCCD phải có 12 số hoặc Passport phải có 8-9 ký tự';
-    }
-    return null;
-  };
-
-  // Hàm validate mã SkyJoy (nếu có nhập)
-  const validateSkyjoyCode = (code: string): string | null => {
-    if (!code.trim()) {
-      return null; // Không bắt buộc
-    }
-
-    const skyjoyRegex = /^SJ[0-9]{10}$/;
-    if (!skyjoyRegex.test(code)) {
-      return 'Mã SkyJoy phải có định dạng SJxxxxxxxxxx (10 số)';
-    }
-    return null;
-  };
-
-  // Hàm validate tất cả thông tin của một hành khách
-  const validatePassenger = (passenger: Passenger): { [key: string]: string } => {
-    const errors: { [key: string]: string } = {};
-
-    const lastNameError = validateName(passenger.lastName, 'Họ');
-    if (lastNameError) errors.lastName = lastNameError;
-
-    const firstNameError = validateName(passenger.firstName, 'Tên đệm & tên');
-    if (firstNameError) errors.firstName = firstNameError;
-
-    const dobError = validateDateOfBirth(passenger.dateOfBirth);
-    if (dobError) errors.dateOfBirth = dobError;
-
-    const phoneError = validatePhoneNumber(passenger.phoneNumber);
-    if (phoneError) errors.phoneNumber = phoneError;
-
-    const emailError = validateEmail(passenger.email);
-    if (emailError) errors.email = emailError;
-
-    const idError = validateIdNumber(passenger.idNumber);
-    if (idError) errors.idNumber = idError;
-
-    const skyjoyError = validateSkyjoyCode(passenger.skyjoyMemberCode);
-    if (skyjoyError) errors.skyjoyMemberCode = skyjoyError;
-
-    return errors;
-  };
-
-  const updatePassenger = (passengerId: number, field: keyof Passenger, value: any) => {
-    setPassengers(prev =>
-      prev.map(passenger =>
-        passenger.id === passengerId
-          ? { ...passenger, [field]: value }
-          : passenger
-      )
-    );
-  };
-
-  const updateChildPassenger = (passengerId: number, field: keyof ChildPassenger, value: any) => {
-    setChildPassengers(prev =>
-      prev.map(passenger =>
-        passenger.id === passengerId
-          ? { ...passenger, [field]: value }
-          : passenger
-      )
-    );
-  };
-
-  const updateInfantPassenger = (passengerId: number, field: keyof InfantPassenger, value: any) => {
-    setInfantPassengers(prev =>
-      prev.map(passenger =>
-        passenger.id === passengerId
-          ? { ...passenger, [field]: value }
-          : passenger
-      )
-    );
-  };
-
-  // Validate trẻ em
-  const validateChild = (child: ChildPassenger): { [key: string]: string } => {
-    const errors: { [key: string]: string } = {};
-
-    const lastNameError = validateName(child.lastName, 'Họ');
-    if (lastNameError) errors.lastName = lastNameError;
-
-    const firstNameError = validateName(child.firstName, 'Tên đệm & tên');
-    if (firstNameError) errors.firstName = firstNameError;
-
-    const dobError = validateChildDateOfBirth(child.dateOfBirth);
-    if (dobError) errors.dateOfBirth = dobError;
-
-    return errors;
-  };
-
-  // Validate em bé
-  const validateInfant = (infant: InfantPassenger): { [key: string]: string } => {
-    const errors: { [key: string]: string } = {};
-
-    const lastNameError = validateName(infant.lastName, 'Họ');
-    if (lastNameError) errors.lastName = lastNameError;
-
-    const firstNameError = validateName(infant.firstName, 'Tên đệm & tên');
-    if (firstNameError) errors.firstName = firstNameError;
-
-    const dobError = validateInfantDateOfBirth(infant.dateOfBirth);
-    if (dobError) errors.dateOfBirth = dobError;
-
-    return errors;
-  };
-
-  // Hàm tạo booking và passenger khi submit
-  const handleSubmit = async () => {
-    try {
-      // Validate tất cả hành khách
-      const newErrors: ValidationErrors = {};
-      let hasErrors = false;
-      const errorDetails: string[] = [];
-
-      // Validate người lớn
-      passengers.forEach((passenger, index) => {
-        const errors = validatePassenger(passenger);
-        if (Object.keys(errors).length > 0) {
-          newErrors[`adult-${passenger.id}`] = errors;
-          hasErrors = true;
-
-          Object.entries(errors).forEach(([field, errorMsg]) => {
-            if (errorMsg) {
-              errorDetails.push(`Người lớn ${index + 1}: ${errorMsg}`);
-            }
-          });
-        }
-      });
-
-      // Validate trẻ em
-      childPassengers.forEach((child, index) => {
-        const errors = validateChild(child);
-        if (Object.keys(errors).length > 0) {
-          newErrors[`child-${child.id}`] = errors;
-          hasErrors = true;
-
-          Object.entries(errors).forEach(([field, errorMsg]) => {
-            if (errorMsg) {
-              errorDetails.push(`Trẻ em ${index + 1}: ${errorMsg}`);
-            }
-          });
-        }
-      });
-
-      // Validate em bé
-      infantPassengers.forEach((infant, index) => {
-        const errors = validateInfant(infant);
-        if (Object.keys(errors).length > 0) {
-          newErrors[`infant-${infant.id}`] = errors;
-          hasErrors = true;
-
-          Object.entries(errors).forEach(([field, errorMsg]) => {
-            if (errorMsg) {
-              errorDetails.push(`Em bé ${index + 1}: ${errorMsg}`);
-            }
-          });
-        }
-      });
-
-      // Nếu có lỗi, hiển thị và không submit
-      if (hasErrors) {
-        setValidationErrors(newErrors);
-
-        // Scroll đến hành khách đầu tiên có lỗi
-        const firstErrorKey = Object.keys(newErrors)[0];
-        const element = document.getElementById(`passenger-${firstErrorKey}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        showNotification('error', 'Vui lòng sửa các lỗi sau:', errorDetails, 3000);
-        return;
-      }
-
-      // Clear errors nếu không có lỗi
-      setValidationErrors({});
-
-      // Nếu booking đã tồn tại (quay lại chỉnh sửa), bỏ qua bước tạo mới nhưng vẫn đảm bảo dữ liệu hợp lệ
-      if (state.bookingId) {
-        router.push('/book-plane/choose-seat');
-        return;
-      }
-
-      setIsSubmitting(true);
-
-      // Lấy userId từ token (nếu có) - Backend sẽ tự động tạo user guest nếu không có userId
-      let userId = null;
-      const token = getCookie("access_token");
-
-      if (token) {
-        try {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          userId = payload.userId || null;
-        } catch (error) {
-          console.warn('Token không hợp lệ, backend sẽ tự động tạo user guest');
-        }
-      }
-
-      // Tạo booking - userId có thể là null cho khách vãng lai
-      const bookingData = {
-        contactEmail: passengers[0].email,
-        contactPhone: passengers[0].phoneNumber,
-        userId: userId,
-        totalAmount: calculatedTotal,
-        paymentStatus: 'Pending',
-        bookingStatus: 'Reserved'
-      };
-
-      const bookingResponse = await requestApi('bookings', 'POST', bookingData);
-
-      if (!bookingResponse.success) {
-        showNotification('error', `Tạo đặt chỗ thất bại: ${bookingResponse.message}`);
-        return;
-      }
-
-      const bookingId = bookingResponse.data.bookingId;
-
-      // Lưu bookingId vào context
-      setBookingId(bookingId);
-
-      // Tạo passengers người lớn
-      for (const passenger of passengers) {
-        const passengerData = {
-          firstName: passenger.firstName,
-          lastName: passenger.lastName,
-          dateOfBirth: passenger.dateOfBirth || new Date(),
-          passportNumber: passenger.idNumber || '',
-          passengerType: 'Adult',
-          bookingId: bookingId
-        };
-
-        await requestApi('passengers', 'POST', passengerData);
-      }
-
-      // Tạo passengers Trẻ em (Child) - sử dụng dữ liệu thực từ form
-      for (const child of childPassengers) {
-        const childData = {
-          firstName: child.firstName,
-          lastName: child.lastName,
-          dateOfBirth: child.dateOfBirth || new Date(),
-          passportNumber: '',
-          passengerType: 'Child',
-          bookingId: bookingId
-        };
-        await requestApi('passengers', 'POST', childData);
-      }
-
-      // Tạo passengers Em bé (Infant) - sử dụng dữ liệu thực từ form
-      for (const infant of infantPassengers) {
-        const infantData = {
-          firstName: infant.firstName,
-          lastName: infant.lastName,
-          dateOfBirth: infant.dateOfBirth || new Date(),
-          passportNumber: '',
-          passengerType: 'Infant',
-          bookingId: bookingId
-        };
-        await requestApi('passengers', 'POST', infantData);
-      }
-
-
-      router.push('/book-plane/choose-seat');
-
-    } catch (error: any) {
-      console.error('Error creating booking:', error);
-
-      // Xử lý các loại lỗi khác nhau
-      let errorMessage = 'Đã xảy ra lỗi không xác định';
-
-      if (error.response) {
-        // Lỗi từ API response
-        errorMessage = error.response.data?.message || 'Lỗi từ máy chủ';
-      } else if (error.request) {
-        // Request được gửi nhưng không nhận được response
-        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet';
-      } else if (error.message) {
-        // Lỗi khác
-        errorMessage = error.message;
-      }
-
-      showNotification('error', `Đã xảy ra lỗi: ${errorMessage}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const formatVnd = (amount: number) => {
-    // Làm tròn số về số nguyên để tránh hiển thị phần thập phân
-    const roundedNumber = Math.round(amount);
-    return new Intl.NumberFormat('vi-VN').format(roundedNumber);
-  };
-
-  const [departureFlight, setDepartureFlight] = useState<any>(null);
-  const [returnFlight, setReturnFlight] = useState<any>(null);
-
-  // Load dữ liệu từ context hoặc localStorage
-  useEffect(() => {
-    if (!isClient) return;
-
-    console.log('BookingContext state:', state);
-    console.log('selectedDeparture:', state.selectedDeparture);
-    console.log('selectedReturn:', state.selectedReturn);
-
-    // Ưu tiên lấy từ context
-    if (state.selectedDeparture) {
-      setDepartureFlight(state.selectedDeparture);
+  const handlePriceInput = (field: string, rawValue: string, isUpdate = false) => {
+    const parsedValue = parseCurrencyInput(rawValue);
+    if (isUpdate) {
+      handleUpdateChange(field, parsedValue);
     } else {
-      // Fallback từ localStorage nếu context bị mất
-      const savedFlight = localStorage.getItem('selectedFlight');
-      if (savedFlight) {
-        try {
-          const flightData = JSON.parse(savedFlight);
-          console.log('Restored from localStorage:', flightData);
-          // Tạo lại object departureFlight từ localStorage
-          const restoredFlight = {
-            flightId: flightData.flightNumber,
-            fareIndex: 0,
-            fareName: flightData.travelClass,
-            price: flightData.price,
-            tax: flightData.tax,
-            service: 0,
-            code: flightData.flightNumber,
-            departTime: '',
-            arriveTime: '',
-          };
-          setDepartureFlight(restoredFlight);
-        } catch (error) {
-          console.error('Error parsing localStorage:', error);
-        }
+      handleChange(field, parsedValue);
+    }
+  };
+
+  const getFlightStatusColor = (status: string) => {
+    switch (status) {
+      case 'Scheduled': return 'text-green-600 bg-green-100';
+      case 'Boarding': return 'text-blue-600 bg-blue-100';
+      case 'Departed': return 'text-purple-600 bg-purple-100';
+      case 'Arrived': return 'text-green-600 bg-green-100';
+      case 'Delayed': return 'text-yellow-600 bg-yellow-100';
+      case 'Canceled': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false, // 24h format
+    });
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins.toString().padStart(2, "0")}m`;
+  };
+
+  const [flights, setFlights] = useState([]);
+
+  const filteredFlights = flights.filter((flight: any) => {
+    const matchesSearch = flight.flightNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    // ||flight.route.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !statusFilter || flight.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+
+  const [airlines, setAirlines] = useState([])
+  const [airports, setAirports] = useState([])
+  const [aircrafts, setAircrafts] = useState([])
+  const [errors, setErrors] = useState<any>({});
+  const [updateErrors, setUpdateErrors] = useState<any>({});
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const canEditEconomyPrice = Number(flightData.availableEconomySeats) > 0;
+  const canEditBusinessPrice = Number(flightData.availableBusinessSeats) > 0;
+  const canEditFirstClassPrice = Number(flightData.availableFirstClassSeats) > 0;
+
+  const canEditEconomyPriceUpdate = Number(flightUpdateData.availableEconomySeats) > 0;
+  const canEditBusinessPriceUpdate = Number(flightUpdateData.availableBusinessSeats) > 0;
+  const canEditFirstClassPriceUpdate = Number(flightUpdateData.availableFirstClassSeats) > 0;
+  // const [loading,setLoading] = useState(true) 
+
+  useEffect(() => {
+    loadFlights()
+    loadAirlines()
+    loadAirports()
+    loadAircraftsByAirlineId(Number(flightData.airlineId))
+    if (flightData.departureAirportId) {
+      loadTerminalByAirportId(Number(flightData.departureAirportId), "departure");
+    }
+    if (flightData.arrivalAirportId) {
+      loadTerminalByAirportId(Number(flightData.arrivalAirportId), "arrival");
+    }
+    const duration = calculateDuration(flightData.departureTime, flightData.arrivalTime);
+    const durationUpdate = calculateDuration(flightUpdateData.departureTime, flightUpdateData.arrivalTime);
+
+    if (duration !== flightData.duration) {
+      setFlightData((prev: any) => ({ ...prev, duration }));
+    }
+
+    if (durationUpdate !== flightUpdateData.duration) {
+      setFlightUpdateData((prev: any) => ({ ...prev, duration: durationUpdate }));
+    }
+
+
+  }, [flightData.departureTime, flightData.arrivalTime, flightData.airlineId, flightData.departureAirportId, flightData.arrivalAirportId,
+  flightUpdateData.departureTime, flightUpdateData.arrivalTime
+  ])
+
+
+
+  //  Hàm tính duration giữa departureTime và arrivalTime
+  const calculateDuration = (departureTime: string, arrivalTime: string): number | "" => {
+    if (!departureTime || !arrivalTime) return "";
+
+    const departure = new Date(departureTime);
+    const arrival = new Date(arrivalTime);
+
+    // Nếu thời gian đến sớm hơn hoặc bằng thời gian đi → reset
+    if (arrival.getTime() <= departure.getTime()) {
+      return "";
+    }
+
+    const diffMs = arrival.getTime() - departure.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000); // ms → phút
+
+    return diffMinutes;
+  };
+
+  const loadFlights = async () => {
+    await requestApi("flights", "GET").then((res: any) => {
+      if (res.success) {
+        setFlights(res.data)
       }
-    }
-
-    // Chỉ set returnFlight nếu là chuyến khứ hồi
-    if (!isOneWay && state.selectedReturn) {
-      setReturnFlight(state.selectedReturn);
-    }
-  }, [state, isClient, isOneWay]);
-
-  // Tính tổng tiền: Người lớn và trẻ em tính giá như nhau, em bé 100k
-  const calculatedTotal = useMemo(() => {
-    const depPricePerPerson = (Number(departureFlight?.price) || 0);
-    const depTaxPerPerson = (Number(departureFlight?.tax) || 0);
-
-    // Người lớn + trẻ em tính giá như nhau
-    const adultAndChildrenCount = totalAdults + totalChildren;
-
-    // Tổng cho chuyến đi
-    const depAdultPrice = depPricePerPerson * adultAndChildrenCount;
-    const depInfantPrice = 100000 * totalInfants;
-    const depTaxAmount = depTaxPerPerson * adultAndChildrenCount;
-    const totalDeparture = depAdultPrice + depInfantPrice + depTaxAmount;
-
-    // Nếu là chuyến bay khứ hồi, tính thêm chuyến về
-    if (!isOneWay && returnFlight) {
-      const retPricePerPerson = (Number(returnFlight?.price) || 0);
-      const retTaxPerPerson = (Number(returnFlight?.tax) || 0);
-
-      const retAdultPrice = retPricePerPerson * adultAndChildrenCount;
-      const retInfantPrice = 100000 * totalInfants;
-      const retTaxAmount = retTaxPerPerson * adultAndChildrenCount;
-      const totalReturn = retAdultPrice + retInfantPrice + retTaxAmount;
-
-      return totalDeparture + totalReturn;
-    }
-    return totalDeparture;
-  }, [departureFlight, returnFlight, totalAdults, totalChildren, totalInfants, isOneWay]);
-
-  // Nếu chưa mount ở client, hiển thị loading
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải...</p>
-        </div>
-      </div>
-    );
+    }).catch((error: any) => {
+      console.error(error)
+    });
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
-      {/* Top banner */}
-      <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 py-6 shadow-lg">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {/* Back button */}
-              <Link
-                href={isOneWay ? "/book-plane/select-flight" : "/book-plane/select-flight-recovery"}
-                className="flex items-center justify-center w-12 h-12 bg-black/20 hover:bg-black/30 rounded-full transition-all duration-200 hover:scale-110"
-              >
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
+  const loadAirlines = async () => {
+    await requestApi("airlines", "GET").then((res: any) => {
+      if (res.success) {
+        setAirlines(res.data)
+      }
+    }).catch((error: any) => {
+      console.error(error)
+    });
+  }
 
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-black">
-                  {isOneWay ? 'CHUYẾN BAY MỘT CHIỀU' : 'CHUYẾN BAY KHỨ HỒI'} | {totalAdults} {totalAdults === 1 ? 'Người lớn' : 'Người lớn'}{totalChildren > 0 && `, ${totalChildren} ${totalChildren === 1 ? 'Trẻ em' : 'Trẻ em'}`}{totalInfants > 0 && `, ${totalInfants} ${totalInfants === 1 ? 'Em bé' : 'Em bé'}`}
-                </h1>
-                <div className="text-black mt-2 font-medium">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span>Điểm khởi hành: {isClient && (departureFlight?.departureAirport?.city || searchData.departureAirport?.city || 'Chưa chọn')}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                    <span>Điểm đến: {isClient && (departureFlight?.arrivalAirport?.city || searchData.arrivalAirport?.city || 'Chưa chọn')}</span>
-                  </div>
+  const loadAirports = async () => {
+    await requestApi("airports", "GET").then((res: any) => {
+      if (res.success) {
+        setAirports(res.data)
+      }
+    }).catch((error: any) => {
+      console.error(error)
+    });
+  }
+
+  const loadAircraftsByAirlineId = async (airlineId: number) => {
+    await requestApi(`aircrafts/airline/${String(airlineId)}`, "GET").then((res: any) => {
+      if (res.success) {
+        setAircrafts(res.data)
+      } else {
+        setAircrafts([])
+      }
+    }).catch((error: any) => {
+      console.error(error)
+    });
+  }
+  const [departureTerminals, setDepartureTerminals] = useState<any[]>([]);
+  const [arrivalTerminals, setArrivalTerminals] = useState<any[]>([]);
+
+  const loadTerminalByAirportId = async (airportId: number, type: "departure" | "arrival") => {
+    if (!airportId) return;
+
+    try {
+      const res: any = await requestApi(`terminals/airport/${String(airportId)}`, "GET");
+      if (res.success) {
+        if (type === "departure") {
+          setDepartureTerminals(res.data);
+        } else {
+          setArrivalTerminals(res.data);
+        }
+      } else {
+        if (type === "departure") setDepartureTerminals([]);
+        else setArrivalTerminals([]);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const loadAvailableSeatsByAircraft = async (aircraftId: number) => {
+    if (!aircraftId) {
+      // Reset số ghế khi không có máy bay được chọn
+      setFlightData((prev: any) => ({
+        ...prev,
+        availableEconomySeats: null,
+        availableBusinessSeats: null,
+        availableFirstClassSeats: null,
+      }));
+      return;
+    }
+
+    try {
+      const res: any = await requestApi(`seats/aircraft/${String(aircraftId)}`, "GET");
+      if (res.success && res.data) {
+        // Đếm số ghế available theo từng travelClass
+        const economySeats = res.data.filter(
+          (seat: any) => seat.travelClass === "Economy" && seat.isAvailable === true
+        ).length;
+        const businessSeats = res.data.filter(
+          (seat: any) => seat.travelClass === "Business" && seat.isAvailable === true
+        ).length;
+        const firstClassSeats = res.data.filter(
+          (seat: any) => seat.travelClass === "First" && seat.isAvailable === true
+        ).length;
+
+        // Tự động cập nhật số ghế trống
+        setFlightData((prev: any) => ({
+          ...prev,
+          availableEconomySeats: economySeats,
+          availableBusinessSeats: businessSeats,
+          availableFirstClassSeats: firstClassSeats,
+        }));
+
+        // Xóa lỗi validation nếu có
+        setErrors((prev: any) => {
+          const newErrors = { ...prev };
+          delete newErrors.availableEconomySeats;
+          delete newErrors.availableBusinessSeats;
+          delete newErrors.availableFirstClassSeats;
+          return newErrors;
+        });
+      } else {
+        // Nếu không tìm thấy ghế, reset về null
+        setFlightData((prev: any) => ({
+          ...prev,
+          availableEconomySeats: null,
+          availableBusinessSeats: null,
+          availableFirstClassSeats: null,
+        }));
+      }
+    } catch (error) {
+      console.error("Error loading available seats:", error);
+      // Reset số ghế khi có lỗi
+      setFlightData((prev: any) => ({
+        ...prev,
+        availableEconomySeats: null,
+        availableBusinessSeats: null,
+        availableFirstClassSeats: null,
+      }));
+    }
+  };
+
+  const validateInputs = () => {
+    const newErrors: any = {};
+
+    // --- Mã chuyến bay ---
+    // if (!flightData.flightNumber || flightData.flightNumber.trim() === "") {
+    //   newErrors.flightNumber = "Vui lòng nhập mã chuyến bay.";
+    // } else if (flightData.flightNumber.length > 10) {
+    //   newErrors.flightNumber = "Mã chuyến bay không được dài quá 10 ký tự.";
+    // }
+
+    // --- Hãng hàng không ---
+    if (!flightData.airlineId) {
+      newErrors.airlineId = "Vui lòng chọn hãng hàng không.";
+    }
+
+    // --- Máy bay ---
+    if (!flightData.aircraftId) {
+      newErrors.aircraftId = "Vui lòng chọn máy bay.";
+    }
+
+    // --- Sân bay khởi hành / đến ---
+    if (!flightData.departureAirportId) {
+      newErrors.departureAirportId = "Vui lòng chọn sân bay khởi hành.";
+    }
+
+    if (!flightData.arrivalAirportId) {
+      newErrors.arrivalAirportId = "Vui lòng chọn sân bay đến.";
+    }
+
+    if (
+      flightData.departureAirportId &&
+      flightData.arrivalAirportId &&
+      flightData.departureAirportId === flightData.arrivalAirportId
+    ) {
+      newErrors.arrivalAirportId = "Sân bay đi và đến không được trùng nhau.";
+    }
+
+    // --- Terminal (tùy bạn muốn bắt buộc hay không) ---
+    if (!flightData.departureTerminalId) {
+      newErrors.departureTerminalId = "Vui lòng chọn terminal khởi hành.";
+    }
+
+    if (!flightData.arrivalTerminalId) {
+      newErrors.arrivalTerminalId = "Vui lòng chọn terminal đến.";
+    }
+
+    if (!flightData.departureTime) {
+      newErrors.departureTime = "Vui lòng chọn thời gian khởi hành.";
+    }
+    if (!flightData.arrivalTime) {
+      newErrors.arrivalTime = "Vui lòng chọn thời gian đến.";
+    } else if (new Date(flightData.arrivalTime) <= new Date(flightData.departureTime)) {
+      newErrors.arrivalTime = "Thời gian đến phải sau thời gian khởi hành.";
+    }
+
+
+
+    // --- Trạng thái chuyến bay ---
+    if (!flightData.status) {
+      newErrors.status = "Vui lòng chọn trạng thái chuyến bay.";
+    }
+
+    // --- Giá vé ---
+    if (Number(flightData.availableEconomySeats) > 0) {
+      if (!flightData.economyPrice || Number(flightData.economyPrice) <= 0) {
+        newErrors.economyPrice = "Vui lòng nhập giá Economy hợp lệ (> 0).";
+      }
+    }
+    if (Number(flightData.availableBusinessSeats) > 0) {
+      if (!flightData.businessPrice || Number(flightData.businessPrice) <= 0) {
+        newErrors.businessPrice = "Vui lòng nhập giá Business hợp lệ (> 0).";
+      }
+    }
+    if (Number(flightData.availableFirstClassSeats) > 0) {
+      if (!flightData.firstClassPrice || Number(flightData.firstClassPrice) <= 0) {
+        newErrors.firstClassPrice = "Vui lòng nhập giá First Class hợp lệ (> 0).";
+      }
+    }
+    if (
+      flightData.availableEconomySeats === "" ||
+      flightData.availableEconomySeats === null ||
+      Number(flightData.availableEconomySeats) < 0
+    ) {
+      newErrors.availableEconomySeats = "Vui lòng nhập số ghế Economy hợp lệ (≥ 0).";
+    }
+
+    if (
+      flightData.availableBusinessSeats === "" ||
+      flightData.availableBusinessSeats === null ||
+      Number(flightData.availableBusinessSeats) < 0
+    ) {
+      newErrors.availableBusinessSeats = "Vui lòng nhập số ghế Business hợp lệ (≥ 0).";
+    }
+
+    if (
+      flightData.availableFirstClassSeats === "" ||
+      flightData.availableFirstClassSeats === null ||
+      Number(flightData.availableFirstClassSeats) < 0
+    ) {
+      newErrors.availableFirstClassSeats = "Vui lòng nhập số ghế First Class hợp lệ (≥ 0).";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // true nếu không có lỗi
+  };
+
+  const validateUpdateInputs = () => {
+    const newErrors: any = {};
+
+    if (!flightUpdateData.departureTime) {
+      newErrors.departureTime = "Vui lòng chọn thời gian khởi hành.";
+    }
+    if (!flightUpdateData.arrivalTime) {
+      newErrors.arrivalTime = "Vui lòng chọn thời gian đến.";
+    } else if (new Date(flightUpdateData.arrivalTime) <= new Date(flightUpdateData.departureTime)) {
+      newErrors.arrivalTime = "Thời gian đến phải sau thời gian khởi hành.";
+    }
+
+    if (Number(flightUpdateData.availableEconomySeats) > 0) {
+      if (!flightUpdateData.economyPrice || Number(flightUpdateData.economyPrice) <= 0) {
+        newErrors.economyPrice = "Giá Economy phải > 0.";
+      }
+    }
+
+    if (Number(flightUpdateData.availableBusinessSeats) > 0) {
+      if (!flightUpdateData.businessPrice || Number(flightUpdateData.businessPrice) <= 0) {
+        newErrors.businessPrice = "Giá Business phải > 0.";
+      }
+    }
+
+    if (Number(flightUpdateData.availableFirstClassSeats) > 0) {
+      if (!flightUpdateData.firstClassPrice || Number(flightUpdateData.firstClassPrice) <= 0) {
+        newErrors.firstClassPrice = "Giá First Class phải > 0.";
+      }
+    }
+
+    if (
+      flightUpdateData.availableEconomySeats === "" ||
+      flightUpdateData.availableEconomySeats === null ||
+      Number(flightUpdateData.availableEconomySeats) < 0
+    ) {
+      newErrors.availableEconomySeats = "Vui lòng nhập số ghế Economy hợp lệ (≥ 0).";
+    }
+
+    if (
+      flightUpdateData.availableBusinessSeats === "" ||
+      flightUpdateData.availableBusinessSeats === null ||
+      Number(flightUpdateData.availableBusinessSeats) < 0
+    ) {
+      newErrors.availableBusinessSeats = "Vui lòng nhập số ghế Business hợp lệ (≥ 0).";
+    }
+
+    if (
+      flightUpdateData.availableFirstClassSeats === "" ||
+      flightUpdateData.availableFirstClassSeats === null ||
+      Number(flightUpdateData.availableFirstClassSeats) < 0
+    ) {
+      newErrors.availableFirstClassSeats = "Vui lòng nhập số ghế First Class hợp lệ (≥ 0).";
+    }
+    setUpdateErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // true nếu không có lỗi
+  };
+
+  const clearFlightData = () => {
+    setFlightData({
+      flightNumber: "",
+      airlineId: "",
+      departureAirportId: "",
+      arrivalAirportId: "",
+      departureTerminalId: "",
+      arrivalTerminalId: "",
+      aircraftId: "",
+      departureTime: "",
+      arrivalTime: "",
+      duration: "",
+      status: "Scheduled",
+      economyPrice: null,
+      businessPrice: null,
+      firstClassPrice: null,
+      availableEconomySeats: null,
+      availableBusinessSeats: null,
+      availableFirstClassSeats: null,
+    });
+
+    setErrors({}); // đồng thời xóa lỗi (nếu có)
+
+  };
+  const clearFlightUpdateData = () => {
+    setSelectedId(null)
+    setFlightUpdateData({
+      flightNumber: "",
+      departureTime: "",
+      arrivalTime: "",
+      duration: "",
+      status: "Scheduled",
+      economyPrice: "",
+      businessPrice: "",
+      firstClassPrice: "",
+      availableEconomySeats: "",
+      availableBusinessSeats: "",
+      availableFirstClassSeats: "",
+    })
+    setUpdateErrors({})
+
+  }
+
+
+
+
+
+
+
+  const handleChange = (field: string, value: any) => {
+    setFlightData((prev: any) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      };
+
+      if (field === 'availableEconomySeats' && Number(value) <= 0) {
+        updated.economyPrice = '';
+      }
+      if (field === 'availableBusinessSeats' && Number(value) <= 0) {
+        updated.businessPrice = '';
+      }
+      if (field === 'availableFirstClassSeats' && Number(value) <= 0) {
+        updated.firstClassPrice = '';
+      }
+
+      return updated;
+    });
+
+    // Xóa lỗi của field đó khi người dùng nhập lại
+    setErrors((prev: any) => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  };
+
+
+  const handleUpdateChange = (field: string, value: any) => {
+    setFlightUpdateData((prev: any) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      };
+
+      if (field === 'availableEconomySeats' && Number(value) <= 0) {
+        updated.economyPrice = '';
+      }
+      if (field === 'availableBusinessSeats' && Number(value) <= 0) {
+        updated.businessPrice = '';
+      }
+      if (field === 'availableFirstClassSeats' && Number(value) <= 0) {
+        updated.firstClassPrice = '';
+      }
+
+      return updated;
+    });
+
+    // Xóa lỗi của field đó khi người dùng nhập lại
+    setUpdateErrors((prev: any) => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  };
+
+  const generateFlightNumberByAirline = async (airlineId: string) => {
+    if (!airlineId) return;
+
+    try {
+      const res = await requestApi(`flights/generate-flight-number/${airlineId}`, 'GET');
+      if (res.success && res.data?.flightNumber) {
+        handleChange('flightNumber', res.data.flightNumber);
+      }
+    } catch (error) {
+      console.error('Error generating flight number:', error);
+    }
+  };
+
+  const handleAddFlight = async (): Promise<void> => {
+    const isValid = validateInputs();
+    if (!isValid) return; // Dừng nếu có lỗi
+    if (isCreatingFlight) return;
+    setIsCreatingFlight(true);
+
+    const formattedData = {
+      ...flightData,
+      airlineId: Number(flightData.airlineId),
+      departureAirportId: Number(flightData.departureAirportId),
+      arrivalAirportId: Number(flightData.arrivalAirportId),
+      departureTerminalId: flightData.departureTerminalId
+        ? Number(flightData.departureTerminalId)
+        : null,
+      arrivalTerminalId: flightData.arrivalTerminalId
+        ? Number(flightData.arrivalTerminalId)
+        : null,
+      aircraftId: Number(flightData.aircraftId),
+      duration: Number(flightData.duration),
+      economyPrice: Number(flightData.economyPrice),
+      businessPrice: Number(flightData.businessPrice),
+      firstClassPrice: Number(flightData.firstClassPrice),
+      availableEconomySeats: Number(flightData.availableEconomySeats),
+      availableBusinessSeats: Number(flightData.availableBusinessSeats),
+      availableFirstClassSeats: Number(flightData.availableFirstClassSeats),
+    };
+
+    try {
+      const res: any = await requestApi("flights", "POST", formattedData);
+
+      if (res.success) {
+        const flightId = res.data?.flightId;
+        const flightSeatResult = await syncFlightSeats(flightId);
+        if (flightSeatResult.success) {
+          showNotification(
+            'success',
+            'Thêm chuyến bay mới thành công',
+            `Đã tạo ${flightSeatResult.data?.count ?? 0} FlightSeat dựa trên cấu hình ghế máy bay.`
+          );
+        } else {
+          showNotification(
+            'warning',
+            'Thêm chuyến bay thành công nhưng chưa tạo được FlightSeat',
+            flightSeatResult.message || 'Vui lòng kiểm tra lại cấu hình ghế.'
+          );
+        }
+        clearFlightData();
+        setShowAddModal(false);
+        loadFlights();
+      } else if (res.errorCode === 'FLIGHT_EXISTS') {
+        setErrors((prev: any) => ({
+          ...prev,
+          flightNumber: "Mã chuyến bay đã tồn tại. Vui lòng nhập mã khác.",
+        }));
+        showNotification('warning', 'Mã chuyến bay đã tồn tại', 'Vui lòng nhập mã khác.');
+      } else {
+        showNotification('error', 'Thêm chuyến bay thất bại', res.message || 'Lỗi không xác định');
+      }
+    } catch (error: any) {
+      console.error("Error creating flight:", error);
+      showNotification('error', 'Lỗi khi tạo chuyến bay', error.message || 'Lỗi không xác định');
+    } finally {
+      setIsCreatingFlight(false);
+    }
+  };
+
+  const handleSelectFlightId = (id: string) => {
+    requestApi(`flights/${id}`, "GET").then((res: any) => {
+      if (res.success)
+        setFlightUpdateData(res.data)
+      setSelectedId(Number(id))
+    }).catch((err: any) => {
+      console.error(err)
+    })
+  }
+  const [selectError, setSelectError] = useState("");
+  const handleUpdateFlight = () => {
+    if (!selectedId) {
+      setSelectError("Vui lòng chọn chuyến bay trước khi cập nhật!");
+      return;
+    }
+    setSelectError(""); // xóa lỗi khi hợp lệ
+    const isValid = validateUpdateInputs()
+    if (!isValid) return; // Dừng nếu có lỗi
+    const formattedUpdateData = {
+      ...flightUpdateData,
+      duration: Number(flightUpdateData.duration),
+      economyPrice: Number(flightUpdateData.economyPrice),
+      businessPrice: Number(flightUpdateData.businessPrice),
+      firstClassPrice: Number(flightUpdateData.firstClassPrice),
+      availableEconomySeats: Number(flightUpdateData.availableEconomySeats),
+      availableBusinessSeats: Number(flightUpdateData.availableBusinessSeats),
+      availableFirstClassSeats: Number(flightUpdateData.availableFirstClassSeats),
+    };
+    requestApi(`flights/${String(selectedId)}`, "PUT", formattedUpdateData).then((res: any) => {
+      if (res.success) {
+        alert('Cập nhật chuyến bay thành công')
+        clearFlightUpdateData()
+        setShowUpdateModal(false)
+        loadFlights()
+      } else {
+        alert('Cập nhật chuyến bay thất bại')
+      }
+    })
+  }
+
+  const deleteFlight = (id: string): void => {
+    requestApi(`flights/${id}`, "DELETE").then((res: any) => {
+      if (res.success) {
+        alert("Xóa máy bay thành công!");
+        loadFlights();
+      } else {
+        alert("Xóa thất bại");
+      }
+    }).catch((error: any) => console.log(error))
+  }
+
+  const syncFlightSeats = async (flightId?: number) => {
+    if (!flightId) {
+      return { success: false, message: "FlightId không hợp lệ." };
+    }
+    try {
+      return await requestApi(`flight-seats/flight/${flightId}/generate`, "POST");
+    } catch (error: any) {
+      console.error("Error generating flight seats:", error);
+      return { success: false, message: error?.message || "Không thể tạo FlightSeat tự động." };
+    }
+  };
+
+
+
+
+
+
+  // Render content based on active sub-tab
+  const renderSubContent = () => {
+    switch (activeSubTab) {
+      case 'flights-create':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Tạo chuyến bay mới</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                await handleAddFlight();
+              }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {/* Airline */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Hãng hàng không
+                  </label>
+                  <select
+                    value={flightData.airlineId}
+                    onChange={(e: any) => {
+                      handleChange('airlineId', e.target.value);
+                      loadAircraftsByAirlineId(e.target.value);
+                      generateFlightNumberByAirline(e.target.value);
+
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${errors.airlineId ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="">Chọn hãng hàng không</option>
+                    {airlines.map((a: any) => (
+                      <option key={a.airlineId} value={a.airlineId}>
+                        {a.airlineName}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.airlineId && (
+                    <p className="text-red-500 text-sm">{errors.airlineId}</p>
+                  )}
                 </div>
+
+                {/* Aircraft */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Máy bay
+                  </label>
+                  <select
+                    value={flightData.aircraftId}
+                    onChange={(e) => {
+                      handleChange('aircraftId', e.target.value);
+                      loadAvailableSeatsByAircraft(Number(e.target.value));
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${errors.aircraftId ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="">Chọn máy bay</option>
+                    {aircrafts.map((a: any) => (
+                      <option key={a.aircraftId} value={a.aircraftId}>
+                        {a.model}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.aircraftId && (
+                    <p className="text-red-500 text-sm">{errors.aircraftId}</p>
+                  )}
+                </div>
+
+                {/* Departure Airport */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Sân bay đi
+                  </label>
+                  <select
+                    value={flightData.departureAirportId}
+                    onChange={(e: any) => {
+                      handleChange('departureAirportId', e.target.value);
+                      loadTerminalByAirportId(e.target.value, 'departure');
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${errors.departureAirportId ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="">Chọn sân bay</option>
+                    {airports.map((a: any) => (
+                      <option key={a.airportId} value={a.airportId}>
+                        {a.airportName}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.departureAirportId && (
+                    <p className="text-red-500 text-sm">{errors.departureAirportId}</p>
+                  )}
+                </div>
+
+                {/* Arrival Airport */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Sân bay đến
+                  </label>
+                  <select
+                    value={flightData.arrivalAirportId}
+                    onChange={(e: any) => {
+                      handleChange('arrivalAirportId', e.target.value);
+                      loadTerminalByAirportId(e.target.value, 'arrival');
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${errors.arrivalAirportId ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="">Chọn sân bay</option>
+                    {airports.map((a: any) => (
+                      <option key={a.airportId} value={a.airportId}>
+                        {a.airportName}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.arrivalAirportId && (
+                    <p className="text-red-500 text-sm">{errors.arrivalAirportId}</p>
+                  )}
+                </div>
+
+                {/* Departure Terminal */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Nhà ga đi
+                  </label>
+                  <select
+                    value={flightData.departureTerminalId}
+                    onChange={(e) => handleChange('departureTerminalId', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${errors.departureTerminalId ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="">Chọn nhà ga</option>
+                    {departureTerminals.map((t) => (
+                      <option key={t.terminalId} value={t.terminalId}>
+                        {t.terminalName}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.departureTerminalId && (
+                    <p className="text-red-500 text-sm">{errors.departureTerminalId}</p>
+                  )}
+                </div>
+
+                {/* Arrival Terminal */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Nhà ga đến
+                  </label>
+                  <select
+                    value={flightData.arrivalTerminalId}
+                    onChange={(e) => handleChange('arrivalTerminalId', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${errors.arrivalTerminalId ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="">Chọn nhà ga</option>
+                    {arrivalTerminals.map((t) => (
+                      <option key={t.terminalId} value={t.terminalId}>
+                        {t.terminalName}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.arrivalTerminalId && (
+                    <p className="text-red-500 text-sm">{errors.arrivalTerminalId}</p>
+                  )}
+                </div>
+
+
+
+                {/* Departure Time */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Thời gian khởi hành
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={flightData.departureTime}
+                    onChange={(e) => handleChange('departureTime', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${errors.departureTime ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  />
+                  {errors.departureTime && (
+                    <p className="text-red-500 text-sm">{errors.departureTime}</p>
+                  )}
+                </div>
+
+                {/* Arrival Time */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Thời gian đến
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={flightData.arrivalTime}
+                    onChange={(e) => handleChange('arrivalTime', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${errors.arrivalTime ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  />
+                  {errors.arrivalTime && (
+                    <p className="text-red-500 text-sm">{errors.arrivalTime}</p>
+                  )}
+                </div>
+
+                {/* Duration */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Thời lượng (phút)
+                  </label>
+                  <input
+                    type="number"
+                    value={flightData.duration}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-600 bg-gray-100"
+                    placeholder="Tự động tính"
+                  />
+                </div>
+                {/* Status */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Trạng thái
+                  </label>
+                  <select
+                    value={flightData.status}
+                    onChange={(e) => handleChange('status', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${errors.status ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="Boarding">Boarding</option>
+                    <option value="Departed">Departed</option>
+                    <option value="Arrived">Arrived</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                  {errors.status && (
+                    <p className="text-red-500 text-sm">{errors.status}</p>
+                  )}
+                </div>
+                {/* Giá Economy */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Giá Economy (₫)</label>
+                  <input
+                    value={formatCurrencyDisplay(flightData.economyPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditEconomyPrice}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.economyPrice ? 'border-red-500' : 'border-gray-300'
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditEconomyPrice ? "Nhập giá vé hạng Economy" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('economyPrice', e.target.value)}
+                  />
+                  {errors.economyPrice && (
+                    <p className="text-red-500 text-sm mt-1">{errors.economyPrice}</p>
+                  )}
+                </div>
+
+                {/* Giá Business */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Giá Business (₫)</label>
+                  <input
+                    value={formatCurrencyDisplay(flightData.businessPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditBusinessPrice}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.businessPrice ? 'border-red-500' : 'border-gray-300'
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditBusinessPrice ? "Nhập giá vé hạng Business" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('businessPrice', e.target.value)}
+                  />
+                  {errors.businessPrice && (
+                    <p className="text-red-500 text-sm mt-1">{errors.businessPrice}</p>
+                  )}
+                </div>
+
+                {/* Giá First Class */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Giá First Class (₫)</label>
+                  <input
+                    value={formatCurrencyDisplay(flightData.firstClassPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditFirstClassPrice}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.firstClassPrice ? 'border-red-500' : 'border-gray-300'
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditFirstClassPrice ? "Nhập giá vé hạng First Class" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('firstClassPrice', e.target.value)}
+                  />
+                  {errors.firstClassPrice && (
+                    <p className="text-red-500 text-sm mt-1">{errors.firstClassPrice}</p>
+                  )}
+                </div>
+
+                {/* Ghế Economy */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Economy</label>
+                  <input
+                    value={flightData.availableEconomySeats ?? ""}
+                    type="number"
+                    min="0"
+                    readOnly
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    placeholder="Tự động tính"
+                  />
+                  {errors.availableEconomySeats && (
+                    <p className="text-red-500 text-sm mt-1">{errors.availableEconomySeats}</p>
+                  )}
+                </div>
+
+                {/* Ghế Business */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Business</label>
+                  <input
+                    value={flightData.availableBusinessSeats ?? ""}
+                    type="number"
+                    min="0"
+                    readOnly
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    placeholder="Tự động tính"
+                  />
+                  {errors.availableBusinessSeats && (
+                    <p className="text-red-500 text-sm mt-1">{errors.availableBusinessSeats}</p>
+                  )}
+                </div>
+
+                {/* Ghế First Class */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống First Class</label>
+                  <input
+                    value={flightData.availableFirstClassSeats ?? ""}
+                    type="number"
+                    min="0"
+                    readOnly
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    placeholder="Tự động tính"
+                  />
+                  {errors.availableFirstClassSeats && (
+                    <p className="text-red-500 text-sm mt-1">{errors.availableFirstClassSeats}</p>
+                  )}
+                </div>
+                {/* Submit */}
+                <div className="md:col-span-2 mt-6 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    onClick={() => clearFlightData()}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isCreatingFlight}
+                    className={`px-4 py-2 rounded-lg text-white transition-colors ${isCreatingFlight ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  >
+                    {isCreatingFlight ? 'Đang tạo...' : 'Tạo chuyến bay'}
+                  </button>
+                </div>
+
+              </form>
+              {/* Buttons */}
+
+            </div>
+          </div>
+
+        );
+
+      case 'flights-edit':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Sửa chuyến bay</h3>
+              <div className="mb-4">
+                <label className="block text-md font-medium text-gray-700 mb-1">Chọn chuyến bay để chỉnh sửa</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  onChange={(e) => {
+                    handleSelectFlightId(e.target.value)
+                    // setSelectedId(Number(e.target.value))
+                    setSelectError(""); // clear lỗi khi user chọn
+                  }}
+                  value={selectedId || ""}
+
+                >
+                  <option value="">Chọn chuyến bay</option>
+                  {flights.map((flight: any) => (
+                    <option key={flight.flightId} value={flight.flightId}>
+                      {flight.flightNumber} - {flight.departureAirport.airportCode} → {flight.arrivalAirport.airportCode}
+                    </option>
+                  ))}
+                </select>
+                {selectError && <p className="text-red-500 text-sm mt-1">{selectError}</p>}
+              </div>
+              <form className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleUpdateFlight();
+                }}
+              >
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số chuyến bay</label>
+                  <input
+                    readOnly
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    placeholder="VN001"
+                    value={flightUpdateData.flightNumber}
+                  />
+                </div>
+                {/* Departure Time */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Thời gian khởi hành
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={flightUpdateData.departureTime
+                      ? new Date(flightUpdateData.departureTime).toLocaleString('sv-SE', {
+                        timeZone: 'Asia/Ho_Chi_Minh',
+                        hour12: false,
+                      }).replace(' ', 'T')
+                      : ''}
+                    onChange={(e) => handleUpdateChange('departureTime', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${updateErrors.departureTime ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  />
+                  {updateErrors.departureTime && (
+                    <p className="text-red-500 text-sm">{updateErrors.departureTime}</p>
+                  )}
+                </div>
+
+                {/* Arrival Time */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Thời gian đến
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={flightUpdateData.arrivalTime
+                      ? new Date(flightUpdateData.arrivalTime).toLocaleString('sv-SE', {
+                        timeZone: 'Asia/Ho_Chi_Minh',
+                        hour12: false,
+                      }).replace(' ', 'T')
+                      : ''}
+                    onChange={(e) => handleUpdateChange('arrivalTime', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${updateErrors.arrivalTime ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  />
+                  {updateErrors.arrivalTime && (
+                    <p className="text-red-500 text-sm">{updateErrors.arrivalTime}</p>
+                  )}
+                </div>
+
+                {/* Duration */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Thời lượng (phút)
+                  </label>
+                  <input
+                    type="number"
+                    value={flightUpdateData.duration}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-600 bg-gray-100"
+                    placeholder="Tự động tính"
+                  />
+                </div>
+                {/* Status */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    Trạng thái
+                  </label>
+                  <select
+                    value={flightUpdateData.status}
+                    onChange={(e) => handleUpdateChange('status', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg text-black ${updateErrors.status ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="Boarding">Boarding</option>
+                    <option value="Departed">Departed</option>
+                    <option value="Arrived">Arrived</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                  {updateErrors.status && (
+                    <p className="text-red-500 text-sm">{updateErrors.status}</p>
+                  )}
+                </div>
+                {/* Giá Economy */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Giá Economy (₫)</label>
+                  <input
+                    value={formatCurrencyDisplay(flightUpdateData.economyPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditEconomyPriceUpdate}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.economyPrice ? 'border-red-500' : 'border-gray-300'
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditEconomyPriceUpdate ? "Nhập giá vé hạng Economy" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('economyPrice', e.target.value, true)}
+                  />
+                  {updateErrors.economyPrice && (
+                    <p className="text-red-500 text-sm mt-1">{updateErrors.economyPrice}</p>
+                  )}
+                </div>
+
+                {/* Giá Business */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Giá Business (₫)</label>
+                  <input
+                    value={formatCurrencyDisplay(flightUpdateData.businessPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditBusinessPriceUpdate}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.businessPrice ? 'border-red-500' : 'border-gray-300'
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditBusinessPriceUpdate ? "Nhập giá vé hạng Business" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('businessPrice', e.target.value, true)}
+                  />
+                  {updateErrors.businessPrice && (
+                    <p className="text-red-500 text-sm mt-1">{updateErrors.businessPrice}</p>
+                  )}
+                </div>
+
+                {/* Giá First Class */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Giá First Class (₫)</label>
+                  <input
+                    value={formatCurrencyDisplay(flightUpdateData.firstClassPrice)}
+                    type="text"
+                    inputMode="numeric"
+                    disabled={!canEditFirstClassPriceUpdate}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.firstClassPrice ? 'border-red-500' : 'border-gray-300'
+                      } disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    placeholder={canEditFirstClassPriceUpdate ? "Nhập giá vé hạng First Class" : "Không có ghế"}
+                    onChange={(e) => handlePriceInput('firstClassPrice', e.target.value, true)}
+                  />
+                  {updateErrors.firstClassPrice && (
+                    <p className="text-red-500 text-sm mt-1">{updateErrors.firstClassPrice}</p>
+                  )}
+                </div>
+
+                {/* Ghế Economy */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Economy</label>
+                  <input
+                    value={flightUpdateData.availableEconomySeats ?? ""}
+                    type="number"
+                    min="0"
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    placeholder="Nhập số ghế trống Economy"
+                    onChange={(e) => handleUpdateChange('availableEconomySeats', e.target.value)}
+                  />
+                  {updateErrors.availableEconomySeats && (
+                    <p className="text-red-500 text-sm mt-1">{updateErrors.availableEconomySeats}</p>
+                  )}
+                </div>
+
+                {/* Ghế Business */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Business</label>
+                  <input
+                    value={flightUpdateData.availableBusinessSeats ?? ""}
+                    type="number"
+                    min="0"
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    placeholder="Nhập số ghế trống Business"
+                    onChange={(e) => handleUpdateChange('availableBusinessSeats', e.target.value)}
+                  />
+                  {updateErrors.availableBusinessSeats && (
+                    <p className="text-red-500 text-sm mt-1">{updateErrors.availableBusinessSeats}</p>
+                  )}
+                </div>
+
+                {/* Ghế First Class */}
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống First Class</label>
+                  <input
+                    value={flightUpdateData.availableFirstClassSeats ?? ""}
+                    type="number"
+                    min="0"
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    placeholder="Nhập số ghế trống First Class"
+                    onChange={(e) => handleUpdateChange('availableFirstClassSeats', e.target.value)}
+                  />
+                  {updateErrors.availableFirstClassSeats && (
+                    <p className="text-red-500 text-sm mt-1">{updateErrors.availableFirstClassSeats}</p>
+                  )}
+                </div>
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button onClick={() => clearFlightUpdateData()} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                    Hủy
+                  </button>
+                  <button type='submit' className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Cập nhật chuyến bay
+                  </button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        );
+
+      case 'flights-schedule':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Xem lịch bay</h3>
+              <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Từ ngày</label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  />
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Đến ngày</label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  />
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="Boarding">Boarding</option>
+                    <option value="Departed">Departed</option>
+                    <option value="Arrived">Arrived</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Canceled">Canceled</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Chuyến bay</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Tuyến</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Thời gian khởi hành</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Thời gian đến</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Máy bay</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {flights.map((flight: any) => (
+                      <tr key={flight.flightId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {flight.flightNumber}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {flight.departureAirport.airportCode} → {flight.arrivalAirport.airportCode}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(flight.departureTime).toLocaleString('vi-VN')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(flight.arrivalTime).toLocaleString('vi-VN')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {flight.aircraft.aircraftCode}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getFlightStatusColor(flight.status)}`}>
+                            {flight.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
+        );
+
+      case 'flights-status':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Cập nhật trạng thái chuyến bay</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Chọn chuyến bay</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
+                    <option value="">Chọn chuyến bay</option>
+                    {flights.map((flight: any) => (
+                      <option key={flight.flightId} value={flight.flightId}>
+                        {flight.departureAirport.airportCode} → {flight.arrivalAirport.airportCode}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Trạng thái hiện tại</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" disabled>
+                    <option value="Scheduled">Scheduled</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Cập nhật trạng thái thành</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black">
+                    <option value="">Chọn trạng thái mới</option>
+                    <option value="Boarding">Boarding</option>
+                    <option value="Departed">Departed</option>
+                    <option value="Arrived">Arrived</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Canceled">Canceled</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">Thời gian cập nhật</label>
+                  <input
+                    type="datetime-local"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-md font-medium text-gray-700 mb-1">Ghi chú</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    rows={3}
+                    placeholder="Ghi chú về việc thay đổi trạng thái..."
+                  ></textarea>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                  Hủy
+                </button>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  Cập nhật trạng thái
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Lịch sử cập nhật trạng thái</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Chuyến bay</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Tuyến</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Trạng thái cũ</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Trạng thái mới</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Thời gian cập nhật</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Người cập nhật</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        VN001
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        SGN → HAN
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-yellow-600 bg-yellow-100">
+                          Scheduled
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
+                          Boarding
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        2024-01-15 08:30
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Admin
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        VN002
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        HAN → DAD
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
+                          Boarding
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-purple-600 bg-purple-100">
+                          Departed
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        2024-01-15 14:45
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Operator
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="space-y-6">
+            {/* Search and Filters */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center space-x-4">
+                <div className="relative flex-1">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm chuyến bay..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                  />
+                </div>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                >
+                  <option value="">Tất cả trạng thái</option>
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="Boarding">Boarding</option>
+                  <option value="Departed">Departed</option>
+                  <option value="Arrived">Arrived</option>
+                  <option value="Delayed">Delayed</option>
+                  <option value="Canceled">Canceled</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Flights List */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Danh sách chuyến bay</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Chuyến bay
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Tuyến
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Thời gian
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Thời lượng
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Trạng thái
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Thao tác
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredFlights.map((flight: any) => (
+                      <tr key={flight.flightId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                              <RocketLaunchIcon className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{flight.flightNumber}</div>
+                              <div className="text-sm text-gray-500">#{flight.flightId}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {flight.departureAirport.airportCode} → {flight.arrivalAirport.airportCode}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div>
+                            <div className="font-medium">{formatTime(flight.departureTime)}</div>
+                            <div className="text-gray-500">{formatTime(flight.arrivalTime)}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatDuration(flight.duration)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getFlightStatusColor(flight.status)}`}>
+                            {flight.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <button className="text-blue-600 hover:text-blue-900">
+                              <EyeIcon className="h-5 w-5" />
+                            </button>
+                            <button className="text-green-600 hover:text-green-900" onClick={() => { setShowUpdateModal(true), handleSelectFlightId(flight.flightId) }}>
+                              <PencilIcon className="h-5 w-5" />
+                            </button>
+                            <button className="text-red-600 hover:text-red-900" onClick={() => deleteFlight(flight.flightId)}>
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {activeSubTab === 'flights-create' ? 'Tạo chuyến bay' :
+              activeSubTab === 'flights-edit' ? 'Sửa chuyến bay' :
+                activeSubTab === 'flights-schedule' ? 'Xem lịch bay' :
+                  activeSubTab === 'flights-status' ? 'Cập nhật trạng thái' :
+                    'Quản lý chuyến bay'}
+          </h2>
+          <p className="text-gray-600">
+            {activeSubTab === 'flights-create' ? 'Tạo chuyến bay mới' :
+              activeSubTab === 'flights-edit' ? 'Chỉnh sửa thông tin chuyến bay' :
+                activeSubTab === 'flights-schedule' ? 'Xem lịch trình các chuyến bay' :
+                  activeSubTab === 'flights-status' ? 'Cập nhật trạng thái chuyến bay' :
+                    'Quản lý và theo dõi các chuyến bay'}
+          </p>
         </div>
+        {activeSubTab === 'flights' && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Thêm chuyến bay
+          </button>
+        )}
       </div>
 
-      <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Passenger Forms */}
-        <div className="lg:col-span-2">
+      {/* Render sub-content */}
+      {renderSubContent()}
 
-          {/* Passenger Forms */}
-          <div className="space-y-8">
-            {passengers.map((passenger, index) => (
-              <div key={passenger.id} id={`passenger-${passenger.id}`} className="bg-white rounded-xl p-8 shadow-xl border border-gray-100">
-                {/* Passenger Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-800">Người lớn {index + 1}</h3>
-                  </div>
-                  <button className="p-2 hover:bg-gray-100 rounded-full">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  </button>
-                </div>
+      {/* Add Flight Modal - only show for main flights tab */}
+      {activeSubTab === 'flights' && showAddModal && mounted && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
+          <div className=" bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh]">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Thêm chuyến bay mới</h3>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              await handleAddFlight();
+            }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                {/* Gender Selection */}
-                <div className="mb-6">
-                  <div className="flex space-x-6">
-                    {[
-                      { value: 'male', label: 'Nam' },
-                      { value: 'female', label: 'Nữ' },
-                      { value: 'other', label: 'Khác' }
-                    ].map((option) => (
-                      <label key={option.value} className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name={`gender-${passenger.id}`}
-                          value={option.value}
-                          checked={passenger.gender === option.value}
-                          onChange={(e) => updatePassenger(passenger.id, 'gender', e.target.value)}
-                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-base text-gray-700">{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+              {/* Airline */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Hãng hàng không
+                </label>
+                <select
+                  value={flightData.airlineId}
+                  onChange={(e: any) => {
+                    handleChange('airlineId', e.target.value);
+                    loadAircraftsByAirlineId(e.target.value);
+                    generateFlightNumberByAirline(e.target.value);
 
-                {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column */}
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Họ <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={passenger.lastName}
-                        onChange={(e) => updatePassenger(passenger.id, 'lastName', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`adult-${passenger.id}`]?.lastName
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                          }`}
-                        placeholder="Nhập họ"
-                      />
-                      {validationErrors[`adult-${passenger.id}`]?.lastName && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`adult-${passenger.id}`].lastName}
-                        </p>
-                      )}
-                      {!validationErrors[`adult-${passenger.id}`]?.lastName && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          ① Hướng dẫn nhập họ, tên đệm và tên.
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Ngày sinh <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        value={passenger.dateOfBirth}
-                        onChange={(e) => updatePassenger(passenger.id, 'dateOfBirth', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`adult-${passenger.id}`]?.dateOfBirth
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                          }`}
-                        max={new Date().toISOString().split('T')[0]}
-                      />
-                      {validationErrors[`adult-${passenger.id}`]?.dateOfBirth && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`adult-${passenger.id}`].dateOfBirth}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Số điện thoại  <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex">
-                        <select className="border-2 border-gray-300 border-r-0 rounded-l-xl px-3 py-3 text-gray-700 focus:border-blue-500 focus:ring-3 focus:ring-blue-200">
-                          <option value="+84 ">🇻🇳 +84 </option>
-                        </select>
-                        <input
-                          type="tel"
-                          value={passenger.phoneNumber}
-                          onChange={(e) => updatePassenger(passenger.id, 'phoneNumber', e.target.value)}
-                          className={`flex-1 border-2 rounded-r-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`adult-${passenger.id}`]?.phoneNumber
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                            : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                            }`}
-                          placeholder="Nhập số điện thoại"
-                        />
-                      </div>
-                      {validationErrors[`adult-${passenger.id}`]?.phoneNumber && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`adult-${passenger.id}`].phoneNumber}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        CCCD / Hộ chiếu <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={passenger.idNumber}
-                        onChange={(e) => updatePassenger(passenger.id, 'idNumber', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`adult-${passenger.id}`]?.idNumber
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                          }`}
-                        placeholder="Nhập CCCD hoặc số hộ chiếu"
-                      />
-                      {validationErrors[`adult-${passenger.id}`]?.idNumber && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`adult-${passenger.id}`].idNumber}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Nơi ở hiện tại
-                      </label>
-                      <input
-                        type="text"
-                        value={passenger.currentResidence}
-                        onChange={(e) => updatePassenger(passenger.id, 'currentResidence', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                        placeholder="Nhập địa chỉ hiện tại"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Right Column */}
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Tên đệm & tên <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={passenger.firstName}
-                        onChange={(e) => updatePassenger(passenger.id, 'firstName', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`adult-${passenger.id}`]?.firstName
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                          }`}
-                        placeholder="Nhập tên đệm và tên"
-                      />
-                      {validationErrors[`adult-${passenger.id}`]?.firstName && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`adult-${passenger.id}`].firstName}
-                        </p>
-                      )}
-                    </div>
-
-                    <div >
-                      <label className="block text-base font-bold text-black mb-2">
-                        Quốc gia <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={passenger.country}
-                        onChange={(e) => updatePassenger(passenger.id, 'country', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                        placeholder="Việt Nam"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        value={passenger.email}
-                        onChange={(e) => updatePassenger(passenger.id, 'email', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`adult-${passenger.id}`]?.email
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                          }`}
-                        placeholder="Nhập email"
-                      />
-                      {validationErrors[`adult-${passenger.id}`]?.email && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`adult-${passenger.id}`].email}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Buy for me toggle */}
-                {/* <div className="mt-6 flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={passenger.buyForMe}
-                    onChange={(e) => updatePassenger(passenger.id, 'buyForMe', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-base text-gray-700">Mua vé cho tôi</span>
-                </div> */}
-
-                {/* OTT Communication */}
-                {/* <div className="mt-6">
-                  <label className="block text-base font-bold text-black mb-3">
-                    Nhận thông tin hành trình qua tin nhắn OTT
-                  </label>
-                  <div className="flex space-x-6">
-                    {[
-                      { value: 'none', label: 'Không chọn' },
-                      { value: 'zalo', label: 'Zalo OA' },
-                      { value: 'whatsapp', label: 'WhatsApp' }
-                    ].map((option) => (
-                      <label key={option.value} className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name={`ott-${passenger.id}`}
-                          value={option.value}
-                          checked={passenger.ottPreference === option.value}
-                          onChange={(e) => updatePassenger(passenger.id, 'ottPreference', e.target.value)}
-                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-base text-gray-700">{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div> */}
-
-                {/* Remember details */}
-                {/* <div className="mt-6 flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={passenger.rememberDetails}
-                    onChange={(e) => updatePassenger(passenger.id, 'rememberDetails', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-base text-gray-700">
-                    Ghi nhớ các chi tiết hành khách trên cho các lần đặt vé trong tương lai
-                  </span>
-                </div> */}
-              </div>
-            ))}
-
-            {/* Child Passenger Forms */}
-            {childPassengers.map((child, index) => (
-              <div key={`child-${child.id}`} id={`passenger-child-${child.id}`} className="bg-white rounded-xl p-8 shadow-xl border border-gray-100">
-                {/* Child Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-800">Trẻ em {index + 1}</h3>
-                  </div>
-                  <button className="p-2 hover:bg-gray-100 rounded-full">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  </button>
-                </div>
-
-                <p className="text-sm text-blue-600 mb-4">
-                  ① Hướng dẫn nhập họ, tên đệm và tên.
-                </p>
-
-                {/* Gender Selection */}
-                <div className="mb-6">
-                  <div className="flex space-x-6">
-                    {[
-                      { value: 'male', label: 'Nam' },
-                      { value: 'female', label: 'Nữ' },
-                      { value: 'other', label: 'Khác' }
-                    ].map((option) => (
-                      <label key={option.value} className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name={`gender-child-${child.id}`}
-                          value={option.value}
-                          checked={child.gender === option.value}
-                          onChange={(e) => updateChildPassenger(child.id, 'gender', e.target.value)}
-                          className="w-4 h-4 text-green-600 focus:ring-green-500"
-                        />
-                        <span className="text-base text-gray-700">{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column */}
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Họ <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={child.lastName}
-                        onChange={(e) => updateChildPassenger(child.id, 'lastName', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`child-${child.id}`]?.lastName
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-green-500 focus:ring-green-200'
-                          }`}
-                        placeholder="Nhập họ"
-                      />
-                      {validationErrors[`child-${child.id}`]?.lastName && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`child-${child.id}`].lastName}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Ngày sinh <span className="text-red-500">*</span> (2-11 tuổi)
-                      </label>
-                      <input
-                        type="date"
-                        value={child.dateOfBirth}
-                        onChange={(e) => updateChildPassenger(child.id, 'dateOfBirth', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`child-${child.id}`]?.dateOfBirth
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-green-500 focus:ring-green-200'
-                          }`}
-                        max={new Date().toISOString().split('T')[0]}
-                      />
-                      {validationErrors[`child-${child.id}`]?.dateOfBirth && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`child-${child.id}`].dateOfBirth}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Right Column */}
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Tên đệm & tên <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={child.firstName}
-                        onChange={(e) => updateChildPassenger(child.id, 'firstName', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`child-${child.id}`]?.firstName
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-green-500 focus:ring-green-200'
-                          }`}
-                        placeholder="Nhập tên đệm và tên"
-                      />
-                      {validationErrors[`child-${child.id}`]?.firstName && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`child-${child.id}`].firstName}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Bay cùng
-                      </label>
-                      <select
-                        value={child.accompaniedBy}
-                        onChange={(e) => updateChildPassenger(child.id, 'accompaniedBy', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
-                      >
-                        <option value="">Chọn người lớn đi cùng</option>
-                        {passengers.map((p, idx) => (
-                          <option key={p.id} value={`adult-${p.id}`}>
-                            Người lớn {idx + 1}: {p.firstName} {p.lastName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {/* Infant Passenger Forms */}
-            {infantPassengers.map((infant, index) => (
-              <div key={`infant-${infant.id}`} id={`passenger-infant-${infant.id}`} className="bg-white rounded-xl p-8 shadow-xl border border-gray-100">
-                {/* Infant Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-pink-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-800">Em bé {index + 1}</h3>
-                  </div>
-                  <button className="p-2 hover:bg-gray-100 rounded-full">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  </button>
-                </div>
-
-                <p className="text-sm text-blue-600 mb-4">
-                  ① Hướng dẫn nhập họ, tên đệm và tên.
-                </p>
-
-                {/* Gender Selection */}
-                <div className="mb-6">
-                  <div className="flex space-x-6">
-                    {[
-                      { value: 'male', label: 'Nam' },
-                      { value: 'female', label: 'Nữ' },
-                      { value: 'other', label: 'Khác' }
-                    ].map((option) => (
-                      <label key={option.value} className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name={`gender-infant-${infant.id}`}
-                          value={option.value}
-                          checked={infant.gender === option.value}
-                          onChange={(e) => updateInfantPassenger(infant.id, 'gender', e.target.value)}
-                          className="w-4 h-4 text-pink-600 focus:ring-pink-500"
-                        />
-                        <span className="text-base text-gray-700">{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column */}
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Họ <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={infant.lastName}
-                        onChange={(e) => updateInfantPassenger(infant.id, 'lastName', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`infant-${infant.id}`]?.lastName
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-pink-500 focus:ring-pink-200'
-                          }`}
-                        placeholder="Nhập họ"
-                      />
-                      {validationErrors[`infant-${infant.id}`]?.lastName && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`infant-${infant.id}`].lastName}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Ngày sinh <span className="text-red-500">*</span> (Dưới 2 tuổi)
-                      </label>
-                      <input
-                        type="date"
-                        value={infant.dateOfBirth}
-                        onChange={(e) => updateInfantPassenger(infant.id, 'dateOfBirth', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`infant-${infant.id}`]?.dateOfBirth
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-pink-500 focus:ring-pink-200'
-                          }`}
-                        max={new Date().toISOString().split('T')[0]}
-                      />
-                      {validationErrors[`infant-${infant.id}`]?.dateOfBirth && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`infant-${infant.id}`].dateOfBirth}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Right Column */}
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Tên đệm & tên <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={infant.firstName}
-                        onChange={(e) => updateInfantPassenger(infant.id, 'firstName', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`infant-${infant.id}`]?.firstName
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-pink-500 focus:ring-pink-200'
-                          }`}
-                        placeholder="Nhập tên đệm và tên"
-                      />
-                      {validationErrors[`infant-${infant.id}`]?.firstName && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`infant-${infant.id}`].firstName}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Bay cùng
-                      </label>
-                      <select
-                        value={infant.accompaniedBy}
-                        onChange={(e) => updateInfantPassenger(infant.id, 'accompaniedBy', e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
-                      >
-                        <option value="">Chọn người lớn đi cùng</option>
-                        {passengers.map((p, idx) => (
-                          <option key={p.id} value={`adult-${p.id}`}>
-                            Người lớn {idx + 1}: {p.firstName} {p.lastName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Privacy Policy */}
-
-        </div>
-
-        {/* Right: Booking Summary */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl border border-gray-100 sticky top-4">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent mb-8 text-center">
-              THÔNG TIN ĐẶT CHỖ
-            </h3>
-
-            {/* Departure Flight */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-lg font-bold text-black">Chuyến đi</h4>
-                {isClient && departureFlight && (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg font-bold text-black">{formatVnd((Number(departureFlight?.price) || 0) * (totalAdults + totalChildren) + 100000 * totalInfants + (Number(departureFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </div>
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${errors.airlineId ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                >
+                  <option value="">Chọn hãng hàng không</option>
+                  {airlines.map((a: any) => (
+                    <option key={a.airlineId} value={a.airlineId}>
+                      {a.airlineName}
+                    </option>
+                  ))}
+                </select>
+                {errors.airlineId && (
+                  <p className="text-red-500 text-sm">{errors.airlineId}</p>
                 )}
               </div>
 
-              {isClient && !departureFlight && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
-                  <p className="text-sm text-yellow-800">
-                    ⚠️ Không tìm thấy thông tin chuyến bay. Vui lòng quay lại trang chọn chuyến bay.
-                  </p>
-                </div>
-              )}
-
-              {isClient && departureFlight && (
-                <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                  {/* Route */}
-                  <div className="text-base text-gray-700">
-                    {(departureFlight?.departureAirport?.city || searchData.departureAirport?.city || '')} ({(departureFlight?.departureAirport?.airportCode || searchData.departureAirport?.airportCode || '')}) ✈ {(departureFlight?.arrivalAirport?.city || searchData.arrivalAirport?.city || '')} ({(departureFlight?.arrivalAirport?.airportCode || searchData.arrivalAirport?.airportCode || '')})
-                  </div>
-
-                  {/* Date - Format: "Chủ nhật, 28/10/2025" */}
-                  <div className="text-base text-gray-700">
-                    {(() => {
-                      const date = searchData.departureDate || new Date();
-                      const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-                      const dayName = dayNames[date.getDay()];
-                      const day = date.getDate();
-                      const month = date.getMonth() + 1;
-                      const year = date.getFullYear();
-                      return `${dayName}, ${day}/${month}/${year}`;
-                    })()}
-                  </div>
-
-                  {/* Time */}
-                  <div className="text-base text-gray-700">Giờ bay: {departureFlight?.departTime || ''} - {departureFlight?.arriveTime || ''}</div>
-
-                  {/* Flight Code */}
-                  <div className="text-base text-gray-700">Số hiệu: {departureFlight?.code || ''}</div>
-
-                  {/* Fare Class */}
-                  <div className="text-base font-bold text-gray-700">Hạng vé: {departureFlight?.fareName || ''}</div>
-
-                  {/* Price Breakdown */}
-                  <div className="pt-2 space-y-3 border-t border-gray-200">
-                    {/* Giá vé cho người lớn */}
-                    {totalAdults > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-base text-gray-700">Người lớn x {totalAdults}</span>
-                        <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.price) || 0) * totalAdults)} VND</span>
-                      </div>
-                    )}
-
-                    {/* Giá vé cho trẻ em */}
-                    {totalChildren > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-base text-gray-700">Trẻ em x {totalChildren}</span>
-                        <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.price) || 0) * totalChildren)} VND</span>
-                      </div>
-                    )}
-
-                    {/* Giá vé cho em bé */}
-                    {totalInfants > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-base text-gray-700">Em bé x {totalInfants}</span>
-                        <span className="font-semibold text-gray-700">{formatVnd(100000 * totalInfants)} VND</span>
-                      </div>
-                    )}
-
-                    {/* Thuế VAT */}
-                    {(totalAdults > 0 || totalChildren > 0 || totalInfants > 0) && (
-                      <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                        <span className="text-base text-gray-700">Thuế VAT</span>
-                        <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Return Flight - chỉ hiển thị khi không phải chuyến bay một chiều VÀ có dữ liệu returnFlight */}
-            {!isOneWay && isClient && returnFlight && (
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-lg font-bold text-black">Chuyến về</h4>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg font-bold text-black">{formatVnd(((Number(returnFlight?.price) || 0) + (Number(returnFlight?.tax) || 0)) * (totalAdults + totalChildren) + 100000 * totalInfants)} VND</span>
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                  {/* Route */}
-                  <div className="text-base text-gray-700">
-                    {(returnFlight?.departureAirport?.city || searchData.arrivalAirport?.city || '')} ({(returnFlight?.departureAirport?.airportCode || searchData.arrivalAirport?.airportCode || '')}) ✈ {(returnFlight?.arrivalAirport?.city || searchData.departureAirport?.city || '')} ({(returnFlight?.arrivalAirport?.airportCode || searchData.departureAirport?.airportCode || '')})
-                  </div>
-
-                  {/* Date - Format: "Thứ hai, 29/10/2025" */}
-                  <div className="text-base text-gray-700">
-                    {(() => {
-                      const date = searchData.returnDate || new Date();
-                      const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-                      const dayName = dayNames[date.getDay()];
-                      const day = date.getDate();
-                      const month = date.getMonth() + 1;
-                      const year = date.getFullYear();
-                      return `${dayName}, ${day}/${month}/${year}`;
-                    })()}
-                  </div>
-
-                  {/* Time */}
-                  <div className="text-base text-gray-700">Giờ bay: {returnFlight?.departTime || ''} - {returnFlight?.arriveTime || ''}</div>
-
-                  {/* Flight Code */}
-                  <div className="text-base text-gray-700">Số hiệu: {returnFlight?.code || ''}</div>
-
-                  {/* Fare Class */}
-                  <div className="text-base font-bold text-gray-700">Hạng vé: {returnFlight?.fareName || ''}</div>
-
-                  {/* Price Breakdown */}
-                  <div className="pt-2 space-y-3 border-t border-gray-200">
-                    {/* Giá vé cho người lớn */}
-                    {totalAdults > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-base text-gray-700">Người lớn x {totalAdults}</span>
-                        <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.price) || 0) * totalAdults)} VND</span>
-                      </div>
-                    )}
-
-                    {/* Giá vé cho trẻ em */}
-                    {totalChildren > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-base text-gray-700">Trẻ em x {totalChildren}</span>
-                        <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.price) || 0) * totalChildren)} VND</span>
-                      </div>
-                    )}
-
-                    {/* Giá vé cho em bé */}
-                    {totalInfants > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-base text-gray-700">Em bé x {totalInfants}</span>
-                        <span className="font-semibold text-gray-700">{formatVnd(100000 * totalInfants)} VND</span>
-                      </div>
-                    )}
-
-                    {/* Thuế VAT */}
-                    {(totalAdults > 0 || totalChildren > 0 || totalInfants > 0) && (
-                      <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                        <span className="text-base text-gray-700">Thuế VAT</span>
-                        <span className="font-semibold text-gray-700">{formatVnd((Number(returnFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              {/* Aircraft */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Máy bay
+                </label>
+                <select
+                  value={flightData.aircraftId}
+                  onChange={(e) => {
+                    handleChange('aircraftId', e.target.value);
+                    loadAvailableSeatsByAircraft(Number(e.target.value));
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${errors.aircraftId ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                >
+                  <option value="">Chọn máy bay</option>
+                  {aircrafts.map((a: any) => (
+                    <option key={a.aircraftId} value={a.aircraftId}>
+                      {a.model}
+                    </option>
+                  ))}
+                </select>
+                {errors.aircraftId && (
+                  <p className="text-red-500 text-sm">{errors.aircraftId}</p>
+                )}
               </div>
-            )}
 
-            {/* Total */}
-            {isClient && (
-              <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8 rounded-2xl text-center mb-8 shadow-xl">
-                <div className="text-xl font-semibold mb-3">Tổng tiền</div>
-                <div className="text-4xl md:text-5xl font-bold">
-                  {formatVnd(calculatedTotal)} VND
-                </div>
-                <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
+              {/* Departure Airport */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Sân bay đi
+                </label>
+                <select
+                  value={flightData.departureAirportId}
+                  onChange={(e: any) => {
+                    handleChange('departureAirportId', e.target.value);
+                    loadTerminalByAirportId(e.target.value, 'departure');
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${errors.departureAirportId ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                >
+                  <option value="">Chọn sân bay</option>
+                  {airports.map((a: any) => (
+                    <option key={a.airportId} value={a.airportId}>
+                      {a.airportName}
+                    </option>
+                  ))}
+                </select>
+                {errors.departureAirportId && (
+                  <p className="text-red-500 text-sm">{errors.departureAirportId}</p>
+                )}
               </div>
-            )}
 
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="w-full text-center bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-5 rounded-2xl text-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Đang xử lý...' : 'Đi tiếp'}
-            </button>
+              {/* Arrival Airport */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Sân bay đến
+                </label>
+                <select
+                  value={flightData.arrivalAirportId}
+                  onChange={(e: any) => {
+                    handleChange('arrivalAirportId', e.target.value);
+                    loadTerminalByAirportId(e.target.value, 'arrival');
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${errors.arrivalAirportId ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                >
+                  <option value="">Chọn sân bay</option>
+                  {airports.map((a: any) => (
+                    <option key={a.airportId} value={a.airportId}>
+                      {a.airportName}
+                    </option>
+                  ))}
+                </select>
+                {errors.arrivalAirportId && (
+                  <p className="text-red-500 text-sm">{errors.arrivalAirportId}</p>
+                )}
+              </div>
+
+              {/* Departure Terminal */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Nhà ga đi
+                </label>
+                <select
+                  value={flightData.departureTerminalId}
+                  onChange={(e) => handleChange('departureTerminalId', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${errors.departureTerminalId ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                >
+                  <option value="">Chọn nhà ga</option>
+                  {departureTerminals.map((t) => (
+                    <option key={t.terminalId} value={t.terminalId}>
+                      {t.terminalName}
+                    </option>
+                  ))}
+                </select>
+                {errors.departureTerminalId && (
+                  <p className="text-red-500 text-sm">{errors.departureTerminalId}</p>
+                )}
+              </div>
+
+              {/* Arrival Terminal */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Nhà ga đến
+                </label>
+                <select
+                  value={flightData.arrivalTerminalId}
+                  onChange={(e) => handleChange('arrivalTerminalId', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${errors.arrivalTerminalId ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                >
+                  <option value="">Chọn nhà ga</option>
+                  {arrivalTerminals.map((t) => (
+                    <option key={t.terminalId} value={t.terminalId}>
+                      {t.terminalName}
+                    </option>
+                  ))}
+                </select>
+                {errors.arrivalTerminalId && (
+                  <p className="text-red-500 text-sm">{errors.arrivalTerminalId}</p>
+                )}
+              </div>
+
+
+
+              {/* Departure Time */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Thời gian khởi hành
+                </label>
+                <input
+                  type="datetime-local"
+                  value={flightData.departureTime}
+                  onChange={(e) => handleChange('departureTime', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${errors.departureTime ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                />
+                {errors.departureTime && (
+                  <p className="text-red-500 text-sm">{errors.departureTime}</p>
+                )}
+              </div>
+
+              {/* Arrival Time */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Thời gian đến
+                </label>
+                <input
+                  type="datetime-local"
+                  value={flightData.arrivalTime}
+                  onChange={(e) => handleChange('arrivalTime', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${errors.arrivalTime ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                />
+                {errors.arrivalTime && (
+                  <p className="text-red-500 text-sm">{errors.arrivalTime}</p>
+                )}
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Thời lượng (phút)
+                </label>
+                <input
+                  type="number"
+                  value={flightData.duration}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-600 bg-gray-100"
+                  placeholder="Tự động tính"
+                />
+              </div>
+              {/* Status */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Trạng thái
+                </label>
+                <select
+                  value={flightData.status}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${errors.status ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                >
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="Boarding">Boarding</option>
+                  <option value="Departed">Departed</option>
+                  <option value="Arrived">Arrived</option>
+                  <option value="Delayed">Delayed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+                {errors.status && (
+                  <p className="text-red-500 text-sm">{errors.status}</p>
+                )}
+              </div>
+              {/* Giá Economy */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Giá Economy (₫)</label>
+                <input
+                  value={flightData.economyPrice ?? ""}
+                  type="number"
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.economyPrice ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Nhập giá vé hạng Economy"
+                  onChange={(e) => handleChange('economyPrice', e.target.value)}
+                />
+                {errors.economyPrice && (
+                  <p className="text-red-500 text-sm mt-1">{errors.economyPrice}</p>
+                )}
+              </div>
+
+              {/* Giá Business */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Giá Business (₫)</label>
+                <input
+                  value={flightData.businessPrice ?? ""}
+                  type="number"
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.businessPrice ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Nhập giá vé hạng Business"
+                  onChange={(e) => handleChange('businessPrice', e.target.value)}
+                />
+                {errors.businessPrice && (
+                  <p className="text-red-500 text-sm mt-1">{errors.businessPrice}</p>
+                )}
+              </div>
+
+              {/* Giá First Class */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Giá First Class (₫)</label>
+                <input
+                  value={flightData.firstClassPrice ?? ""}
+                  type="number"
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${errors.firstClassPrice ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Nhập giá vé hạng First Class"
+                  onChange={(e) => handleChange('firstClassPrice', e.target.value)}
+                />
+                {errors.firstClassPrice && (
+                  <p className="text-red-500 text-sm mt-1">{errors.firstClassPrice}</p>
+                )}
+              </div>
+
+              {/* Ghế Economy */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Economy</label>
+                <input
+                  value={flightData.availableEconomySeats ?? ""}
+                  type="number"
+                  min="0"
+                  readOnly
+                  className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Tự động tính"
+                />
+                {errors.availableEconomySeats && (
+                  <p className="text-red-500 text-sm mt-1">{errors.availableEconomySeats}</p>
+                )}
+              </div>
+
+              {/* Ghế Business */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Business</label>
+                <input
+                  value={flightData.availableBusinessSeats ?? ""}
+                  type="number"
+                  min="0"
+                  readOnly
+                  className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Tự động tính"
+                />
+                {errors.availableBusinessSeats && (
+                  <p className="text-red-500 text-sm mt-1">{errors.availableBusinessSeats}</p>
+                )}
+              </div>
+
+              {/* Ghế First Class */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống First Class</label>
+                <input
+                  value={flightData.availableFirstClassSeats ?? ""}
+                  type="number"
+                  min="0"
+                  readOnly
+                  className={`w-full px-3 py-2 border rounded-lg text-gray-600 bg-gray-100 ${errors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Tự động tính"
+                />
+                {errors.availableFirstClassSeats && (
+                  <p className="text-red-500 text-sm mt-1">{errors.availableFirstClassSeats}</p>
+                )}
+              </div>
+              {/* Submit */}
+              <div className="md:col-span-2 mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  onClick={() => setShowAddModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingFlight}
+                  className={`px-4 py-2 rounded-lg text-white transition-colors ${isCreatingFlight ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                >
+                  {isCreatingFlight ? 'Đang tạo...' : 'Tạo chuyến bay'}
+                </button>
+              </div>
+
+            </form>
           </div>
-        </div>
-      </div>
+        </div>,
+        document.body
+      )}
 
-      {/* Bottom bar */}
-      <div className="bg-white border-t border-gray-200 py-4">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <button onClick={() => router.back()} className="px-6 py-3 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            Quay lại
-          </button>
+      {showUpdateModal && mounted && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
+          <div className=" bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh]">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cập nhật chuyến bay</h3>
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleUpdateFlight();
+              }}
+            >
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Số chuyến bay</label>
+                <input
+                  readOnly
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  placeholder="VN001"
+                  value={flightUpdateData.flightNumber}
+                />
+              </div>
+              {/* Departure Time */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Thời gian khởi hành
+                </label>
+                <input
+                  type="datetime-local"
+                  value={flightUpdateData.departureTime
+                    ? new Date(flightUpdateData.departureTime).toLocaleString('sv-SE', {
+                      timeZone: 'Asia/Ho_Chi_Minh',
+                      hour12: false,
+                    }).replace(' ', 'T')
+                    : ''}
+                  onChange={(e) => handleUpdateChange('departureTime', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${updateErrors.departureTime ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                />
+                {updateErrors.departureTime && (
+                  <p className="text-red-500 text-sm">{updateErrors.departureTime}</p>
+                )}
+              </div>
 
-          {isClient && (
-            <div className="text-center">
-              <div className="text-lg font-bold text-gray-800">Tổng tiền</div>
-              <div className="text-2xl font-bold text-red-600">{formatVnd(calculatedTotal)} VND</div>
-            </div>
-          )}
+              {/* Arrival Time */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Thời gian đến
+                </label>
+                <input
+                  type="datetime-local"
+                  value={flightUpdateData.arrivalTime
+                    ? new Date(flightUpdateData.arrivalTime).toLocaleString('sv-SE', {
+                      timeZone: 'Asia/Ho_Chi_Minh',
+                      hour12: false,
+                    }).replace(' ', 'T')
+                    : ''}
+                  onChange={(e) => handleUpdateChange('arrivalTime', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${updateErrors.arrivalTime ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                />
+                {updateErrors.arrivalTime && (
+                  <p className="text-red-500 text-sm">{updateErrors.arrivalTime}</p>
+                )}
+              </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Đang xử lý...' : 'Đi tiếp'}
-          </button>
-        </div>
-      </div>
+              {/* Duration */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Thời lượng (phút)
+                </label>
+                <input
+                  type="number"
+                  value={flightUpdateData.duration}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-600 bg-gray-100"
+                  placeholder="Tự động tính"
+                />
+              </div>
+              {/* Status */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">
+                  Trạng thái
+                </label>
+                <select
+                  value={flightUpdateData.status}
+                  onChange={(e) => handleUpdateChange('status', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg text-black ${updateErrors.status ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                >
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="Boarding">Boarding</option>
+                  <option value="Departed">Departed</option>
+                  <option value="Arrived">Arrived</option>
+                  <option value="Delayed">Delayed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+                {updateErrors.status && (
+                  <p className="text-red-500 text-sm">{updateErrors.status}</p>
+                )}
+              </div>
+              {/* Giá Economy */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Giá Economy (₫)</label>
+                <input
+                  value={flightUpdateData.economyPrice ?? ""}
+                  type="number"
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.economyPrice ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Nhập giá vé hạng Economy"
+                  onChange={(e) => handleUpdateChange('economyPrice', e.target.value)}
+                />
+                {updateErrors.economyPrice && (
+                  <p className="text-red-500 text-sm mt-1">{updateErrors.economyPrice}</p>
+                )}
+              </div>
+
+              {/* Giá Business */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Giá Business (₫)</label>
+                <input
+                  value={flightUpdateData.businessPrice ?? ""}
+                  type="number"
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.businessPrice ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Nhập giá vé hạng Business"
+                  onChange={(e) => handleUpdateChange('businessPrice', e.target.value)}
+                />
+                {updateErrors.businessPrice && (
+                  <p className="text-red-500 text-sm mt-1">{updateErrors.businessPrice}</p>
+                )}
+              </div>
+
+              {/* Giá First Class */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Giá First Class (₫)</label>
+                <input
+                  value={flightUpdateData.firstClassPrice ?? ""}
+                  type="number"
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.firstClassPrice ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Nhập giá vé hạng First Class"
+                  onChange={(e) => handleUpdateChange('firstClassPrice', e.target.value)}
+                />
+                {updateErrors.firstClassPrice && (
+                  <p className="text-red-500 text-sm mt-1">{updateErrors.firstClassPrice}</p>
+                )}
+              </div>
+
+              {/* Ghế Economy */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Economy</label>
+                <input
+                  value={flightUpdateData.availableEconomySeats ?? ""}
+                  type="number"
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.availableEconomySeats ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Nhập số ghế trống Economy"
+                  onChange={(e) => handleUpdateChange('availableEconomySeats', e.target.value)}
+                />
+                {updateErrors.availableEconomySeats && (
+                  <p className="text-red-500 text-sm mt-1">{updateErrors.availableEconomySeats}</p>
+                )}
+              </div>
+
+              {/* Ghế Business */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống Business</label>
+                <input
+                  value={flightUpdateData.availableBusinessSeats ?? ""}
+                  type="number"
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.availableBusinessSeats ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Nhập số ghế trống Business"
+                  onChange={(e) => handleUpdateChange('availableBusinessSeats', e.target.value)}
+                />
+                {updateErrors.availableBusinessSeats && (
+                  <p className="text-red-500 text-sm mt-1">{updateErrors.availableBusinessSeats}</p>
+                )}
+              </div>
+
+              {/* Ghế First Class */}
+              <div>
+                <label className="block text-md font-medium text-gray-700 mb-1">Số ghế trống First Class</label>
+                <input
+                  value={flightUpdateData.availableFirstClassSeats ?? ""}
+                  type="number"
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${updateErrors.availableFirstClassSeats ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  placeholder="Nhập số ghế trống First Class"
+                  onChange={(e) => handleUpdateChange('availableFirstClassSeats', e.target.value)}
+                />
+                {updateErrors.availableFirstClassSeats && (
+                  <p className="text-red-500 text-sm mt-1">{updateErrors.availableFirstClassSeats}</p>
+                )}
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button onClick={() => setShowUpdateModal(false)} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                  Hủy
+                </button>
+                <button type='submit' className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  Cập nhật chuyến bay
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
-
