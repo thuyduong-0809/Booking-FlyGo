@@ -74,12 +74,12 @@ export default function PassengersPage() {
     Array.from({ length: totalAdults }, (_, index) => ({
       id: index + 1,
       gender: 'male' as const,
-      lastName: `Nguyễn ${index > 0 ? index + 1 : ''}`.trim(),
-      firstName: `Văn A${index > 0 ? index + 1 : ''}`,
+      lastName: ``,
+      firstName: ``,
       dateOfBirth: '1990-01-15',
-      phoneNumber: `091234567${index}`,
-      email: `avminh824@gmail.com`,
-      country: 'Việt Nam',
+      phoneNumber: `}`,
+      email: ``,
+      country: '',
       idNumber: '',
       currentResidence: '',
       skyjoyMemberCode: '',
@@ -293,10 +293,10 @@ export default function PassengersPage() {
     }
   };
 
-  // Hàm validate CCCD/Passport (nếu có nhập)
+  // Hàm validate CCCD/Passport (BẮT BUỘC)
   const validateIdNumber = (idNumber: string): string | null => {
     if (!idNumber.trim()) {
-      return null; // Không bắt buộc
+      return 'CCCD/Hộ chiếu là bắt buộc'; // BẮT BUỘC NHẬP
     }
 
     // CCCD: 12 số
@@ -795,7 +795,7 @@ export default function PassengersPage() {
 
                     <div>
                       <label className="block text-base font-bold text-black mb-2">
-                        CCCD / Hộ chiếu
+                        CCCD / Hộ chiếu <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -825,27 +825,6 @@ export default function PassengersPage() {
                         className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                         placeholder="Nhập địa chỉ hiện tại"
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-black mb-2">
-                        Nhập mã hội viên SkyJoy (SJxxxxxxxxxx)
-                      </label>
-                      <input
-                        type="text"
-                        value={passenger.skyjoyMemberCode}
-                        onChange={(e) => updatePassenger(passenger.id, 'skyjoyMemberCode', e.target.value)}
-                        className={`w-full border-2 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 transition-all ${validationErrors[`adult-${passenger.id}`]?.skyjoyMemberCode
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                          }`}
-                        placeholder="SJxxxxxxxxxx"
-                      />
-                      {validationErrors[`adult-${passenger.id}`]?.skyjoyMemberCode && (
-                        <p className="text-sm text-red-600 mt-1 font-medium">
-                          {validationErrors[`adult-${passenger.id}`].skyjoyMemberCode}
-                        </p>
-                      )}
                     </div>
                   </div>
 
@@ -1240,15 +1219,7 @@ export default function PassengersPage() {
           </div>
 
           {/* Privacy Policy */}
-          <div className="mt-8 bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-            <p className="text-base text-gray-700">
-              Bằng cách chọn "Đi tiếp", Quý khách xác nhận đã đọc, hiểu và đồng ý với việc xử lý dữ liệu cá nhân theo các mục đích đã chọn và{' '}
-              <a href="#" className="text-blue-600 underline hover:text-blue-800">
-                Chính sách Quyền riêng tư
-              </a>{' '}
-              của FlyGo.
-            </p>
-          </div>
+
         </div>
 
         {/* Right: Booking Summary */}

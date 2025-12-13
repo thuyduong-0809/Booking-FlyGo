@@ -49,16 +49,10 @@ export default function CancelledBookingsList() {
         setLoading(true);
         try {
             const res = await requestApi('cancel-history', 'GET');
-            console.log('🔍 Cancel History API Response:', res);
-
-            // Handle both { data: [...] } and direct array response
             const cancelHistory = Array.isArray(res) ? res : (res?.data || []);
-
-            console.log('📊 Cancel History Data:', cancelHistory);
-            console.log('📈 Total records:', cancelHistory.length);
             setBookings(cancelHistory);
         } catch (error: any) {
-            console.error('❌ Error loading cancel history:', error);
+
             showNotification('error', 'Không thể tải danh sách booking đã hủy');
         } finally {
             setLoading(false);
