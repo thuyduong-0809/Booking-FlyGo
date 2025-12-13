@@ -10,6 +10,7 @@ import FooterNav from "@/components/FooterNav";
 import StoreProvider from "stores/providers";
 import ConditionalLayout from "./ConditionalLayout";
 import { SearchProvider } from "./book-plane/SearchContext";
+import { BookingProvider } from "./book-plane/BookingContext";
 import { NotificationProvider, NotificationContainer } from "@/components/Notification";
 
 const poppins = Poppins({
@@ -31,10 +32,12 @@ export default function RootLayout({
         <StoreProvider>
           <NotificationProvider>
             <SearchProvider>
-              <ClientCommons />
-              <ConditionalLayout>
-                {children}
-              </ConditionalLayout>
+              <BookingProvider>
+                <ClientCommons />
+                <ConditionalLayout>
+                  {children}
+                </ConditionalLayout>
+              </BookingProvider>
             </SearchProvider>
             <NotificationContainer />
           </NotificationProvider>

@@ -708,6 +708,73 @@ export default function PassengersPage() {
         await requestApi('passengers', 'POST', infantData);
       }
 
+      // ✨ TẠO BOOKING FLIGHTS NGAY SAU KHI TẠO PASSENGERS
+      console.log('🎫 Bắt đầu tạo BookingFlights...');
+
+      // Lấy thông tin chuyến bay từ context
+      if (state.selectedDeparture) {
+        console.log('✈️ Tạo BookingFlight cho chuyến đi:', state.selectedDeparture);
+
+        // Lấy danh sách passengers vừa tạo để lấy passengerId
+        const passengersResponse = await requestApi(`passengers/booking/${bookingId}`, 'GET');
+
+        if (passengersResponse.success && passengersResponse.data) {
+          const createdPassengers = passengersResponse.data;
+          console.log('👥 Số lượng passengers:', createdPassengers.length);
+
+          // Tạo BookingFlight cho từng passenger
+          for (const passenger of createdPassengers) {
+            try {
+              const bookingFlightData = {
+                bookingId: bookingId,
+                flightId: Number(state.selectedDeparture.flightId),
+                travelClass: state.selectedDeparture.fareName === 'Business' ? 'Business' :
+                  state.selectedDeparture.fareName === 'FIST CLASS' ? 'First' : 'Economy',
+                baggageAllowance: 20, // Default 20kg
+                passengerId: passenger.passengerId
+              };
+
+              console.log('📝 Tạo BookingFlight:', bookingFlightData);
+              await requestApi('booking-flights', 'POST', bookingFlightData);
+              console.log('✅ Tạo BookingFlight thành công cho passenger:', passenger.passengerId);
+            } catch (error) {
+              console.error('❌ Lỗi tạo BookingFlight cho passenger:', passenger.passengerId, error);
+            }
+          }
+        }
+      }
+
+      // Nếu có chuyến về (round trip)
+      if (!isOneWay && state.selectedReturn) {
+        console.log('✈️ Tạo BookingFlight cho chuyến về:', state.selectedReturn);
+
+        const passengersResponse = await requestApi(`passengers/booking/${bookingId}`, 'GET');
+
+        if (passengersResponse.success && passengersResponse.data) {
+          const createdPassengers = passengersResponse.data;
+
+          for (const passenger of createdPassengers) {
+            try {
+              const bookingFlightData = {
+                bookingId: bookingId,
+                flightId: Number(state.selectedReturn.flightId),
+                travelClass: state.selectedReturn.fareName === 'Business' ? 'Business' :
+                  state.selectedReturn.fareName === 'FIST CLASS' ? 'First' : 'Economy',
+                baggageAllowance: 20,
+                passengerId: passenger.passengerId
+              };
+
+              console.log('📝 Tạo BookingFlight (chuyến về):', bookingFlightData);
+              await requestApi('booking-flights', 'POST', bookingFlightData);
+              console.log('✅ Tạo BookingFlight (chuyến về) thành công cho passenger:', passenger.passengerId);
+            } catch (error) {
+              console.error('❌ Lỗi tạo BookingFlight (chuyến về) cho passenger:', passenger.passengerId, error);
+            }
+          }
+        }
+      }
+
+      console.log('🎉 Hoàn thành tạo BookingFlights!');
 
       router.push('/book-plane/choose-seat');
 
