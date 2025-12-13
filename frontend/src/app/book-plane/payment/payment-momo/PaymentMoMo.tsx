@@ -22,11 +22,13 @@ export default function PaymentMoMo({
 }: PaymentMoMoProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [payUrl, setPayUrl] = useState<string | null>(null);
 
     useEffect(() => {
         // Reset khi modal đóng
         if (!isOpen) {
             setError(null);
+            setPayUrl(null);
             return;
         }
 
@@ -54,6 +56,7 @@ export default function PaymentMoMo({
             });
 
             if (response && response.payUrl) {
+                setPayUrl(response.payUrl);
                 // Redirect trực tiếp đến MoMo (đóng trang cũ)
                 // MoMo sẽ tự động redirect về success page sau khi thanh toán
                 window.location.href = response.payUrl;
