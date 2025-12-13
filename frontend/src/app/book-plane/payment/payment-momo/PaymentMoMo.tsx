@@ -6,7 +6,7 @@ import { paymentsService } from '@/services/payments.service';
 interface PaymentMoMoProps {
     isOpen: boolean;
     onClose: () => void;
-    onComplete: () => void;
+    onComplete?: () => void; // Optional vì không cần nữa
     bookingId: string;
     totalAmount: number;
     orderInfo: string;
@@ -22,20 +22,16 @@ export default function PaymentMoMo({
 }: PaymentMoMoProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [payUrl, setPayUrl] = useState<string | null>(null);
-    const [hasOpenedWindow, setHasOpenedWindow] = useState(false);
 
     useEffect(() => {
         // Reset khi modal đóng
         if (!isOpen) {
-            setPayUrl(null);
             setError(null);
-            setHasOpenedWindow(false);
             return;
         }
 
-        // Chỉ tạo thanh toán một lần khi modal mở
-        if (isOpen && bookingId && totalAmount > 0 && !payUrl && !loading && !hasOpenedWindow) {
+        // Tự động tạo thanh toán khi modal mở
+        if (isOpen && bookingId && totalAmount > 0 && !loading) {
             createMoMoPayment();
         }
     }, [isOpen]);
@@ -59,31 +55,19 @@ export default function PaymentMoMo({
 
             if (response && response.payUrl) {
                 setPayUrl(response.payUrl);
-                // Tự động mở cửa sổ thanh toán CHỈ MỘT LẦN
-                if (!hasOpenedWindow) {
-                    window.open(response.payUrl, '_blank');
-                    setHasOpenedWindow(true);
-                }
+                // Redirect trực tiếp đến MoMo (đóng trang cũ)
+                // MoMo sẽ tự động redirect về success page sau khi thanh toán
+                window.location.href = response.payUrl;
             } else {
                 setError('Không thể tạo liên kết thanh toán: ' + (response?.message || 'Không có response'));
+                setLoading(false);
             }
         } catch (err: any) {
             setError(err.message || err.response?.data?.message || 'Có lỗi xảy ra khi tạo thanh toán');
-        } finally {
             setLoading(false);
         }
     };
 
-    const handleCheckPayment = async () => {
-        // Xác nhận với user trước khi hoàn tất
-        const confirmed = confirm(
-            'Bạn có chắc chắn đã hoàn tất thanh toán trên MoMo chưa?\n\nNhấn OK để xác nhận đã thanh toán và hoàn tất đơn hàng.'
-        );
-
-        if (confirmed) {
-            onComplete();
-        }
-    };
 
     if (!isOpen) return null;
 
@@ -115,51 +99,14 @@ export default function PaymentMoMo({
                     </div>
                 )}
 
-                {payUrl && !loading && (
+                {!payUrl && !loading && !error && (
                     <div className="space-y-4">
-                        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                            <p className="text-green-800 font-medium text-center">
-                                Cửa sổ thanh toán đã được mở
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <p className="text-blue-800 font-medium text-center">
+                                Đang chuyển hướng đến MoMo...
                             </p>
-                            <p className="text-sm text-green-600 text-center mt-2">
-                                Vui lòng hoàn tất thanh toán trong cửa sổ mới
-                            </p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <p className="text-gray-700">Thông tin giao dịch:</p>
-                            <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="flex justify-between mb-2">
-                                    <span className="text-gray-600">Số tiền:</span>
-                                    <span className="font-semibold text-gray-800">
-                                        {new Intl.NumberFormat('vi-VN').format(totalAmount)} VND
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Mã đặt chỗ:</span>
-                                    <span className="font-semibold text-gray-800">{bookingId}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex space-x-3">
-                            <button
-                                onClick={() => window.open(payUrl, '_blank')}
-                                className="flex-1 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105"
-                            >
-                                Mở lại cửa sổ thanh toán
-                            </button>
-                            <button
-                                onClick={handleCheckPayment}
-                                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200"
-                            >
-                                Hoàn tất
-                            </button>
-                        </div>
-
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                            <p className="text-center text-sm text-yellow-800">
-                                ⚠️ Sau khi thanh toán thành công trên MoMo, nhấn nút <strong>"Hoàn tất"</strong> để cập nhật trạng thái đơn hàng.
+                            <p className="text-sm text-blue-600 text-center mt-2">
+                                Vui lòng đợi trong giây lát
                             </p>
                         </div>
                     </div>

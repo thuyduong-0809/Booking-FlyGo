@@ -213,46 +213,7 @@ export default function PaymentPage() {
     }
   };
 
-  const handleMoMoComplete = async () => {
-    if (!state.bookingId) {
-      alert('Không tìm thấy booking. Vui lòng quay lại trang trước.');
-      return;
-    }
-
-    try {
-      setIsProcessing(true);
-
-      const payments = await paymentsService.getPaymentsByBooking(Number(state.bookingId));
-
-      if (payments && payments.length > 0) {
-        // Find the most recent payment
-        const latestPayment = payments.sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )[0];
-
-        // Check if payment is already completed
-        if (latestPayment.paymentStatus === 'Completed') {
-          setShowMoMoPayment(false);
-          // Redirect đến success page để xử lý booking flights
-          window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
-          return;
-        }
-
-        // Nếu chưa completed, redirect đến success page để xử lý
-        // Success page sẽ tự động update payment status và tạo booking flights
-        setShowMoMoPayment(false);
-        setIsProcessing(false);
-        window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
-      } else {
-        setIsProcessing(false);
-        alert('Không tìm thấy thông tin thanh toán. Vui lòng thử lại.');
-      }
-    } catch (error: any) {
-      setIsProcessing(false);
-      console.error('Error in handleMoMoComplete:', error);
-      alert('Có lỗi xảy ra: ' + (error?.message || 'Vui lòng thử lại.'));
-    }
-  };
+  // Không cần handleMoMoComplete nữa vì MoMo sẽ tự động redirect về success page
 
   const handleMoMoClose = () => {
     setShowMoMoPayment(false);
@@ -674,7 +635,6 @@ export default function PaymentPage() {
         <PaymentMoMo
           isOpen={showMoMoPayment}
           onClose={handleMoMoClose}
-          onComplete={handleMoMoComplete}
           bookingId={state.bookingId.toString()}
           totalAmount={totalPrice}
           orderInfo="Thanh toan ve may bay FlyGo"
