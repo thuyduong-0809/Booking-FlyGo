@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { paymentsService } from '@/services/payments.service';
@@ -13,52 +13,16 @@ export default function PaymentSuccessPage() {
     const searchParams = useSearchParams();
     const [paymentData, setPaymentData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isClient, setIsClient] = useState(false);
+    const [currentTime, setCurrentTime] = useState<string>('');
 
+    // Đánh dấu đã render ở client để tránh hydration error
     useEffect(() => {
-        const orderId = searchParams.get('orderId');
-        const resultCode = searchParams.get('resultCode');
-        const amount = searchParams.get('amount');
-        const bookingId = searchParams.get('bookingId');
+        setIsClient(true);
+        setCurrentTime(new Date().toLocaleString('vi-VN'));
+    }, []);
 
-        console.log('Payment Success - URL params:', { orderId, resultCode, amount, bookingId });
-
-        // Nếu có query params từ MoMo redirect (có orderId và resultCode)
-        if (orderId && resultCode) {
-            const resultCodeNum = parseInt(resultCode);
-
-            // Nếu thanh toán thành công (resultCode === 0)
-            if (resultCodeNum === 0) {
-                // Ưu tiên dùng bookingId từ URL (đã được thêm vào redirectUrl)
-                if (bookingId) {
-                    console.log('Payment Success - MoMo redirect with bookingId, updating payment status');
-                    // Có bookingId trong URL → update trực tiếp
-                    updatePaymentStatus(parseInt(bookingId));
-                } else {
-                    console.log('Payment Success - MoMo redirect without bookingId, getting from orderId');
-                    // Không có bookingId → lấy từ orderId
-                    getBookingAndUpdateStatus(orderId);
-                }
-            } else {
-                // Thanh toán thất bại
-                console.log('Payment Success - Payment failed with resultCode:', resultCodeNum);
-                setPaymentData({
-                    orderId,
-                    resultCode: resultCodeNum,
-                    amount: amount ? parseInt(amount) : 0,
-                });
-                setLoading(false);
-            }
-        }
-        // Nếu chỉ có bookingId → tự động update status và kiểm tra payment
-        else if (bookingId) {
-            updatePaymentStatusWhenBookingIdOnly(parseInt(bookingId));
-        }
-        else {
-            console.log('Payment Success - No valid params found');
-            setLoading(false);
-        }
-    }, [searchParams]);
-
+    // Định nghĩa các hàm trước khi sử dụng trong useEffect
     const getBookingAndUpdateStatus = async (orderId: string) => {
         try {
             setLoading(true);
@@ -156,6 +120,158 @@ export default function PaymentSuccessPage() {
         }
     };
 
+    const updatePaymentStatus = async (bookingId: number) => {
+        try {
+            console.log('Payment Success - Updating payment status for bookingId:', bookingId);
+
+            // Lấy payments theo bookingId
+            const payments = await paymentsService.getPaymentsByBooking(bookingId);
+
+            if (payments && payments.length > 0) {
+                // Tìm payment đang pending (thanh toán vừa thành công)
+                const pendingPayment = payments.find(p => p.paymentStatus === 'Pending');
+
+                if (pendingPayment && pendingPayment.paymentId) {
+                    console.log('Payment Success - Found pending payment:', pendingPayment.paymentId);
+
+                    // Bước 1: Cập nhật payment status thành Completed
+                    const result = await paymentsService.updatePaymentStatus(
+                        pendingPayment.paymentId,
+                        'Completed'
+                    );
+                    console.log('Payment Success - Payment status updated to Completed');
+
+                    // Cập nhật paymentData với thông tin thành công TRƯỚC KHI tạo booking flights
+                    // Để đảm bảo UI hiển thị thành công ngay cả khi có lỗi trong booking flights
+                    setPaymentData({
+                        orderId: result.paymentDetails?.momoOrderId || pendingPayment.paymentDetails?.momoOrderId || 'N/A',
+                        resultCode: 0, // Success
+                        amount: result.amount || pendingPayment.amount,
+                    });
+
+                    // Bước 2: Tạo bookingFlights và seatAllocations
+                    // QUAN TRỌNG: Chỉ tạo BookingFlight SAU KHI thanh toán thành công
+                    // Backend sẽ:
+                    // - Tìm FlightSeat available cho flight này
+                    // - Tạo SeatAllocation (liên kết passenger với ghế)
+                    // - Cập nhật FlightSeat.isAvailable = false (đánh dấu ghế đã được đặt)
+                    // - Giảm availableSeats trong Flight
+                    // Tất cả trong một transaction để đảm bảo atomicity
+                    try {
+                        await createBookingFlightsAndSeatAllocations(bookingId);
+                        console.log('Payment Success - All booking flights created successfully');
+                    } catch (createError: any) {
+                        console.error('Payment Success - Error creating booking flights:', createError);
+                        // Vẫn hiển thị thành công nhưng có thể booking flights chưa được tạo
+                        // User có thể thử lại hoặc liên hệ support
+                    }
+
+                    // KHÔNG redirect nữa, để user thấy thông báo thành công
+                    // User có thể tự click nút để về trang chủ hoặc xem chi tiết
+                    setLoading(false);
+                    return;
+                } else {
+                    console.warn('Payment Success - No pending payment found, checking latest payment');
+                    // Nếu không có pending, có thể đã được xử lý rồi
+                    const latestPayment = payments.sort((a, b) =>
+                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                    )[0];
+
+                    // Set paymentData với thông tin từ latest payment
+                    setPaymentData({
+                        orderId: latestPayment.paymentDetails?.momoOrderId || 'N/A',
+                        resultCode: latestPayment.paymentStatus === 'Completed' ? 0 : 0, // Luôn hiển thị thành công nếu user đã đến đây
+                        amount: latestPayment.amount,
+                    });
+
+                    if (latestPayment.paymentStatus === 'Completed') {
+                        // Đã completed rồi, chỉ cần hiển thị thành công
+                        setLoading(false);
+                        return;
+                    } else {
+                        // Nếu chưa completed, update nó
+                        if (latestPayment.paymentId) {
+                            try {
+                                await paymentsService.updatePaymentStatus(
+                                    latestPayment.paymentId,
+                                    'Completed'
+                                );
+                                // Tạo booking flights
+                                await createBookingFlightsAndSeatAllocations(bookingId);
+                            } catch (updateError) {
+                                console.error('Payment Success - Error updating payment:', updateError);
+                            }
+                        }
+                        setLoading(false);
+                        return;
+                    }
+                }
+            } else {
+                console.error('Payment Success - No payments found for bookingId:', bookingId);
+                setPaymentData({
+                    orderId: 'N/A',
+                    resultCode: -1,
+                    amount: 0,
+                });
+            }
+            setLoading(false);
+        } catch (error: any) {
+            console.error('Payment Success - Error updating payment status:', error);
+            setPaymentData({
+                orderId: 'N/A',
+                resultCode: -1,
+                amount: 0,
+            });
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!isClient) return; // Chỉ chạy khi đã mount ở client
+        const orderId = searchParams.get('orderId');
+        const resultCode = searchParams.get('resultCode');
+        const amount = searchParams.get('amount');
+        const bookingId = searchParams.get('bookingId');
+
+        console.log('Payment Success - URL params:', { orderId, resultCode, amount, bookingId });
+
+        // Nếu có query params từ MoMo redirect (có orderId và resultCode)
+        if (orderId && resultCode) {
+            const resultCodeNum = parseInt(resultCode);
+
+            // Nếu thanh toán thành công (resultCode === 0)
+            if (resultCodeNum === 0) {
+                // Ưu tiên dùng bookingId từ URL (đã được thêm vào redirectUrl)
+                if (bookingId) {
+                    console.log('Payment Success - MoMo redirect with bookingId, updating payment status');
+                    // Có bookingId trong URL → update trực tiếp
+                    updatePaymentStatus(parseInt(bookingId));
+                } else {
+                    console.log('Payment Success - MoMo redirect without bookingId, getting from orderId');
+                    // Không có bookingId → lấy từ orderId
+                    getBookingAndUpdateStatus(orderId);
+                }
+            } else {
+                // Thanh toán thất bại
+                console.log('Payment Success - Payment failed with resultCode:', resultCodeNum);
+                setPaymentData({
+                    orderId,
+                    resultCode: resultCodeNum,
+                    amount: amount ? parseInt(amount) : 0,
+                });
+                setLoading(false);
+            }
+        }
+        // Nếu chỉ có bookingId → tự động update status và kiểm tra payment
+        else if (bookingId) {
+            updatePaymentStatusWhenBookingIdOnly(parseInt(bookingId));
+        }
+        else {
+            console.log('Payment Success - No valid params found');
+            setLoading(false);
+        }
+    }, [searchParams, isClient]);
+
     // Hàm tính baggageAllowance dựa trên travelClass
     // Theo yêu cầu: eco là 7kg, business là 14kg, firstclass là 16kg
     const getBaggageAllowance = (travelClass: 'Economy' | 'Business' | 'First'): number => {
@@ -183,7 +299,7 @@ export default function PaymentSuccessPage() {
         }
     };
 
-    // Hàm tạo bookingFlights và seatAllocations
+    // Hàm tạo bookingFlights và seatAllocations - ĐỊNH NGHĨA TRƯỚC updatePaymentStatus
     const createBookingFlightsAndSeatAllocations = async (bookingId: number) => {
         try {
             // 1. Lấy thông tin flight đã chọn từ localStorage (đi/ về)
@@ -375,117 +491,23 @@ export default function PaymentSuccessPage() {
         }
     };
 
-    const updatePaymentStatus = async (bookingId: number) => {
-        try {
-            console.log('Payment Success - Updating payment status for bookingId:', bookingId);
-
-            // Lấy payments theo bookingId
-            const payments = await paymentsService.getPaymentsByBooking(bookingId);
-
-            if (payments && payments.length > 0) {
-                // Tìm payment đang pending (thanh toán vừa thành công)
-                const pendingPayment = payments.find(p => p.paymentStatus === 'Pending');
-
-                if (pendingPayment && pendingPayment.paymentId) {
-                    console.log('Payment Success - Found pending payment:', pendingPayment.paymentId);
-
-                    // Bước 1: Cập nhật payment status thành Completed
-                    const result = await paymentsService.updatePaymentStatus(
-                        pendingPayment.paymentId,
-                        'Completed'
-                    );
-                    console.log('Payment Success - Payment status updated to Completed');
-
-                    // Cập nhật paymentData với thông tin thành công TRƯỚC KHI tạo booking flights
-                    // Để đảm bảo UI hiển thị thành công ngay cả khi có lỗi trong booking flights
-                    setPaymentData({
-                        orderId: result.paymentDetails?.momoOrderId || pendingPayment.paymentDetails?.momoOrderId || 'N/A',
-                        resultCode: 0, // Success
-                        amount: result.amount || pendingPayment.amount,
-                    });
-
-                    // Bước 2: Tạo bookingFlights và seatAllocations
-                    // QUAN TRỌNG: Chỉ tạo BookingFlight SAU KHI thanh toán thành công
-                    // Backend sẽ:
-                    // - Tìm FlightSeat available cho flight này
-                    // - Tạo SeatAllocation (liên kết passenger với ghế)
-                    // - Cập nhật FlightSeat.isAvailable = false (đánh dấu ghế đã được đặt)
-                    // - Giảm availableSeats trong Flight
-                    // Tất cả trong một transaction để đảm bảo atomicity
-                    try {
-                        await createBookingFlightsAndSeatAllocations(bookingId);
-                        console.log('Payment Success - All booking flights created successfully');
-                    } catch (createError: any) {
-                        console.error('Payment Success - Error creating booking flights:', createError);
-                        // Vẫn hiển thị thành công nhưng có thể booking flights chưa được tạo
-                        // User có thể thử lại hoặc liên hệ support
-                    }
-
-                    // KHÔNG redirect nữa, để user thấy thông báo thành công
-                    // User có thể tự click nút để về trang chủ hoặc xem chi tiết
-                    setLoading(false);
-                    return;
-                } else {
-                    console.warn('Payment Success - No pending payment found, checking latest payment');
-                    // Nếu không có pending, có thể đã được xử lý rồi
-                    const latestPayment = payments.sort((a, b) =>
-                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-                    )[0];
-
-                    // Set paymentData với thông tin từ latest payment
-                    setPaymentData({
-                        orderId: latestPayment.paymentDetails?.momoOrderId || 'N/A',
-                        resultCode: latestPayment.paymentStatus === 'Completed' ? 0 : 0, // Luôn hiển thị thành công nếu user đã đến đây
-                        amount: latestPayment.amount,
-                    });
-
-                    if (latestPayment.paymentStatus === 'Completed') {
-                        // Đã completed rồi, chỉ cần hiển thị thành công
-                        setLoading(false);
-                        return;
-                    } else {
-                        // Nếu chưa completed, update nó
-                        if (latestPayment.paymentId) {
-                            try {
-                                await paymentsService.updatePaymentStatus(
-                                    latestPayment.paymentId,
-                                    'Completed'
-                                );
-                                // Tạo booking flights
-                                await createBookingFlightsAndSeatAllocations(bookingId);
-                            } catch (updateError) {
-                                console.error('Payment Success - Error updating payment:', updateError);
-                            }
-                        }
-                        setLoading(false);
-                        return;
-                    }
-                }
-            } else {
-                console.error('Payment Success - No payments found for bookingId:', bookingId);
-                setPaymentData({
-                    orderId: 'N/A',
-                    resultCode: -1,
-                    amount: 0,
-                });
-            }
-            setLoading(false);
-        } catch (error: any) {
-            console.error('Payment Success - Error updating payment status:', error);
-            setPaymentData({
-                orderId: 'N/A',
-                resultCode: -1,
-                amount: 0,
-            });
-            setLoading(false);
-        }
-    };
-
     const formatVnd = (n: number) => {
         return new Intl.NumberFormat('vi-VN').format(n) + ' VND';
     };
 
     const isSuccess = paymentData?.resultCode === 0;
+
+    // Nếu chưa mount ở client, hiển thị loading để tránh hydration error
+    if (!isClient) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100 flex items-center justify-center">
+                <div className="bg-white rounded-2xl p-8 shadow-xl text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Đang tải...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
@@ -550,7 +572,7 @@ export default function PaymentSuccessPage() {
                                             <div className="flex justify-between items-center">
                                                 <span className="text-gray-600">Thời gian:</span>
                                                 <span className="font-semibold text-gray-800">
-                                                    {new Date().toLocaleString('vi-VN')}
+                                                    {currentTime || 'Đang tải...'}
                                                 </span>
                                             </div>
                                         </div>
