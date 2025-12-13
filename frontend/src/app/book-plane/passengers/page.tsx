@@ -91,18 +91,13 @@ export default function PassengersPage() {
 
   const [childPassengers, setChildPassengers] = useState<ChildPassenger[]>(
     Array.from({ length: totalChildren }, (_, index) => {
-      // Tính ngày sinh cho trẻ em (5 tuổi + index năm)
-      const today = new Date();
-      const birthYear = today.getFullYear() - (5 + index);
-      const birthDate = `${birthYear}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
       return {
         id: index + 1,
         gender: 'male' as const,
-        lastName: `Trần ${index > 0 ? index + 1 : ''}`.trim(),
-        firstName: `Minh ${index > 0 ? 'B' + index : 'B'}`,
-        dateOfBirth: birthDate,
-        accompaniedBy: 'adult-1',
+        lastName: ``,
+        firstName: ``,
+        dateOfBirth: '',
+        accompaniedBy: '',
       };
     })
   );
