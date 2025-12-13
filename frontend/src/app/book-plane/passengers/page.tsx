@@ -104,21 +104,13 @@ export default function PassengersPage() {
 
   const [infantPassengers, setInfantPassengers] = useState<InfantPassenger[]>(
     Array.from({ length: totalInfants }, (_, index) => {
-      // Tính ngày sinh cho em bé (10 tháng tuổi + index tháng)
-      const today = new Date();
-      const monthsOld = 10 + index;
-      const birthDate = new Date(today);
-      birthDate.setMonth(birthDate.getMonth() - monthsOld);
-
-      const birthDateStr = `${birthDate.getFullYear()}-${String(birthDate.getMonth() + 1).padStart(2, '0')}-${String(birthDate.getDate()).padStart(2, '0')}`;
-
       return {
         id: index + 1,
         gender: 'female' as const,
-        lastName: `Lê ${index > 0 ? index + 1 : ''}`.trim(),
-        firstName: `Hồng ${index > 0 ? 'C' + index : 'C'}`,
-        dateOfBirth: birthDateStr,
-        accompaniedBy: 'adult-1',
+        lastName: ``,
+        firstName: ``,
+        dateOfBirth: '',
+        accompaniedBy: '',
       };
     })
   );
