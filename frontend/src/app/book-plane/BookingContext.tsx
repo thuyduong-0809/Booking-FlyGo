@@ -54,13 +54,27 @@ interface BookingContextValue {
   setSelectedReturn: (fare: SelectedFare | undefined) => void;
   setSelectedServices: (services: SelectedService[]) => void;
   setBookingId: (id: number | undefined) => void;
+  setTripType: (type: "round" | "oneway") => void;
   grandTotal: number;
 }
 
 const BookingContext = createContext<BookingContextValue | undefined>(undefined);
 
 export function BookingProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<BookingState>(initialState);
+  // Khởi tạo state từ localStorage nếu có
+  const [state, setState] = useState<BookingState>(() => {
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem('bookingState');
+      if (savedState) {
+        try {
+          return JSON.parse(savedState);
+        } catch (error) {
+          console.error('Error parsing bookingState from localStorage:', error);
+        }
+      }
+    }
+    return initialState;
+  });
 
   const setPassengers = useCallback((num: number) => {
     setState(prev => ({ ...prev, passengers: Math.max(1, Math.floor(num)) }));
@@ -90,6 +104,21 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setState(prev => ({ ...prev, bookingId: id }));
   }, []);
 
+  const setTripType = useCallback((type: "round" | "oneway") => {
+    setState(prev => ({ ...prev, tripType: type }));
+  }, []);
+
+  // Lưu state vào localStorage mỗi khi thay đổi (chỉ ở client)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('bookingState', JSON.stringify(state));
+      } catch (error) {
+        console.error('Error saving bookingState to localStorage:', error);
+      }
+    }
+  }, [state]);
+
   const grandTotal = useMemo(() => {
     const dep = state.selectedDeparture ? (state.selectedDeparture.price + state.selectedDeparture.tax + state.selectedDeparture.service) : 0;
     const ret = state.selectedReturn ? (state.selectedReturn.price + state.selectedReturn.tax + state.selectedReturn.service) : 0;
@@ -108,8 +137,9 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setSelectedReturn,
     setSelectedServices,
     setBookingId,
+    setTripType,
     grandTotal,
-  }), [state, setPassengers, setRoute, setDates, setSelectedDeparture, setSelectedReturn, setSelectedServices, setBookingId, grandTotal]);
+  }), [state, setPassengers, setRoute, setDates, setSelectedDeparture, setSelectedReturn, setSelectedServices, setBookingId, setTripType, grandTotal]);
 
   return (
     <BookingContext.Provider value={value}>

@@ -677,7 +677,7 @@ const FlightSummaryCard = ({
 };
 
 export default function SelectFlightRecoveryPage() {
-  const { state, setSelectedDeparture, setSelectedReturn, grandTotal } = useBooking();
+  const { state, setSelectedDeparture, setSelectedReturn, setTripType, grandTotal } = useBooking();
   const { searchData } = useSearch();
   const { showNotification } = useNotification();
 
@@ -789,6 +789,11 @@ export default function SelectFlightRecoveryPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchData.departureDate, searchData.returnDate]);
+
+  // Set tripType khi component mount - Trang này là chuyến khứ hồi
+  useEffect(() => {
+    setTripType('round');
+  }, [setTripType]);
 
   // Fetch flights khi component mount hoặc searchData thay đổi
   useEffect(() => {

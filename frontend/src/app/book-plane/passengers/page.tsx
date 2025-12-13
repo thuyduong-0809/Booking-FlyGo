@@ -67,8 +67,8 @@ export default function PassengersPage() {
   const totalChildren = searchData.passengers?.children || 0;
   const totalInfants = searchData.passengers?.infants || 0;
 
-  // Kiểm tra loại chuyến bay
-  const isOneWay = searchData.tripType === 'oneWay';
+  // Kiểm tra loại chuyến bay - Ưu tiên lấy từ BookingContext
+  const isOneWay = state.tripType === 'oneway';
 
   const [passengers, setPassengers] = useState<Passenger[]>(
     Array.from({ length: totalAdults }, (_, index) => ({
@@ -586,8 +586,57 @@ export default function PassengersPage() {
     return new Intl.NumberFormat('vi-VN').format(roundedNumber);
   };
 
-  const departureFlight = state.selectedDeparture;
-  const returnFlight = state.selectedReturn;
+  const [departureFlight, setDepartureFlight] = useState<any>(null);
+  const [returnFlight, setReturnFlight] = useState<any>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  // Đánh dấu đã render ở client để tránh hydration error
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Load dữ liệu từ context hoặc localStorage
+  useEffect(() => {
+    if (!isClient) return;
+
+    console.log('BookingContext state:', state);
+    console.log('selectedDeparture:', state.selectedDeparture);
+    console.log('selectedReturn:', state.selectedReturn);
+
+    // Ưu tiên lấy từ context
+    if (state.selectedDeparture) {
+      setDepartureFlight(state.selectedDeparture);
+    } else {
+      // Fallback từ localStorage nếu context bị mất
+      const savedFlight = localStorage.getItem('selectedFlight');
+      if (savedFlight) {
+        try {
+          const flightData = JSON.parse(savedFlight);
+          console.log('Restored from localStorage:', flightData);
+          // Tạo lại object departureFlight từ localStorage
+          const restoredFlight = {
+            flightId: flightData.flightNumber,
+            fareIndex: 0,
+            fareName: flightData.travelClass,
+            price: flightData.price,
+            tax: flightData.tax,
+            service: 0,
+            code: flightData.flightNumber,
+            departTime: '',
+            arriveTime: '',
+          };
+          setDepartureFlight(restoredFlight);
+        } catch (error) {
+          console.error('Error parsing localStorage:', error);
+        }
+      }
+    }
+
+    // Chỉ set returnFlight nếu là chuyến khứ hồi
+    if (!isOneWay && state.selectedReturn) {
+      setReturnFlight(state.selectedReturn);
+    }
+  }, [state, isClient, isOneWay]);
 
   // Tính tổng tiền: Người lớn và trẻ em tính giá như nhau, em bé 100k
   const calculatedTotal = useMemo(() => {
@@ -618,6 +667,18 @@ export default function PassengersPage() {
     return totalDeparture;
   }, [departureFlight, returnFlight, totalAdults, totalChildren, totalInfants, isOneWay]);
 
+  // Nếu chưa mount ở client, hiển thị loading
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
       {/* Top banner */}
@@ -627,7 +688,7 @@ export default function PassengersPage() {
             <div className="flex items-center space-x-4">
               {/* Back button */}
               <Link
-                href="/book-plane/select-flight-recovery"
+                href={isOneWay ? "/book-plane/select-flight" : "/book-plane/select-flight-recovery"}
                 className="flex items-center justify-center w-12 h-12 bg-black/20 hover:bg-black/30 rounded-full transition-all duration-200 hover:scale-110"
               >
                 <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -642,11 +703,11 @@ export default function PassengersPage() {
                 <div className="text-black mt-2 font-medium">
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span>Điểm khởi hành {searchData.departureAirport?.city}</span>
+                    <span>Điểm khởi hành: {isClient && (departureFlight?.departureAirport?.city || searchData.departureAirport?.city || 'Chưa chọn')}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                    <span>Điểm đến {searchData.arrivalAirport?.city}</span>
+                    <span>Điểm đến: {isClient && (departureFlight?.arrivalAirport?.city || searchData.arrivalAirport?.city || 'Chưa chọn')}</span>
                   </div>
                 </div>
               </div>
@@ -1220,79 +1281,93 @@ export default function PassengersPage() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-lg font-bold text-black">Chuyến đi</h4>
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg font-bold text-black">{formatVnd((Number(departureFlight?.price) || 0) * (totalAdults + totalChildren) + 100000 * totalInfants + (Number(departureFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </div>
+                {isClient && departureFlight && (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-lg font-bold text-black">{formatVnd((Number(departureFlight?.price) || 0) * (totalAdults + totalChildren) + 100000 * totalInfants + (Number(departureFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </div>
+                )}
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                {/* Route */}
-                <div className="text-base text-gray-700">{searchData.departureAirport?.city || ''} ({searchData.departureAirport?.airportCode || ''}) ✈ {searchData.arrivalAirport?.city || ''} ({searchData.arrivalAirport?.airportCode || ''})</div>
-
-                {/* Date - Format: "Chủ nhật, 28/10/2025" */}
-                <div className="text-base text-gray-700">
-                  {(() => {
-                    const date = searchData.departureDate || new Date();
-                    const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-                    const dayName = dayNames[date.getDay()];
-                    const day = date.getDate();
-                    const month = date.getMonth() + 1;
-                    const year = date.getFullYear();
-                    return `${dayName}, ${day}/${month}/${year}`;
-                  })()}
+              {isClient && !departureFlight && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-yellow-800">
+                    ⚠️ Không tìm thấy thông tin chuyến bay. Vui lòng quay lại trang chọn chuyến bay.
+                  </p>
                 </div>
+              )}
 
-                {/* Time */}
-                <div className="text-base text-gray-700">Giờ bay: {departureFlight?.departTime || ''} - {departureFlight?.arriveTime || ''}</div>
+              {isClient && departureFlight && (
+                <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                  {/* Route */}
+                  <div className="text-base text-gray-700">
+                    {(departureFlight?.departureAirport?.city || searchData.departureAirport?.city || '')} ({(departureFlight?.departureAirport?.airportCode || searchData.departureAirport?.airportCode || '')}) ✈ {(departureFlight?.arrivalAirport?.city || searchData.arrivalAirport?.city || '')} ({(departureFlight?.arrivalAirport?.airportCode || searchData.arrivalAirport?.airportCode || '')})
+                  </div>
 
-                {/* Flight Code */}
-                <div className="text-base text-gray-700">Số hiệu: {departureFlight?.code || ''}</div>
+                  {/* Date - Format: "Chủ nhật, 28/10/2025" */}
+                  <div className="text-base text-gray-700">
+                    {(() => {
+                      const date = searchData.departureDate || new Date();
+                      const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+                      const dayName = dayNames[date.getDay()];
+                      const day = date.getDate();
+                      const month = date.getMonth() + 1;
+                      const year = date.getFullYear();
+                      return `${dayName}, ${day}/${month}/${year}`;
+                    })()}
+                  </div>
 
-                {/* Fare Class */}
-                <div className="text-base font-bold text-gray-700">Hạng vé: {departureFlight?.fareName || ''}</div>
+                  {/* Time */}
+                  <div className="text-base text-gray-700">Giờ bay: {departureFlight?.departTime || ''} - {departureFlight?.arriveTime || ''}</div>
 
-                {/* Price Breakdown */}
-                <div className="pt-2 space-y-3 border-t border-gray-200">
-                  {/* Giá vé cho người lớn */}
-                  {totalAdults > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-base text-gray-700">Người lớn x {totalAdults}</span>
-                      <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.price) || 0) * totalAdults)} VND</span>
-                    </div>
-                  )}
+                  {/* Flight Code */}
+                  <div className="text-base text-gray-700">Số hiệu: {departureFlight?.code || ''}</div>
 
-                  {/* Giá vé cho trẻ em */}
-                  {totalChildren > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-base text-gray-700">Trẻ em x {totalChildren}</span>
-                      <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.price) || 0) * totalChildren)} VND</span>
-                    </div>
-                  )}
+                  {/* Fare Class */}
+                  <div className="text-base font-bold text-gray-700">Hạng vé: {departureFlight?.fareName || ''}</div>
 
-                  {/* Giá vé cho em bé */}
-                  {totalInfants > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-base text-gray-700">Em bé x {totalInfants}</span>
-                      <span className="font-semibold text-gray-700">{formatVnd(100000 * totalInfants)} VND</span>
-                    </div>
-                  )}
+                  {/* Price Breakdown */}
+                  <div className="pt-2 space-y-3 border-t border-gray-200">
+                    {/* Giá vé cho người lớn */}
+                    {totalAdults > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-base text-gray-700">Người lớn x {totalAdults}</span>
+                        <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.price) || 0) * totalAdults)} VND</span>
+                      </div>
+                    )}
 
-                  {/* Thuế VAT */}
-                  {(totalAdults > 0 || totalChildren > 0 || totalInfants > 0) && (
-                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                      <span className="text-base text-gray-700">Thuế VAT</span>
-                      <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
-                    </div>
-                  )}
+                    {/* Giá vé cho trẻ em */}
+                    {totalChildren > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-base text-gray-700">Trẻ em x {totalChildren}</span>
+                        <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.price) || 0) * totalChildren)} VND</span>
+                      </div>
+                    )}
+
+                    {/* Giá vé cho em bé */}
+                    {totalInfants > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-base text-gray-700">Em bé x {totalInfants}</span>
+                        <span className="font-semibold text-gray-700">{formatVnd(100000 * totalInfants)} VND</span>
+                      </div>
+                    )}
+
+                    {/* Thuế VAT */}
+                    {(totalAdults > 0 || totalChildren > 0 || totalInfants > 0) && (
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                        <span className="text-base text-gray-700">Thuế VAT</span>
+                        <span className="font-semibold text-gray-700">{formatVnd((Number(departureFlight?.tax) || 0) * (totalAdults + totalChildren))} VND</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Return Flight - chỉ hiển thị khi không phải chuyến bay một chiều */}
-            {!isOneWay && (
+            {/* Return Flight - chỉ hiển thị khi không phải chuyến bay một chiều VÀ có dữ liệu returnFlight */}
+            {!isOneWay && isClient && returnFlight && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-lg font-bold text-black">Chuyến về</h4>
@@ -1306,7 +1381,9 @@ export default function PassengersPage() {
 
                 <div className="bg-gray-50 rounded-xl p-4 space-y-2">
                   {/* Route */}
-                  <div className="text-base text-gray-700">{searchData.arrivalAirport?.city || ''} ({searchData.arrivalAirport?.airportCode || ''}) ✈ {searchData.departureAirport?.city || ''} ({searchData.departureAirport?.airportCode || ''})</div>
+                  <div className="text-base text-gray-700">
+                    {(returnFlight?.departureAirport?.city || searchData.arrivalAirport?.city || '')} ({(returnFlight?.departureAirport?.airportCode || searchData.arrivalAirport?.airportCode || '')}) ✈ {(returnFlight?.arrivalAirport?.city || searchData.departureAirport?.city || '')} ({(returnFlight?.arrivalAirport?.airportCode || searchData.departureAirport?.airportCode || '')})
+                  </div>
 
                   {/* Date - Format: "Thứ hai, 29/10/2025" */}
                   <div className="text-base text-gray-700">
@@ -1369,13 +1446,15 @@ export default function PassengersPage() {
             )}
 
             {/* Total */}
-            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8 rounded-2xl text-center mb-8 shadow-xl">
-              <div className="text-xl font-semibold mb-3">Tổng tiền</div>
-              <div className="text-4xl md:text-5xl font-bold">
-                {formatVnd(calculatedTotal)} VND
+            {isClient && (
+              <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8 rounded-2xl text-center mb-8 shadow-xl">
+                <div className="text-xl font-semibold mb-3">Tổng tiền</div>
+                <div className="text-4xl md:text-5xl font-bold">
+                  {formatVnd(calculatedTotal)} VND
+                </div>
+                <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
               </div>
-              <div className="text-red-100 text-sm mt-2">Bao gồm tất cả thuế và phí</div>
-            </div>
+            )}
 
             <button
               onClick={handleSubmit}
@@ -1395,10 +1474,12 @@ export default function PassengersPage() {
             Quay lại
           </button>
 
-          <div className="text-center">
-            <div className="text-lg font-bold text-gray-800">Tổng tiền</div>
-            <div className="text-2xl font-bold text-red-600">{formatVnd(calculatedTotal)} VND</div>
-          </div>
+          {isClient && (
+            <div className="text-center">
+              <div className="text-lg font-bold text-gray-800">Tổng tiền</div>
+              <div className="text-2xl font-bold text-red-600">{formatVnd(calculatedTotal)} VND</div>
+            </div>
+          )}
 
           <button
             onClick={handleSubmit}

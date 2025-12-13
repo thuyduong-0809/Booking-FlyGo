@@ -83,7 +83,7 @@ export default function FlightManagement({ activeSubTab = 'flights' }: FlightMan
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('Scheduled');
   const [isCreatingFlight, setIsCreatingFlight] = useState(false);
 
   const currencyFormatter = new Intl.NumberFormat('en-US');

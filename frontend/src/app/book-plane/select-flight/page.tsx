@@ -581,7 +581,7 @@ const FlightSummaryCard = ({
 };
 
 export default function SelectFlightPage() {
-  const { state, setSelectedDeparture, grandTotal } = useBooking();
+  const { state, setSelectedDeparture, setTripType, grandTotal } = useBooking();
   const { searchData } = useSearch();
 
   const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
@@ -811,6 +811,11 @@ export default function SelectFlightPage() {
       setLoading(false);
     }
   }, [searchData.departureAirport, searchData.arrivalAirport, searchData.departureDate]);
+
+  // Set tripType khi component mount - Trang này là chuyến một chiều
+  useEffect(() => {
+    setTripType('oneway');
+  }, [setTripType]);
 
   // Đồng bộ ngày với searchData khi context thay đổi
   useEffect(() => {
@@ -1146,6 +1151,8 @@ export default function SelectFlightPage() {
                                       code: flight.code,
                                       departTime: flight.departTime,
                                       arriveTime: flight.arriveTime,
+                                      departureAirport: searchData.departureAirport,
+                                      arrivalAirport: searchData.arrivalAirport,
                                     };
 
                                     setSelectedDeparture(flightData);
