@@ -1,6 +1,6 @@
 "use client";
 
-import { ClockIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { MapPinIcon } from "@heroicons/react/24/outline";
 import React, { useState, useRef, useEffect, FC } from "react";
 import ClearDataButton from "./ClearDataButton";
 import { Airport } from "../../../services/airports.service";
@@ -32,16 +32,6 @@ const LocationInput: FC<LocationInputProps> = ({
   const [value, setValue] = useState("");
   const [showPopover, setShowPopover] = useState(autoFocus);
 
-  // Cập nhật value khi selectedAirport thay đổi
-  useEffect(() => {
-    if (selectedAirport) {
-      const displayText = `${selectedAirport.city}, ${selectedAirport.country}`;
-      setValue(displayText);
-    } else {
-      setValue("");
-    }
-  }, [selectedAirport]);
-
   useEffect(() => {
     setShowPopover(autoFocus);
   }, [autoFocus]);
@@ -57,9 +47,10 @@ const LocationInput: FC<LocationInputProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showPopover]);
 
+  // Reset search value when popover opens
   useEffect(() => {
-    if (showPopover && inputRef.current) {
-      inputRef.current.focus();
+    if (showPopover) {
+      setValue("");
     }
   }, [showPopover]);
 
@@ -74,40 +65,46 @@ const LocationInput: FC<LocationInputProps> = ({
   };
 
   const handleSelectLocation = (airport: Airport) => {
-    const displayText = `${airport.city}, ${airport.country}`;
-    setValue(displayText);
+    setValue("");
     setShowPopover(false);
     onLocationSelect?.(airport);
   };
 
   const renderRecentSearches = () => {
     return (
-      <div className="px-4 py-3">
-        <h3 className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-          Các thành phố phổ biến
-        </h3>
-        <div className="mt-2 space-y-2">
-          {airports.slice(0, 4).map((airport, index) => (
-            <div
-              onClick={() => handleSelectLocation(airport)}
-              key={airport.airportId}
-              className="group flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md"
-            >
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-                <MapPinIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
-                  {airport.city}, {airport.country}
-                </div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
-                  {airport.airportName} ({airport.airportCode})
-                </div>
-              </div>
-            </div>
-          ))}
+      <>
+        <div className="px-4 py-3">
+          <h3 className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            Tất cả sân bay ({airports.length})
+          </h3>
         </div>
-      </div>
+        <div className="px-4 pb-3 max-h-[320px] overflow-y-auto" style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#cbd5e1 transparent'
+        }}>
+          <div className="space-y-2">
+            {airports.map((airport, index) => (
+              <div
+                onClick={() => handleSelectLocation(airport)}
+                key={airport.airportId}
+                className="group flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+                  <MapPinIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
+                    {airport.city}, {airport.country}
+                  </div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+                    {airport.airportName} ({airport.airportCode})
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
     );
   };
 
@@ -128,32 +125,39 @@ const LocationInput: FC<LocationInputProps> = ({
     }
 
     return (
-      <div className="px-4 py-3">
-        <h3 className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-          Kết quả tìm kiếm ({filteredAirports.length})
-        </h3>
-        <div className="mt-2 space-y-2">
-          {filteredAirports.map((airport, index) => (
-            <div
-              onClick={() => handleSelectLocation(airport)}
-              key={airport.airportId}
-              className="group flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md"
-            >
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-                <MapPinIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
-                  {airport.city}, {airport.country}
-                </div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
-                  {airport.airportName} ({airport.airportCode})
-                </div>
-              </div>
-            </div>
-          ))}
+      <>
+        <div className="px-4 py-3">
+          <h3 className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            Kết quả tìm kiếm ({filteredAirports.length})
+          </h3>
         </div>
-      </div>
+        <div className="px-4 pb-3 max-h-[320px] overflow-y-auto" style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#cbd5e1 transparent'
+        }}>
+          <div className="space-y-2">
+            {filteredAirports.map((airport, index) => (
+              <div
+                onClick={() => handleSelectLocation(airport)}
+                key={airport.airportId}
+                className="group flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+                  <MapPinIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
+                    {airport.city}, {airport.country}
+                  </div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+                    {airport.airportName} ({airport.airportCode})
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
     );
   };
 
@@ -178,11 +182,8 @@ const LocationInput: FC<LocationInputProps> = ({
           <input
             className={`block w-full bg-transparent border-none focus:ring-0 p-0 focus:outline-none ${isHeroStyle ? "text-base font-semibold text-neutral-900 placeholder:text-neutral-500" : isSearchModal ? "text-base font-semibold text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-500" : "focus:placeholder-neutral-300 xl:text-lg font-semibold placeholder-neutral-800 dark:placeholder-neutral-200"} truncate`}
             placeholder={placeHolder}
-            value={value}
-            autoFocus={showPopover}
-            onChange={(e) => {
-              setValue(e.currentTarget.value);
-            }}
+            value={selectedAirport ? `${selectedAirport.city}, ${selectedAirport.country}` : ""}
+            readOnly
             ref={inputRef}
           />
           {(isHeroStyle || isSearchModal) && desc && (
@@ -192,11 +193,11 @@ const LocationInput: FC<LocationInputProps> = ({
           )}
           {!isHeroStyle && !isSearchModal && (
             <span className="block mt-0.5 text-sm text-neutral-400 font-light ">
-              <span className="line-clamp-1">{!!value ? placeHolder : desc}</span>
+              <span className="line-clamp-1">{!!selectedAirport ? placeHolder : desc}</span>
             </span>
           )}
         </div>
-        {value && (
+        {selectedAirport && (
           <ClearDataButton
             onClick={() => {
               setValue("");
@@ -215,15 +216,51 @@ const LocationInput: FC<LocationInputProps> = ({
 
       {showPopover && (
         <div
-          className={`absolute ${isHeroStyle || isSearchModal ? "left-1/2 w-[calc(100%+2rem)] min-w-[400px]" : "left-0 min-w-[400px] sm:min-w-[560px]"} z-[9999] bg-white dark:bg-neutral-800 top-full mt-3 rounded-2xl shadow-xl border border-neutral-200 dark:border-neutral-700 max-h-[420px] overflow-y-auto`}
+          className={`absolute ${isHeroStyle || isSearchModal ? "left-1/2 w-[calc(100%+2rem)] min-w-[400px]" : "left-0 min-w-[400px] sm:min-w-[560px]"} z-[9999] bg-white dark:bg-neutral-800 top-full mt-3 rounded-2xl shadow-xl border border-neutral-200 dark:border-neutral-700`}
           style={{
             ...(isHeroStyle || isSearchModal ? {
               transform: isSearchModalPopup ? 'translateX(calc(-50% + 10px))' : 'translateX(calc(-50% + 5px))'
-            } : {}),
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#cbd5e1 transparent'
+            } : {})
           }}
         >
+          {/* Search Input - Fixed at top */}
+          <div className="sticky top-0 bg-white dark:bg-neutral-800 px-4 pt-4 pb-3 border-b border-neutral-200 dark:border-neutral-700 z-10">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Tìm kiếm thành phố, sân bay..."
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="w-full px-4 py-2.5 pl-10 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                autoFocus
+              />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              {value && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setValue("");
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Results */}
           {value ? renderSearchValue() : renderRecentSearches()}
         </div>
       )}
