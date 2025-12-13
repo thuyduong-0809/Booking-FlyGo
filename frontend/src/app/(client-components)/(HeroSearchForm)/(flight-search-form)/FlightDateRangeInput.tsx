@@ -33,6 +33,9 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
   const { searchData, updateDepartureDate, updateReturnDate } = useSearch();
   const { showNotification } = useNotification();
 
+  // State để tránh hydration error
+  const [isClient, setIsClient] = useState(false);
+
   // Khởi tạo state với giá trị từ searchData hoặc null (sẽ được set trong useEffect)
   const [startDate, setStartDate] = useState<Date | null>(
     searchData.departureDate || null
@@ -41,8 +44,15 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
     searchData.returnDate || null
   );
 
+  // Đánh dấu component đã mount trên client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Khởi tạo dates mặc định chỉ trên client để tránh hydration error
   useEffect(() => {
+    if (!isClient) return;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
 
@@ -55,7 +65,7 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
       setEndDate(defaultEndDate);
       updateReturnDate(defaultEndDate);
     }
-  }, []); // Chỉ chạy một lần khi component mount
+  }, [isClient]); // Chạy khi isClient thay đổi
 
   // Đồng bộ state với context khi searchData thay đổi
   useEffect(() => {
@@ -124,17 +134,19 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
         </div>
         <div className="flex-grow text-left">
           <span className={`block ${isHeroStyle ? "text-base" : "xl:text-lg"} font-semibold ${isHeroStyle ? "text-neutral-900" : ""}`}>
-            {startDate?.toLocaleDateString("vi-VN", {
-              month: "short",
-              day: "2-digit",
-            }) || "Chọn ngày"}
-            {selectsRange && endDate
-              ? " - " +
-              endDate?.toLocaleDateString("vi-VN", {
+            {!isClient || !startDate
+              ? "Chọn ngày"
+              : startDate?.toLocaleDateString("vi-VN", {
                 month: "short",
                 day: "2-digit",
-              })
-              : ""}
+              }) +
+              (selectsRange && endDate
+                ? " - " +
+                endDate?.toLocaleDateString("vi-VN", {
+                  month: "short",
+                  day: "2-digit",
+                })
+                : "")}
           </span>
           <span className={`block mt-1 leading-none font-${isHeroStyle ? "semibold" : "light"} ${isHeroStyle ? "text-xs uppercase tracking-wide text-neutral-600" : "text-sm text-neutral-400"}`}>
             {selectsRange ? "Ngày đi - Ngày về" : "Ngày đi"}

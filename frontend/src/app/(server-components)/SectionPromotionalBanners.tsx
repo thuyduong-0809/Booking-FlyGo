@@ -3,10 +3,10 @@
 import React, { FC, useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { ChevronLeftIcon, ChevronRightIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
-import bannerDiscount20 from "@/images/test.png";
-import bannerDutyFree from "@/images/test.png";
-import bannerFlyGoPremium from "@/images/test.png";
-import bannerHero from "@/images/test.png";
+import bannerDiscount20 from "@/images/Blue and White Simple Travel Banner.svg";
+import bannerDutyFree from "@/images/Blue and White Modern Travel Facebook Post.svg";
+import bannerFlyGoPremium from "@/images/Blue Modern Travel Flight Airline Service Instagram Post.svg";
+import bannerHero from "@/images/Blue White and Yellow Modern Collage Travel Agency Presentation.svg";
 import backgroundImage from "@/images/travelhero2.png";
 
 export interface SectionPromotionalBannersProps {

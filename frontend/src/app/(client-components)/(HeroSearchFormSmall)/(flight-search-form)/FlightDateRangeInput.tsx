@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useState, useEffect } from "react";
 import { FC } from "react";
 import DatePicker from "react-datepicker";
 import { Popover, Transition } from "@headlessui/react";
@@ -22,10 +22,15 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
   hasButtonSubmit = true,
   selectsRange = true,
 }) => {
-  const [startDate, setStartDate] = useState<Date | null>(
-    new Date("2023/05/01")
-  );
-  const [endDate, setEndDate] = useState<Date | null>(new Date("2023/05/16"));
+  const [isClient, setIsClient] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+    setStartDate(new Date("2023/05/01"));
+    setEndDate(new Date("2023/05/16"));
+  }, []);
 
   const onChangeRangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates;
@@ -38,17 +43,19 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
       <>
         <div className="flex-grow text-left">
           <span className="block xl:text-base font-semibold">
-            {startDate?.toLocaleDateString("en-US", {
-              month: "short",
-              day: "2-digit",
-            }) || "Add dates"}
-            {selectsRange && endDate
-              ? " - " +
+            {!isClient || !startDate
+              ? "Add dates"
+              : startDate?.toLocaleDateString("en-US", {
+                month: "short",
+                day: "2-digit",
+              }) +
+              (selectsRange && endDate
+                ? " - " +
                 endDate?.toLocaleDateString("en-US", {
                   month: "short",
                   day: "2-digit",
                 })
-              : ""}
+                : "")}
           </span>
           <span className="block mt-1 text-sm text-neutral-400 leading-none font-light">
             {selectsRange ? "Pick up - Drop off" : "Pick up date"}
@@ -64,9 +71,8 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
         {({ open }) => (
           <>
             <div
-              className={`flex-1 z-10 flex items-center focus:outline-none ${
-                open ? "nc-hero-field-focused--2" : ""
-              }`}
+              className={`flex-1 z-10 flex items-center focus:outline-none ${open ? "nc-hero-field-focused--2" : ""
+                }`}
             >
               <Popover.Button
                 className={`flex-1 z-10 flex relative ${fieldClassName} items-center space-x-3 focus:outline-none `}
