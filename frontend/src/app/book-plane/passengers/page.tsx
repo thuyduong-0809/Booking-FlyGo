@@ -164,41 +164,17 @@ export default function PassengersPage() {
         if (existing) {
           return existing;
         }
-        // Nếu không, tạo mới với dữ liệu mẫu
-        const sampleData = [
-          {
-            gender: 'male' as const,
-            lastName: 'Nguyễn Văn',
-            firstName: 'An',
-            dateOfBirth: '1990-05-15',
-            phoneNumber: '0912345678',
-            email: 'nguyenvanan@gmail.com',
-            idNumber: '079090001234',
-          },
-          {
-            gender: 'female' as const,
-            lastName: 'Trần Thị',
-            firstName: 'Bình',
-            dateOfBirth: '1992-08-20',
-            phoneNumber: '0987654321',
-            email: 'tranthibinh@gmail.com',
-            idNumber: '079092002345',
-          },
-          {
-            gender: 'male' as const,
-            lastName: 'Lê Hoàng',
-            firstName: 'Cường',
-            dateOfBirth: '1988-12-10',
-            phoneNumber: '0909123456',
-            email: 'lehoangcuong@gmail.com',
-            idNumber: '079088003456',
-          },
-        ];
-        const sample = sampleData[index % sampleData.length];
+        // Nếu không, tạo mới
         return {
           id: index + 1,
-          ...sample,
+          gender: 'male' as const,
+          lastName: ``,
+          firstName: ``,
+          dateOfBirth: '',
+          phoneNumber: ``,
+          email: ``,
           country: 'Việt Nam',
+          idNumber: '',
           currentResidence: '',
           skyjoyMemberCode: '',
           buyForMe: false,
@@ -216,25 +192,12 @@ export default function PassengersPage() {
         if (existing) {
           return existing;
         }
-        // Dữ liệu mẫu cho trẻ em (2-11 tuổi)
-        const sampleChildren = [
-          {
-            gender: 'male' as const,
-            lastName: 'Nguyễn Văn',
-            firstName: 'Đức',
-            dateOfBirth: '2018-03-10',
-          },
-          {
-            gender: 'female' as const,
-            lastName: 'Trần Thị',
-            firstName: 'Ân',
-            dateOfBirth: '2016-07-22',
-          },
-        ];
-        const sample = sampleChildren[index % sampleChildren.length];
         return {
           id: index + 1,
-          ...sample,
+          gender: 'male' as const,
+          lastName: ``,
+          firstName: ``,
+          dateOfBirth: '',
           accompaniedBy: '',
         };
       });
@@ -248,25 +211,12 @@ export default function PassengersPage() {
         if (existing) {
           return existing;
         }
-        // Dữ liệu mẫu cho em bé (dưới 2 tuổi)
-        const sampleInfants = [
-          {
-            gender: 'female' as const,
-            lastName: 'Nguyễn Văn',
-            firstName: 'Ngọc',
-            dateOfBirth: '2024-06-15',
-          },
-          {
-            gender: 'male' as const,
-            lastName: 'Trần Thị',
-            firstName: 'Bảo',
-            dateOfBirth: '2024-01-20',
-          },
-        ];
-        const sample = sampleInfants[index % sampleInfants.length];
         return {
           id: index + 1,
-          ...sample,
+          gender: 'female' as const,
+          lastName: ``,
+          firstName: ``,
+          dateOfBirth: '',
           accompaniedBy: '',
         };
       });

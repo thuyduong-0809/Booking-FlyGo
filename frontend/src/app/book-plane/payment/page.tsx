@@ -108,14 +108,19 @@ export default function PaymentPage() {
     // Ưu tiên 1: Lấy từ bookingData nếu có (khi vào từ my-bookings)
     if (bookingData?.passengers && Array.isArray(bookingData.passengers)) {
       const counts = {
-        adults: bookingData.passengers.filter((p: any) => p.ageCategory === 'Adult').length || 1,
-        children: bookingData.passengers.filter((p: any) => p.ageCategory === 'Child').length || 0,
-        infants: bookingData.passengers.filter((p: any) => p.ageCategory === 'Infant').length || 0
+        adults: bookingData.passengers.filter((p: any) => p.passengerType === 'Adult' || p.ageCategory === 'Adult').length || 1,
+        children: bookingData.passengers.filter((p: any) => p.passengerType === 'Child' || p.ageCategory === 'Child').length || 0,
+        infants: bookingData.passengers.filter((p: any) => p.passengerType === 'Infant' || p.ageCategory === 'Infant').length || 0
       };
       console.log('Payment - Loaded passenger counts from bookingData:', counts);
       setTotalAdults(Math.max(1, counts.adults));
       setTotalChildren(Math.max(0, counts.children));
       setTotalInfants(Math.max(0, counts.infants));
+
+      // Lưu vào localStorage để backup
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('passengerCounts', JSON.stringify(counts));
+      }
       return;
     }
 
