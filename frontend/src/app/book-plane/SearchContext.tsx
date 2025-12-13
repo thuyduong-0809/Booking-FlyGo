@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Airport } from '../../services/airports.service';
 
 export interface SearchData {
@@ -42,17 +42,38 @@ interface SearchProviderProps {
 }
 
 export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
-    const [searchData, setSearchData] = useState<SearchData>({
-        departureAirport: null,
-        arrivalAirport: null,
-        departureDate: null,
-        returnDate: null,
-        tripType: 'roundTrip',
-        passengers: {
-            adults: 1,
-            children: 0,
-            infants: 0,
-        },
+    // Khởi tạo state từ localStorage nếu có
+    const [searchData, setSearchData] = useState<SearchData>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('searchData');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Parse dates từ string về Date object
+                    if (parsed.departureDate) {
+                        parsed.departureDate = new Date(parsed.departureDate);
+                    }
+                    if (parsed.returnDate) {
+                        parsed.returnDate = new Date(parsed.returnDate);
+                    }
+                    return parsed;
+                } catch (error) {
+                    console.error('Error parsing searchData from localStorage:', error);
+                }
+            }
+        }
+        return {
+            departureAirport: null,
+            arrivalAirport: null,
+            departureDate: null,
+            returnDate: null,
+            tripType: 'roundTrip',
+            passengers: {
+                adults: 1,
+                children: 0,
+                infants: 0,
+            },
+        };
     });
 
     const updateDepartureAirport = (airport: Airport | null) => {
@@ -78,6 +99,25 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
     const updatePassengers = (passengers: { adults: number; children: number; infants: number }) => {
         setSearchData(prev => ({ ...prev, passengers }));
     };
+
+    // Lưu searchData vào localStorage mỗi khi thay đổi
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                localStorage.setItem('searchData', JSON.stringify(searchData));
+                // Lưu riêng passengerCounts để dễ truy cập
+                if (searchData.passengers) {
+                    localStorage.setItem('passengerCounts', JSON.stringify({
+                        adults: searchData.passengers.adults,
+                        children: searchData.passengers.children,
+                        infants: searchData.passengers.infants
+                    }));
+                }
+            } catch (error) {
+                console.error('Error saving searchData to localStorage:', error);
+            }
+        }
+    }, [searchData]);
 
     return (
         <SearchContext.Provider value={{

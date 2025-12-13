@@ -62,63 +62,217 @@ export default function PassengersPage() {
   const { searchData } = useSearch();
   const { showNotification } = useNotification();
 
-  // Lấy số lượng người từ searchData
-  const totalAdults = searchData.passengers?.adults || 0;
-  const totalChildren = searchData.passengers?.children || 0;
-  const totalInfants = searchData.passengers?.infants || 0;
+  // State để tránh hydration error
+  const [isClient, setIsClient] = useState(false);
+
+  // State cho số lượng hành khách
+  const [totalAdults, setTotalAdults] = useState(1);
+  const [totalChildren, setTotalChildren] = useState(0);
+  const [totalInfants, setTotalInfants] = useState(0);
 
   // Kiểm tra loại chuyến bay - Ưu tiên lấy từ BookingContext
   const isOneWay = state.tripType === 'oneway';
 
-  const [passengers, setPassengers] = useState<Passenger[]>(
-    Array.from({ length: totalAdults }, (_, index) => ({
-      id: index + 1,
-      gender: 'male' as const,
-      lastName: ``,
-      firstName: ``,
-      dateOfBirth: '',
-      phoneNumber: ``,
-      email: ``,
-      country: '',
-      idNumber: '',
-      currentResidence: '',
-      skyjoyMemberCode: '',
-      buyForMe: false,
-      ottPreference: 'none' as const,
-      rememberDetails: false,
-    }))
-  );
+  // Đánh dấu đã render ở client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  const [childPassengers, setChildPassengers] = useState<ChildPassenger[]>(
-    Array.from({ length: totalChildren }, (_, index) => {
-      return {
-        id: index + 1,
-        gender: 'male' as const,
-        lastName: ``,
-        firstName: ``,
-        dateOfBirth: '',
-        accompaniedBy: '',
-      };
-    })
-  );
+  // Load số lượng hành khách từ searchData hoặc localStorage
+  useEffect(() => {
+    if (!isClient) return;
 
-  const [infantPassengers, setInfantPassengers] = useState<InfantPassenger[]>(
-    Array.from({ length: totalInfants }, (_, index) => {
-      return {
-        id: index + 1,
-        gender: 'female' as const,
-        lastName: ``,
-        firstName: ``,
-        dateOfBirth: '',
-        accompaniedBy: '',
+    // Lấy số lượng người từ localStorage trước (vì nó được lưu từ select-flight)
+    let counts = { adults: 1, children: 0, infants: 0 };
+
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('passengerCounts');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          counts = {
+            adults: Math.max(1, parsed.adults || 1),
+            children: Math.max(0, parsed.children || 0),
+            infants: Math.max(0, parsed.infants || 0)
+          };
+          console.log('Loaded passenger counts from localStorage:', counts);
+        } catch (e) {
+          console.error('Error parsing passenger counts:', e);
+        }
+      }
+    }
+
+    // Nếu searchData.passengers có và khác với localStorage, ưu tiên searchData
+    if (searchData.passengers && typeof searchData.passengers.adults === 'number' && searchData.passengers.adults > 0) {
+      const searchCounts = {
+        adults: Math.max(1, searchData.passengers.adults || 1),
+        children: Math.max(0, searchData.passengers.children || 0),
+        infants: Math.max(0, searchData.passengers.infants || 0)
       };
-    })
-  );
+
+      // Chỉ cập nhật nếu searchData khác với localStorage
+      if (searchCounts.adults !== counts.adults ||
+        searchCounts.children !== counts.children ||
+        searchCounts.infants !== counts.infants) {
+        counts = searchCounts;
+        console.log('Loaded passenger counts from searchData (overriding localStorage):', counts);
+
+        // Lưu lại vào localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('passengerCounts', JSON.stringify(counts));
+        }
+      }
+    }
+
+    // Đảm bảo ít nhất có 1 người lớn
+    if (counts.adults < 1) {
+      counts.adults = 1;
+    }
+
+    console.log('Final passenger counts:', counts);
+    setTotalAdults(counts.adults);
+    setTotalChildren(counts.children);
+    setTotalInfants(counts.infants);
+  }, [isClient, searchData.passengers]);
 
   const [surveyChecked, setSurveyChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const { setBookingId } = useBooking();
+
+  // State cho passengers - sẽ được cập nhật khi totalAdults thay đổi
+  const [passengers, setPassengers] = useState<Passenger[]>([]);
+  const [childPassengers, setChildPassengers] = useState<ChildPassenger[]>([]);
+  const [infantPassengers, setInfantPassengers] = useState<InfantPassenger[]>([]);
+
+  // Cập nhật passenger arrays khi số lượng thay đổi
+  useEffect(() => {
+    if (!isClient) return;
+
+    // Đảm bảo có ít nhất 1 người lớn
+    const safeAdults = Math.max(1, totalAdults);
+    const safeChildren = Math.max(0, totalChildren);
+    const safeInfants = Math.max(0, totalInfants);
+
+    console.log('Updating passenger arrays:', { totalAdults: safeAdults, totalChildren: safeChildren, totalInfants: safeInfants });
+
+    // Cập nhật passengers người lớn - giữ lại dữ liệu đã nhập nếu có
+    setPassengers(prev => {
+      const newPassengers = Array.from({ length: safeAdults }, (_, index) => {
+        // Nếu đã có dữ liệu cho index này, giữ lại
+        const existing = prev.find(p => p.id === index + 1);
+        if (existing) {
+          return existing;
+        }
+        // Nếu không, tạo mới với dữ liệu mẫu
+        const sampleData = [
+          {
+            gender: 'male' as const,
+            lastName: 'Nguyễn Văn',
+            firstName: 'An',
+            dateOfBirth: '1990-05-15',
+            phoneNumber: '0912345678',
+            email: 'nguyenvanan@gmail.com',
+            idNumber: '079090001234',
+          },
+          {
+            gender: 'female' as const,
+            lastName: 'Trần Thị',
+            firstName: 'Bình',
+            dateOfBirth: '1992-08-20',
+            phoneNumber: '0987654321',
+            email: 'tranthibinh@gmail.com',
+            idNumber: '079092002345',
+          },
+          {
+            gender: 'male' as const,
+            lastName: 'Lê Hoàng',
+            firstName: 'Cường',
+            dateOfBirth: '1988-12-10',
+            phoneNumber: '0909123456',
+            email: 'lehoangcuong@gmail.com',
+            idNumber: '079088003456',
+          },
+        ];
+        const sample = sampleData[index % sampleData.length];
+        return {
+          id: index + 1,
+          ...sample,
+          country: 'Việt Nam',
+          currentResidence: '',
+          skyjoyMemberCode: '',
+          buyForMe: false,
+          ottPreference: 'none' as const,
+          rememberDetails: false,
+        };
+      });
+      return newPassengers;
+    });
+
+    // Cập nhật child passengers - giữ lại dữ liệu đã nhập nếu có
+    setChildPassengers(prev => {
+      const newChildren = Array.from({ length: safeChildren }, (_, index) => {
+        const existing = prev.find(p => p.id === index + 1);
+        if (existing) {
+          return existing;
+        }
+        // Dữ liệu mẫu cho trẻ em (2-11 tuổi)
+        const sampleChildren = [
+          {
+            gender: 'male' as const,
+            lastName: 'Nguyễn Văn',
+            firstName: 'Đức',
+            dateOfBirth: '2018-03-10',
+          },
+          {
+            gender: 'female' as const,
+            lastName: 'Trần Thị',
+            firstName: 'Ân',
+            dateOfBirth: '2016-07-22',
+          },
+        ];
+        const sample = sampleChildren[index % sampleChildren.length];
+        return {
+          id: index + 1,
+          ...sample,
+          accompaniedBy: '',
+        };
+      });
+      return newChildren;
+    });
+
+    // Cập nhật infant passengers - giữ lại dữ liệu đã nhập nếu có
+    setInfantPassengers(prev => {
+      const newInfants = Array.from({ length: safeInfants }, (_, index) => {
+        const existing = prev.find(p => p.id === index + 1);
+        if (existing) {
+          return existing;
+        }
+        // Dữ liệu mẫu cho em bé (dưới 2 tuổi)
+        const sampleInfants = [
+          {
+            gender: 'female' as const,
+            lastName: 'Nguyễn Văn',
+            firstName: 'Ngọc',
+            dateOfBirth: '2024-06-15',
+          },
+          {
+            gender: 'male' as const,
+            lastName: 'Trần Thị',
+            firstName: 'Bảo',
+            dateOfBirth: '2024-01-20',
+          },
+        ];
+        const sample = sampleInfants[index % sampleInfants.length];
+        return {
+          id: index + 1,
+          ...sample,
+          accompaniedBy: '',
+        };
+      });
+      return newInfants;
+    });
+  }, [totalAdults, totalChildren, totalInfants, isClient]);
 
   // Hàm validate email
   const validateEmail = (email: string): string | null => {
@@ -588,12 +742,6 @@ export default function PassengersPage() {
 
   const [departureFlight, setDepartureFlight] = useState<any>(null);
   const [returnFlight, setReturnFlight] = useState<any>(null);
-  const [isClient, setIsClient] = useState(false);
-
-  // Đánh dấu đã render ở client để tránh hydration error
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Load dữ liệu từ context hoặc localStorage
   useEffect(() => {
@@ -698,7 +846,7 @@ export default function PassengersPage() {
 
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-black">
-                  {isOneWay ? 'CHUYẾN BAY MỘT CHIỀU' : 'CHUYẾN BAY KHỨ HỒI'} | {totalAdults} Người lớn {totalChildren > 0 && `${totalChildren} Trẻ em`} {totalInfants > 0 && `${totalInfants} Em bé`}
+                  {isOneWay ? 'CHUYẾN BAY MỘT CHIỀU' : 'CHUYẾN BAY KHỨ HỒI'} | {totalAdults} {totalAdults === 1 ? 'Người lớn' : 'Người lớn'}{totalChildren > 0 && `, ${totalChildren} ${totalChildren === 1 ? 'Trẻ em' : 'Trẻ em'}`}{totalInfants > 0 && `, ${totalInfants} ${totalInfants === 1 ? 'Em bé' : 'Em bé'}`}
                 </h1>
                 <div className="text-black mt-2 font-medium">
                   <div className="flex items-center space-x-2">

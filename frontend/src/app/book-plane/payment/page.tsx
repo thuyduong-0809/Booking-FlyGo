@@ -19,12 +19,20 @@ export default function PaymentPage() {
   const { state, grandTotal, setBookingId } = useBooking();
   const { searchData } = useSearch();
 
+  // State để tránh hydration error
+  const [isClient, setIsClient] = useState(false);
+
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('atm');
   const [showMoMoPayment, setShowMoMoPayment] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [bookingData, setBookingData] = useState<any>(null);
   const [loadingBooking, setLoadingBooking] = useState(false);
+
+  // Đánh dấu đã render ở client để tránh hydration error
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Handle bookingId from URL (when coming from my-bookings)
   useEffect(() => {
@@ -88,13 +96,84 @@ export default function PaymentPage() {
 
   const selectedServices = state.selectedServices || [];
 
-  // Lấy số lượng người từ bookingData hoặc searchData
-  const totalAdults = bookingData?.passengers?.filter((p: any) => p.ageCategory === 'Adult').length || searchData.passengers?.adults || 0;
-  const totalChildren = bookingData?.passengers?.filter((p: any) => p.ageCategory === 'Child').length || searchData.passengers?.children || 0;
-  const totalInfants = bookingData?.passengers?.filter((p: any) => p.ageCategory === 'Infant').length || searchData.passengers?.infants || 0;
+  // State cho số lượng hành khách
+  const [totalAdults, setTotalAdults] = useState(1);
+  const [totalChildren, setTotalChildren] = useState(0);
+  const [totalInfants, setTotalInfants] = useState(0);
 
-  // Kiểm tra loại chuyến bay
-  const isOneWay = bookingData?.bookingFlights?.length === 1 || searchData.tripType === 'oneWay';
+  // Load số lượng hành khách từ bookingData, localStorage hoặc searchData
+  useEffect(() => {
+    if (!isClient) return;
+
+    // Ưu tiên 1: Lấy từ bookingData nếu có (khi vào từ my-bookings)
+    if (bookingData?.passengers && Array.isArray(bookingData.passengers)) {
+      const counts = {
+        adults: bookingData.passengers.filter((p: any) => p.ageCategory === 'Adult').length || 1,
+        children: bookingData.passengers.filter((p: any) => p.ageCategory === 'Child').length || 0,
+        infants: bookingData.passengers.filter((p: any) => p.ageCategory === 'Infant').length || 0
+      };
+      console.log('Payment - Loaded passenger counts from bookingData:', counts);
+      setTotalAdults(Math.max(1, counts.adults));
+      setTotalChildren(Math.max(0, counts.children));
+      setTotalInfants(Math.max(0, counts.infants));
+      return;
+    }
+
+    // Ưu tiên 2: Lấy từ localStorage (vì nó được lưu từ select-flight)
+    let counts = { adults: 1, children: 0, infants: 0 };
+
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('passengerCounts');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          counts = {
+            adults: Math.max(1, parsed.adults || 1),
+            children: Math.max(0, parsed.children || 0),
+            infants: Math.max(0, parsed.infants || 0)
+          };
+          console.log('Payment - Loaded passenger counts from localStorage:', counts);
+        } catch (e) {
+          console.error('Error parsing passenger counts:', e);
+        }
+      }
+    }
+
+    // Ưu tiên 3: Nếu searchData.passengers có và khác với localStorage, ưu tiên searchData
+    if (searchData.passengers && typeof searchData.passengers.adults === 'number' && searchData.passengers.adults > 0) {
+      const searchCounts = {
+        adults: Math.max(1, searchData.passengers.adults || 1),
+        children: Math.max(0, searchData.passengers.children || 0),
+        infants: Math.max(0, searchData.passengers.infants || 0)
+      };
+
+      // Chỉ cập nhật nếu searchData khác với localStorage
+      if (searchCounts.adults !== counts.adults ||
+        searchCounts.children !== counts.children ||
+        searchCounts.infants !== counts.infants) {
+        counts = searchCounts;
+        console.log('Payment - Loaded passenger counts from searchData (overriding localStorage):', counts);
+
+        // Lưu lại vào localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('passengerCounts', JSON.stringify(counts));
+        }
+      }
+    }
+
+    // Đảm bảo ít nhất có 1 người lớn
+    if (counts.adults < 1) {
+      counts.adults = 1;
+    }
+
+    console.log('Payment - Final passenger counts:', counts);
+    setTotalAdults(counts.adults);
+    setTotalChildren(counts.children);
+    setTotalInfants(counts.infants);
+  }, [isClient, bookingData, searchData.passengers]);
+
+  // Kiểm tra loại chuyến bay - Ưu tiên từ BookingContext state
+  const isOneWay = state.tripType === 'oneway' || bookingData?.bookingFlights?.length === 1;
 
   // Tính toán giá vé
   const calculateFlightPrice = (flight: any) => {
@@ -189,6 +268,18 @@ export default function PaymentPage() {
         <div className="bg-white rounded-2xl p-8 shadow-xl text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Đang tải thông tin đặt chỗ...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Nếu chưa mount ở client, hiển thị loading
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
         </div>
       </div>
     );

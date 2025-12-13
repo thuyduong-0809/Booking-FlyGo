@@ -596,9 +596,21 @@ export default function SelectFlightPage() {
   const [passengerName, setPassengerName] = useState<string>('');
 
   // Số lượng vé từ searchData - lấy số lượng cho từng loại hành khách
-  const adultsCount = searchData.passengers?.adults || 0;
+  const adultsCount = searchData.passengers?.adults || 1;
   const childrenCount = searchData.passengers?.children || 0;
   const infantsCount = searchData.passengers?.infants || 0;
+
+  // Lưu số lượng hành khách vào localStorage ngay khi component mount hoặc searchData thay đổi
+  useEffect(() => {
+    if (typeof window !== 'undefined' && searchData.passengers) {
+      localStorage.setItem('passengerCounts', JSON.stringify({
+        adults: adultsCount,
+        children: childrenCount,
+        infants: infantsCount
+      }));
+      console.log('Saved passenger counts to localStorage:', { adults: adultsCount, children: childrenCount, infants: infantsCount });
+    }
+  }, [adultsCount, childrenCount, infantsCount, searchData.passengers]);
 
   // Sử dụng ngày từ searchData hoặc mặc định
   const [selectedDepartureDate, setSelectedDepartureDate] = useState(
@@ -998,7 +1010,54 @@ export default function SelectFlightPage() {
         }
       }
 
-      // Nếu tất cả kiểm tra đều pass, chuyển sang trang tiếp theo
+      // Nếu tất cả kiểm tra đều pass, lưu thông tin chuyến bay vào context
+      if (selectedDepartureFlight) {
+        const departureFlight = departureFlights.find(f => f.id === selectedDepartureFlight.flightId);
+        const departureFare = departureFlight?.fares[selectedDepartureFlight.fareIndex];
+
+        if (departureFlight && departureFare) {
+          // Lưu vào context
+          setSelectedDeparture({
+            flightId: departureFlight.code || departureFlight.id,
+            fareIndex: selectedDepartureFlight.fareIndex,
+            fareName: departureFare.name,
+            price: departureFare.price,
+            tax: departureFare.tax,
+            service: departureFare.service,
+            code: departureFlight.code,
+            departTime: departureFlight.departTime,
+            arriveTime: departureFlight.arriveTime,
+            departureAirport: searchData.departureAirport,
+            arrivalAirport: searchData.arrivalAirport
+          });
+
+          // Lưu vào localStorage để fallback
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('selectedDepartureFlight', JSON.stringify({
+              flightId: departureFlight.code || departureFlight.id,
+              fareIndex: selectedDepartureFlight.fareIndex,
+              fareName: departureFare.name,
+              price: departureFare.price,
+              tax: departureFare.tax,
+              service: departureFare.service,
+              code: departureFlight.code,
+              departTime: departureFlight.departTime,
+              arriveTime: departureFlight.arriveTime,
+              departureAirport: searchData.departureAirport,
+              arrivalAirport: searchData.arrivalAirport
+            }));
+
+            // Lưu số lượng hành khách vào localStorage
+            localStorage.setItem('passengerCounts', JSON.stringify({
+              adults: adultsCount,
+              children: childrenCount,
+              infants: infantsCount
+            }));
+          }
+        }
+      }
+
+      // Chuyển sang trang tiếp theo
       window.location.href = '/book-plane/passengers';
     } catch (error) {
       console.error('Error checking seat availability:', error);
@@ -1027,7 +1086,7 @@ export default function SelectFlightPage() {
 
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-black">
-                  Chuyến bay một chiều | {searchData.passengers?.adults || 1} Người lớn
+                  Chuyến bay một chiều | {adultsCount} {adultsCount === 1 ? 'Người lớn' : 'Người lớn'}{childrenCount > 0 && `, ${childrenCount} ${childrenCount === 1 ? 'Trẻ em' : 'Trẻ em'}`}{infantsCount > 0 && `, ${infantsCount} ${infantsCount === 1 ? 'Em bé' : 'Em bé'}`}
                 </h1>
                 <div className="text-black mt-2 font-medium">
                   <div className="flex items-center space-x-2">

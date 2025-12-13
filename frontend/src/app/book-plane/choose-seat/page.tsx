@@ -448,13 +448,86 @@ export default function ChooseSeatPage() {
     const { searchData } = useSearch();
     const bookingId = state.bookingId;
 
-    // Lấy số lượng người từ searchData
-    const totalAdults = searchData.passengers?.adults || 0;
-    const totalChildren = searchData.passengers?.children || 0;
-    const totalInfants = searchData.passengers?.infants || 0;
+    // State để tránh hydration error
+    const [isClient, setIsClient] = useState(false);
 
-    // Kiểm tra loại chuyến bay
-    const isOneWay = searchData.tripType === 'oneWay';
+    // State cho số lượng hành khách
+    const [totalAdults, setTotalAdults] = useState(1);
+    const [totalChildren, setTotalChildren] = useState(0);
+    const [totalInfants, setTotalInfants] = useState(0);
+
+    // Đánh dấu đã render ở client
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    // Load số lượng hành khách từ localStorage hoặc searchData
+    useEffect(() => {
+        if (!isClient) return;
+
+        // Lấy số lượng người từ localStorage trước (vì nó được lưu từ select-flight)
+        let counts = { adults: 1, children: 0, infants: 0 };
+
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('passengerCounts');
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    counts = {
+                        adults: Math.max(1, parsed.adults || 1),
+                        children: Math.max(0, parsed.children || 0),
+                        infants: Math.max(0, parsed.infants || 0)
+                    };
+                    console.log('Choose Seat - Loaded passenger counts from localStorage:', counts);
+                } catch (e) {
+                    console.error('Error parsing passenger counts:', e);
+                }
+            }
+        }
+
+        // Nếu searchData.passengers có và khác với localStorage, ưu tiên searchData
+        if (searchData.passengers && typeof searchData.passengers.adults === 'number' && searchData.passengers.adults > 0) {
+            const searchCounts = {
+                adults: Math.max(1, searchData.passengers.adults || 1),
+                children: Math.max(0, searchData.passengers.children || 0),
+                infants: Math.max(0, searchData.passengers.infants || 0)
+            };
+
+            // Chỉ cập nhật nếu searchData khác với localStorage
+            if (searchCounts.adults !== counts.adults ||
+                searchCounts.children !== counts.children ||
+                searchCounts.infants !== counts.infants) {
+                counts = searchCounts;
+                console.log('Choose Seat - Loaded passenger counts from searchData (overriding localStorage):', counts);
+
+                // Lưu lại vào localStorage
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('passengerCounts', JSON.stringify(counts));
+                }
+            }
+        }
+
+        // Đảm bảo ít nhất có 1 người lớn
+        if (counts.adults < 1) {
+            counts.adults = 1;
+        }
+
+        console.log('Choose Seat - Final passenger counts:', counts);
+        setTotalAdults(counts.adults);
+        setTotalChildren(counts.children);
+        setTotalInfants(counts.infants);
+    }, [isClient, searchData.passengers]);
+
+    // Kiểm tra loại chuyến bay - Ưu tiên từ BookingContext state
+    const isOneWay = state.tripType === 'oneway';
+
+    // Debug log
+    useEffect(() => {
+        console.log('Choose Seat - Trip Type:', state.tripType);
+        console.log('Choose Seat - Is One Way:', isOneWay);
+        console.log('Choose Seat - Departure Flight:', state.selectedDeparture);
+        console.log('Choose Seat - Return Flight:', state.selectedReturn);
+    }, [state.tripType, isOneWay, state.selectedDeparture, state.selectedReturn]);
 
     const departureRouteLabel = `${searchData.departureAirport?.airportCode || 'SGN'} → ${searchData.arrivalAirport?.airportCode || 'HAN'}`;
     const returnRouteLabel = `${searchData.arrivalAirport?.airportCode || 'HAN'} → ${searchData.departureAirport?.airportCode || 'SGN'}`;
@@ -575,8 +648,14 @@ export default function ChooseSeatPage() {
         selectedSeatsRef.current = selectedSeatsByLeg;
     }, [selectedSeatsByLeg]);
 
+    // Đánh dấu đã render ở client để tránh hydration error
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     // Xác định hạng vé được phép dựa trên chuyến bay đã chọn
     useEffect(() => {
+        if (!isClient) return;
         const departureFare = state.selectedDeparture;
         const returnFare = state.selectedReturn;
 
@@ -607,6 +686,8 @@ export default function ChooseSeatPage() {
 
     // Theo dõi thay đổi localStorage khi component mount (chỉ khi không có booking state)
     useEffect(() => {
+        if (!isClient) return;
+
         const updateTravelClassFromStorage = () => {
             // Chỉ update từ localStorage nếu không có booking state
             if (!state.selectedDeparture && !state.selectedReturn) {
@@ -632,7 +713,7 @@ export default function ChooseSeatPage() {
         return () => {
             window.removeEventListener('storage', updateTravelClassFromStorage);
         };
-    }, [activeLegKey]);
+    }, [activeLegKey, isClient]);
 
     // Cập nhật giá dịch vụ chọn ghế dựa trên hạng vé
     useEffect(() => {
@@ -1455,8 +1536,42 @@ export default function ChooseSeatPage() {
         return new Intl.NumberFormat('vi-VN').format(roundedNumber);
     };
 
-    const departureFlight = state.selectedDeparture;
-    const returnFlight = state.selectedReturn;
+    // Lấy thông tin chuyến bay - ưu tiên từ state, fallback từ localStorage  
+    const departureFlight = useMemo(() => {
+        if (state.selectedDeparture) {
+            return state.selectedDeparture;
+        }
+        // Fallback: lấy từ localStorage
+        if (typeof window !== 'undefined') {
+            const savedFlight = localStorage.getItem('selectedDepartureFlight');
+            if (savedFlight) {
+                try {
+                    return JSON.parse(savedFlight);
+                } catch (error) {
+                    console.error('Error parsing selectedDepartureFlight:', error);
+                }
+            }
+        }
+        return null;
+    }, [state.selectedDeparture]);
+
+    const returnFlight = useMemo(() => {
+        if (state.selectedReturn) {
+            return state.selectedReturn;
+        }
+        // Fallback: lấy từ localStorage
+        if (typeof window !== 'undefined' && !isOneWay) {
+            const savedFlight = localStorage.getItem('selectedReturnFlight');
+            if (savedFlight) {
+                try {
+                    return JSON.parse(savedFlight);
+                } catch (error) {
+                    console.error('Error parsing selectedReturnFlight:', error);
+                }
+            }
+        }
+        return null;
+    }, [state.selectedReturn, isOneWay]);
 
     // Tính tổng tiền dịch vụ
     const servicesTotal = useMemo(() => {
@@ -1522,6 +1637,18 @@ export default function ChooseSeatPage() {
         });
     }, [calculatedTotal, bookingId, serviceExtrasString]);
 
+    // Nếu chưa mount ở client, hiển thị loading
+    if (!isClient) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Đang tải...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Top banner */}
@@ -1541,7 +1668,7 @@ export default function ChooseSeatPage() {
 
                             <div>
                                 <h1 className="text-2xl md:text-3xl font-bold text-black">
-                                    {isOneWay ? 'CHUYẾN BAY MỘT CHIỀU' : 'CHUYẾN BAY KHỨ HỒI'} | {totalAdults} Người lớn {totalChildren > 0 && `${totalChildren} Trẻ em`} {totalInfants > 0 && `${totalInfants} Em bé`}
+                                    {isOneWay ? 'CHUYẾN BAY MỘT CHIỀU' : 'CHUYẾN BAY KHỨ HỒI'} | {totalAdults} {totalAdults === 1 ? 'Người lớn' : 'Người lớn'}{totalChildren > 0 && `, ${totalChildren} ${totalChildren === 1 ? 'Trẻ em' : 'Trẻ em'}`}{totalInfants > 0 && `, ${totalInfants} ${totalInfants === 1 ? 'Em bé' : 'Em bé'}`}
                                 </h1>
                                 <div className="text-black mt-2 font-medium">
                                     <div className="flex items-center space-x-2">
@@ -1794,7 +1921,9 @@ export default function ChooseSeatPage() {
 
                         <div className="bg-gray-50 rounded-xl p-4 space-y-2">
                             {/* Route */}
-                            <div className="text-base text-gray-700">{searchData.departureAirport?.city || ''} ({searchData.departureAirport?.airportCode || ''}) ✈ {searchData.arrivalAirport?.city || ''} ({searchData.arrivalAirport?.airportCode || ''})</div>
+                            <div className="text-base text-gray-700">
+                                {searchData.departureAirport?.city || departureFlight?.departureAirport?.city || 'N/A'} ({searchData.departureAirport?.airportCode || departureFlight?.departureAirport?.airportCode || 'N/A'}) ✈ {searchData.arrivalAirport?.city || departureFlight?.arrivalAirport?.city || 'N/A'} ({searchData.arrivalAirport?.airportCode || departureFlight?.arrivalAirport?.airportCode || 'N/A'})
+                            </div>
 
                             {/* Date - Format: "Chủ nhật, 28/10/2025" */}
                             <div className="text-base text-gray-700">
@@ -1810,13 +1939,13 @@ export default function ChooseSeatPage() {
                             </div>
 
                             {/* Time */}
-                            <div className="text-base text-gray-700">Giờ bay: {departureFlight?.departTime || ''} - {departureFlight?.arriveTime || ''}</div>
+                            <div className="text-base text-gray-700">Giờ bay: {departureFlight?.departTime || 'N/A'} - {departureFlight?.arriveTime || 'N/A'}</div>
 
                             {/* Flight Code */}
-                            <div className="text-base text-gray-700">Số hiệu: {departureFlight?.code || ''}</div>
+                            <div className="text-base text-gray-700">Số hiệu: {departureFlight?.code || departureFlight?.flightId || 'N/A'}</div>
 
                             {/* Fare Class */}
-                            <div className="text-base font-bold text-gray-700">Hạng vé: {departureFlight?.fareName || ''}</div>
+                            <div className="text-base font-bold text-gray-700">Hạng vé: {departureFlight?.fareName || 'N/A'}</div>
 
                             {/* Price Breakdown */}
                             <div className="pt-2 space-y-3 border-t border-gray-200">
@@ -1870,7 +1999,9 @@ export default function ChooseSeatPage() {
 
                             <div className="bg-gray-50 rounded-xl p-4 space-y-2">
                                 {/* Route */}
-                                <div className="text-base text-gray-700">{searchData.arrivalAirport?.city || ''} ({searchData.arrivalAirport?.airportCode || ''}) ✈ {searchData.departureAirport?.city || ''} ({searchData.departureAirport?.airportCode || ''})</div>
+                                <div className="text-base text-gray-700">
+                                    {searchData.arrivalAirport?.city || returnFlight?.departureAirport?.city || 'N/A'} ({searchData.arrivalAirport?.airportCode || returnFlight?.departureAirport?.airportCode || 'N/A'}) ✈ {searchData.departureAirport?.city || returnFlight?.arrivalAirport?.city || 'N/A'} ({searchData.departureAirport?.airportCode || returnFlight?.arrivalAirport?.airportCode || 'N/A'})
+                                </div>
 
                                 {/* Date - Format: "Thứ hai, 29/10/2025" */}
                                 <div className="text-base text-gray-700">
@@ -1888,13 +2019,13 @@ export default function ChooseSeatPage() {
                                 </div>
 
                                 {/* Time */}
-                                <div className="text-base text-gray-700">Giờ bay: {returnFlight?.departTime || ''} - {returnFlight?.arriveTime || ''}</div>
+                                <div className="text-base text-gray-700">Giờ bay: {returnFlight?.departTime || 'N/A'} - {returnFlight?.arriveTime || 'N/A'}</div>
 
                                 {/* Flight Code */}
-                                <div className="text-base text-gray-700">Số hiệu: {returnFlight?.code || ''}</div>
+                                <div className="text-base text-gray-700">Số hiệu: {returnFlight?.code || returnFlight?.flightId || 'N/A'}</div>
 
                                 {/* Fare Class */}
-                                <div className="text-base font-bold text-gray-700">Hạng vé: {returnFlight?.fareName || ''}</div>
+                                <div className="text-base font-bold text-gray-700">Hạng vé: {returnFlight?.fareName || 'N/A'}</div>
 
                                 {/* Price Breakdown */}
                                 <div className="pt-2 space-y-3 border-t border-gray-200">
