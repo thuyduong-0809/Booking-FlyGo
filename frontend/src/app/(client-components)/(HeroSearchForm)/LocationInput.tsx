@@ -31,10 +31,16 @@ const LocationInput: FC<LocationInputProps> = ({
 
   const [value, setValue] = useState("");
   const [showPopover, setShowPopover] = useState(autoFocus);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setShowPopover(autoFocus);
   }, [autoFocus]);
+
+  // Đảm bảo component chỉ render ClearDataButton sau khi client hydrate
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (eventClickOutsideDiv) {
@@ -197,7 +203,7 @@ const LocationInput: FC<LocationInputProps> = ({
             </span>
           )}
         </div>
-        {selectedAirport && (
+        {isClient && selectedAirport && (
           <ClearDataButton
             onClick={() => {
               setValue("");

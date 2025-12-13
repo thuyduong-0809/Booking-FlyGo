@@ -30,6 +30,7 @@ const LocationInput: FC<LocationInputProps> = ({
 
   const [value, setValue] = useState("");
   const [showPopover, setShowPopover] = useState(autoFocus);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setShowPopover(autoFocus);
@@ -39,6 +40,11 @@ const LocationInput: FC<LocationInputProps> = ({
       }, 200);
     }
   }, [autoFocus]);
+
+  // Đảm bảo component chỉ render ClearDataButton sau khi client hydrate
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useOutsideAlerter(containerRef, () => {
     setShowPopover(false);
@@ -133,7 +139,7 @@ const LocationInput: FC<LocationInputProps> = ({
           <span className="block mt-0.5 text-sm text-neutral-400 font-light ">
             <span className="line-clamp-1">{!!value ? placeHolder : desc}</span>
           </span>
-          {value && showPopover && (
+          {isClient && value && showPopover && (
             <ClearDataButton onClick={() => setValue("")} />
           )}
         </div>
