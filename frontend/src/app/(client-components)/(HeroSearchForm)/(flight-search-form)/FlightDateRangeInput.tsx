@@ -32,15 +32,30 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
 }) => {
   const { searchData, updateDepartureDate, updateReturnDate } = useSearch();
   const { showNotification } = useNotification();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
 
+  // Khởi tạo state với giá trị từ searchData hoặc null (sẽ được set trong useEffect)
   const [startDate, setStartDate] = useState<Date | null>(
-    searchData.departureDate || today
+    searchData.departureDate || null
   );
   const [endDate, setEndDate] = useState<Date | null>(
-    searchData.returnDate || new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000)
+    searchData.returnDate || null
   );
+
+  // Khởi tạo dates mặc định chỉ trên client để tránh hydration error
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+
+    if (!startDate && !searchData.departureDate) {
+      setStartDate(today);
+      updateDepartureDate(today);
+    }
+    if (!endDate && !searchData.returnDate) {
+      const defaultEndDate = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+      setEndDate(defaultEndDate);
+      updateReturnDate(defaultEndDate);
+    }
+  }, []); // Chỉ chạy một lần khi component mount
 
   // Đồng bộ state với context khi searchData thay đổi
   useEffect(() => {
@@ -51,16 +66,6 @@ const FlightDateRangeInput: FC<FlightDateRangeInputProps> = ({
       setEndDate(searchData.returnDate);
     }
   }, [searchData.departureDate, searchData.returnDate]);
-
-  // Cập nhật context với giá trị mặc định khi component mount
-  useEffect(() => {
-    if (!searchData.departureDate) {
-      updateDepartureDate(startDate);
-    }
-    if (!searchData.returnDate) {
-      updateReturnDate(endDate);
-    }
-  }, []); // Chỉ chạy một lần khi component mount
 
   const onChangeRangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates;

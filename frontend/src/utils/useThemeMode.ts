@@ -13,10 +13,12 @@ export const useThemeMode = () => {
     //   localStorage.theme = "dark";
     // }
     //
-    if (localStorage.theme === "dark") {
-      toDark();
-    } else {
-      toLight();
+    if (typeof window !== 'undefined') {
+      if (localStorage.theme === "dark") {
+        toDark();
+      } else {
+        toLight();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

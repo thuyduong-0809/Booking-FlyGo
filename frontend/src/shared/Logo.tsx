@@ -1,9 +1,12 @@
+"use client";
+
 import React from "react";
 import logoImg from "@/images/logo.png";
 import logoLightImg from "@/images/logo-light.png";
 import LogoSvgLight from "./LogoSvgLight";
 import LogoSvg from "./LogoSvg";
 import Link from "next/link";
+import Image from "next/image";
 import { StaticImageData } from "next/image";
 
 export interface LogoProps {
@@ -28,21 +31,29 @@ const Logo: React.FC<LogoProps> = ({
       {/* THIS USE FOR MY CLIENT */}
       {/* PLEASE UN COMMENT BELLOW CODE AND USE IT */}
       {img ? (
-        <img
+        <Image
           className={`block max-h-30 ${imgLight ? "dark:hidden" : ""}`}
           src="/image/flygo_3.png"
           alt="Logo"
-          // width={500}
-          // height={500}
+          width={96}
+          height={48}
+          priority
+          unoptimized
+          suppressHydrationWarning
         />
       ) : (
         "logo here"
       )}
       {imgLight && (
-        <img
+        <Image
           className="hidden max-h-30 dark:block"
           src="/image/flygo_3.png"
           alt="Logo"
+          width={96}
+          height={48}
+          priority
+          unoptimized
+          suppressHydrationWarning
         />
       )}
     </Link>
