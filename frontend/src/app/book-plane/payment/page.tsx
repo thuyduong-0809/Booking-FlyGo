@@ -230,35 +230,27 @@ export default function PaymentPage() {
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )[0];
 
-
         // Check if payment is already completed
         if (latestPayment.paymentStatus === 'Completed') {
           setShowMoMoPayment(false);
+          // Redirect đến success page để xử lý booking flights
           window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
           return;
         }
 
-        try {
-
-          // Redirect to success page
-          setShowMoMoPayment(false);
-          setIsProcessing(false);
-
-          // Wait a bit to ensure backend update is complete
-          await new Promise(resolve => setTimeout(resolve, 500));
-
-          window.location.href = `/confirm?bookingId=${state.bookingId}`;
-        } catch (updateError) {
-          setIsProcessing(false);
-          alert('Lỗi cập nhật trạng thái: ' + (updateError as any)?.message || 'Vui lòng thử lại.');
-        }
+        // Nếu chưa completed, redirect đến success page để xử lý
+        // Success page sẽ tự động update payment status và tạo booking flights
+        setShowMoMoPayment(false);
+        setIsProcessing(false);
+        window.location.href = `/book-plane/payment/success?bookingId=${state.bookingId}`;
       } else {
         setIsProcessing(false);
         alert('Không tìm thấy thông tin thanh toán. Vui lòng thử lại.');
       }
-    } catch (error) {
+    } catch (error: any) {
       setIsProcessing(false);
-      alert('Có lỗi xảy ra: ' + (error as any)?.message || 'Vui lòng thử lại.');
+      console.error('Error in handleMoMoComplete:', error);
+      alert('Có lỗi xảy ra: ' + (error?.message || 'Vui lòng thử lại.'));
     }
   };
 

@@ -146,20 +146,39 @@ export default function PaymentSuccessPage() {
             const savedReturn = localStorage.getItem('selectedReturnFlight');
 
             if (!savedDeparture) {
+                console.error('Payment Success - No departure flight found in localStorage');
                 return;
             }
 
-            const depFlight = savedDeparture ? JSON.parse(savedDeparture) : null;
-            const retFlight = savedReturn ? JSON.parse(savedReturn) : null;
+            let depFlight: any = null;
+            let retFlight: any = null;
 
-            // Kiểm tra có flightId không
-            if (!depFlight.flightId) {
+            try {
+                depFlight = JSON.parse(savedDeparture);
+            } catch (error) {
+                console.error('Payment Success - Error parsing departure flight:', error);
+                return;
+            }
+
+            if (savedReturn) {
+                try {
+                    retFlight = JSON.parse(savedReturn);
+                } catch (error) {
+                    console.error('Payment Success - Error parsing return flight:', error);
+                }
+            }
+
+            // Kiểm tra có flightId không - có thể là flightId (number) hoặc flightNumber (string)
+            const departureFlightId = depFlight.flightId || depFlight.flightNumber;
+            if (!departureFlightId) {
+                console.error('Payment Success - No flightId found in departure flight data:', depFlight);
                 return;
             }
 
             // 2. Lấy passengers từ booking
             const bookingResponse = await requestApi(`bookings/${bookingId}`, 'GET');
             if (!bookingResponse.success || !bookingResponse.data) {
+                console.error('Payment Success - Failed to get booking data:', bookingResponse);
                 return;
             }
 
@@ -169,8 +188,11 @@ export default function PaymentSuccessPage() {
             );
 
             if (passengers.length === 0) {
+                console.error('Payment Success - No adult or child passengers found');
                 return;
             }
+
+            console.log('Payment Success - Creating booking flights for', passengers.length, 'passengers');
 
             // 3. Kiểm tra travelClass cho chuyến đi - map từ fare name sang database enum
             const departureTravelClass = mapTravelClass(depFlight.travelClass || '');
@@ -194,6 +216,13 @@ export default function PaymentSuccessPage() {
 
             // 4a. Tạo bookingFlight cho mỗi passenger cho chuyến đi
             const departureSeats = selectedSeats.departure || [];
+            const departureFlightIdNum = Number(departureFlightId);
+            
+            if (isNaN(departureFlightIdNum)) {
+                console.error('Payment Success - Invalid departure flightId:', departureFlightId);
+                return;
+            }
+
             for (let i = 0; i < passengers.length; i++) {
                 const passenger = passengers[i];
 
@@ -202,9 +231,11 @@ export default function PaymentSuccessPage() {
                     // Nếu có ghế đã chọn và flightId khớp, sử dụng ghế đó
                     // Nếu không, để backend tự động chọn
                     let seatNumber: string | undefined = undefined;
-                    if (departureSeats.length > i && departureSeats[i].flightId === Number(depFlight.flightId)) {
-                        seatNumber = departureSeats[i].seatNumber;
-                    } else {
+                    if (departureSeats.length > i) {
+                        const seatFlightId = Number(departureSeats[i].flightId);
+                        if (!isNaN(seatFlightId) && seatFlightId === departureFlightIdNum) {
+                            seatNumber = departureSeats[i].seatNumber;
+                        }
                     }
 
                     // Tạo bookingFlight với passengerId để backend tự động tạo seatAllocation
@@ -212,57 +243,76 @@ export default function PaymentSuccessPage() {
                     // Nếu không có seatNumber, backend sẽ tự động chọn ghế trống đầu tiên
                     const bookingFlightData = {
                         bookingId: bookingId,
-                        flightId: Number(depFlight.flightId), // Đảm bảo là number
+                        flightId: departureFlightIdNum, // Đảm bảo là number
                         travelClass: departureTravelClass,
                         baggageAllowance: departureBaggageAllowance,
                         seatNumber: seatNumber, // Truyền ghế đã chọn (nếu có)
                         passengerId: passenger.passengerId
                     };
 
+                    console.log(`Payment Success - Creating booking flight for passenger ${i + 1}:`, bookingFlightData);
+
                     // GỌI API TẠO BOOKING FLIGHT
                     // Backend sẽ:
                     // - Nếu có seatNumber: Kiểm tra ghế đó có available không, nếu có thì sử dụng
                     // - Nếu không có seatNumber: Tự động chọn ghế trống đầu tiên
                     await bookingFlightsService.create(bookingFlightData);
+                    console.log(`Payment Success - Successfully created booking flight for passenger ${i + 1}`);
 
-                } catch (error) {
-                    // Tiếp tục với passenger tiếp theo
+                } catch (error: any) {
+                    console.error(`Payment Success - Error creating booking flight for passenger ${i + 1}:`, error);
+                    // Tiếp tục với passenger tiếp theo thay vì dừng lại
                 }
             }
 
             // 4b. Nếu có chuyến về → tạo tiếp bookingFlight cho chuyến về
-            if (retFlight && retFlight.flightId) {
+            const returnFlightId = retFlight?.flightId || retFlight?.flightNumber;
+            if (retFlight && returnFlightId) {
                 // Kiểm tra travelClass cho chuyến về - map từ fare name sang database enum
                 const returnTravelClass = mapTravelClass(retFlight.travelClass || depFlight.travelClass || '');
                 const returnBaggageAllowance = getBaggageAllowance(returnTravelClass);
 
                 const returnSeats = selectedSeats.return || [];
-                for (let i = 0; i < passengers.length; i++) {
-                    const passenger = passengers[i];
-                    try {
-                        // Lấy ghế đã chọn cho passenger này (theo thứ tự)
-                        // Nếu có ghế đã chọn và flightId khớp, sử dụng ghế đó
-                        // Nếu không, để backend tự động chọn
-                        let seatNumber: string | undefined = undefined;
-                        if (returnSeats.length > i && returnSeats[i].flightId === Number(retFlight.flightId)) {
-                            seatNumber = returnSeats[i].seatNumber;
-                        }
+                const returnFlightIdNum = Number(returnFlightId);
+                
+                if (isNaN(returnFlightIdNum)) {
+                    console.error('Payment Success - Invalid return flightId:', returnFlightId);
+                } else {
+                    for (let i = 0; i < passengers.length; i++) {
+                        const passenger = passengers[i];
+                        try {
+                            // Lấy ghế đã chọn cho passenger này (theo thứ tự)
+                            // Nếu có ghế đã chọn và flightId khớp, sử dụng ghế đó
+                            // Nếu không, để backend tự động chọn
+                            let seatNumber: string | undefined = undefined;
+                            if (returnSeats.length > i) {
+                                const seatFlightId = Number(returnSeats[i].flightId);
+                                if (!isNaN(seatFlightId) && seatFlightId === returnFlightIdNum) {
+                                    seatNumber = returnSeats[i].seatNumber;
+                                }
+                            }
 
-                        // Tạo bookingFlight cho chuyến về
-                        // Nếu có seatNumber, backend sẽ sử dụng ghế đó
-                        // Nếu không, backend sẽ tự động chọn ghế từ FlightSeats của chuyến về (độc lập với chuyến đi)
-                        const bookingFlightData = {
-                            bookingId: bookingId,
-                            flightId: Number(retFlight.flightId),
-                            travelClass: returnTravelClass,
-                            baggageAllowance: returnBaggageAllowance,
-                            seatNumber: seatNumber, // Truyền ghế đã chọn (nếu có)
-                            passengerId: passenger.passengerId
-                        };
-                        // GỌI API TẠO BOOKING FLIGHT cho chuyến về
-                        // Mỗi chuyến bay có FlightSeats riêng, không bị ảnh hưởng lẫn nhau
-                        await bookingFlightsService.create(bookingFlightData);
-                    } catch (error) {
+                            // Tạo bookingFlight cho chuyến về
+                            // Nếu có seatNumber, backend sẽ sử dụng ghế đó
+                            // Nếu không, backend sẽ tự động chọn ghế từ FlightSeats của chuyến về (độc lập với chuyến đi)
+                            const bookingFlightData = {
+                                bookingId: bookingId,
+                                flightId: returnFlightIdNum,
+                                travelClass: returnTravelClass,
+                                baggageAllowance: returnBaggageAllowance,
+                                seatNumber: seatNumber, // Truyền ghế đã chọn (nếu có)
+                                passengerId: passenger.passengerId
+                            };
+                            
+                            console.log(`Payment Success - Creating return booking flight for passenger ${i + 1}:`, bookingFlightData);
+                            
+                            // GỌI API TẠO BOOKING FLIGHT cho chuyến về
+                            // Mỗi chuyến bay có FlightSeats riêng, không bị ảnh hưởng lẫn nhau
+                            await bookingFlightsService.create(bookingFlightData);
+                            console.log(`Payment Success - Successfully created return booking flight for passenger ${i + 1}`);
+                        } catch (error: any) {
+                            console.error(`Payment Success - Error creating return booking flight for passenger ${i + 1}:`, error);
+                        }
                     }
                 }
             }
@@ -273,12 +323,17 @@ export default function PaymentSuccessPage() {
             localStorage.removeItem('selectedReturnFlight');
             localStorage.removeItem('selectedSeats'); // Xóa ghế đã chọn sau khi đã áp dụng
 
-        } catch (error) {
+            console.log('Payment Success - Successfully created all booking flights and seat allocations');
+        } catch (error: any) {
+            console.error('Payment Success - Error in createBookingFlightsAndSeatAllocations:', error);
+            throw error; // Re-throw để caller có thể xử lý
         }
     };
 
     const updatePaymentStatus = async (bookingId: number) => {
         try {
+            console.log('Payment Success - Updating payment status for bookingId:', bookingId);
+            
             // Lấy payments theo bookingId
             const payments = await paymentsService.getPaymentsByBooking(bookingId);
 
@@ -287,12 +342,14 @@ export default function PaymentSuccessPage() {
                 const pendingPayment = payments.find(p => p.paymentStatus === 'Pending');
 
                 if (pendingPayment && pendingPayment.paymentId) {
+                    console.log('Payment Success - Found pending payment:', pendingPayment.paymentId);
 
                     // Bước 1: Cập nhật payment status thành Completed
                     const result = await paymentsService.updatePaymentStatus(
                         pendingPayment.paymentId,
                         'Completed'
                     );
+                    console.log('Payment Success - Payment status updated to Completed');
 
                     // Bước 2: Tạo bookingFlights và seatAllocations
                     // QUAN TRỌNG: Chỉ tạo BookingFlight SAU KHI thanh toán thành công
@@ -302,18 +359,40 @@ export default function PaymentSuccessPage() {
                     // - Cập nhật FlightSeat.isAvailable = false (đánh dấu ghế đã được đặt)
                     // - Giảm availableSeats trong Flight
                     // Tất cả trong một transaction để đảm bảo atomicity
-                    await createBookingFlightsAndSeatAllocations(bookingId);
+                    try {
+                        await createBookingFlightsAndSeatAllocations(bookingId);
+                        console.log('Payment Success - All booking flights created successfully');
+                    } catch (createError: any) {
+                        console.error('Payment Success - Error creating booking flights:', createError);
+                        // Vẫn redirect nhưng có thể booking flights chưa được tạo
+                        // User có thể thử lại hoặc liên hệ support
+                    }
 
                     // Redirect to confirm page after successful update
                     window.location.href = `/confirm?bookingId=${bookingId}`;
                     return;
                 } else {
+                    console.warn('Payment Success - No pending payment found, checking latest payment');
+                    // Nếu không có pending, có thể đã được xử lý rồi
+                    const latestPayment = payments.sort((a, b) =>
+                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                    )[0];
+                    
+                    if (latestPayment.paymentStatus === 'Completed') {
+                        // Đã completed rồi, chỉ cần redirect
+                        window.location.href = `/confirm?bookingId=${bookingId}`;
+                        return;
+                    }
                 }
             } else {
+                console.error('Payment Success - No payments found for bookingId:', bookingId);
             }
             setLoading(false);
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Payment Success - Error updating payment status:', error);
             setLoading(false);
+            // Hiển thị thông báo lỗi cho user
+            alert('Có lỗi xảy ra khi cập nhật trạng thái thanh toán. Vui lòng liên hệ hỗ trợ.');
         }
     };
 

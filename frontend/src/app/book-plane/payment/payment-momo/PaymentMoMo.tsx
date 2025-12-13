@@ -59,7 +59,6 @@ export default function PaymentMoMo({
 
             if (response && response.payUrl) {
                 setPayUrl(response.payUrl);
-                setHasOpenedWindow(true);
                 // Tự động mở cửa sổ thanh toán CHỈ MỘT LẦN
                 if (!hasOpenedWindow) {
                     window.open(response.payUrl, '_blank');
