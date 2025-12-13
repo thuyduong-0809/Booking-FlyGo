@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import Link from 'next/link';
 import { useBooking } from "../BookingContext";
 import { useSearch } from "../SearchContext";
@@ -420,7 +420,7 @@ const FareCell = ({
             <svg className="w-6 h-6 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            <div className="text-sm font-semibold">Hết chỗ</div>
+            <span className="text-xs font-semibold uppercase text-gray-500">Chỗ ngồi đã được đặt hết</span>
           </div>
         ) : (
           <div className="flex flex-col h-full">
@@ -850,6 +850,121 @@ export default function SelectFlightRecoveryPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedReturnDate, returnCurrentMonth, returnCurrentYear]);
+
+  // Kiểm tra availability thực tế từ FlightSeats sau khi load flights
+  const checkedFlightsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const checkAvailability = async () => {
+      // Check departure flights
+      if (departureFlights.length > 0) {
+        const needsCheck = departureFlights.some(
+          flight => flight.flightData && !checkedFlightsRef.current.has(`dep-${flight.flightData.flightId}`)
+        );
+
+        if (needsCheck) {
+          const updatedFlights = await Promise.all(
+            departureFlights.map(async (flight) => {
+              if (!flight.flightData) return flight;
+
+              const flightKey = `dep-${flight.flightData!.flightId}`;
+              if (checkedFlightsRef.current.has(flightKey)) return flight;
+
+              const updatedFares = await Promise.all(
+                flight.fares.map(async (fare) => {
+                  if (fare.isPlaceholder || !fare.classType) return fare;
+
+                  const travelClassMap: { [key: string]: string } = {
+                    'first': 'First',
+                    'business': 'Business',
+                    'eco': 'Economy'
+                  };
+                  const travelClass = travelClassMap[fare.classType];
+
+                  try {
+                    const response = await requestApi(
+                      `flight-seats/flight/${flight.flightData!.flightId}/available/${travelClass}`,
+                      'GET'
+                    );
+
+                    if (!response.success || !response.data || response.data.length === 0) {
+                      return { ...fare, soldOut: true };
+                    }
+
+                    return fare;
+                  } catch (error) {
+                    console.error(`Error checking availability:`, error);
+                    return fare;
+                  }
+                })
+              );
+
+              checkedFlightsRef.current.add(flightKey);
+              return { ...flight, fares: updatedFares };
+            })
+          );
+
+          setDepartureFlights(updatedFlights);
+        }
+      }
+
+      // Check return flights
+      if (returnFlights.length > 0) {
+        const needsCheck = returnFlights.some(
+          flight => flight.flightData && !checkedFlightsRef.current.has(`ret-${flight.flightData.flightId}`)
+        );
+
+        if (needsCheck) {
+          const updatedFlights = await Promise.all(
+            returnFlights.map(async (flight) => {
+              if (!flight.flightData) return flight;
+
+              const flightKey = `ret-${flight.flightData!.flightId}`;
+              if (checkedFlightsRef.current.has(flightKey)) return flight;
+
+              const updatedFares = await Promise.all(
+                flight.fares.map(async (fare) => {
+                  if (fare.isPlaceholder || !fare.classType) return fare;
+
+                  const travelClassMap: { [key: string]: string } = {
+                    'first': 'First',
+                    'business': 'Business',
+                    'eco': 'Economy'
+                  };
+                  const travelClass = travelClassMap[fare.classType];
+
+                  try {
+                    const response = await requestApi(
+                      `flight-seats/flight/${flight.flightData!.flightId}/available/${travelClass}`,
+                      'GET'
+                    );
+
+                    if (!response.success || !response.data || response.data.length === 0) {
+                      return { ...fare, soldOut: true };
+                    }
+
+                    return fare;
+                  } catch (error) {
+                    console.error(`Error checking availability:`, error);
+                    return fare;
+                  }
+                })
+              );
+
+              checkedFlightsRef.current.add(flightKey);
+              return { ...flight, fares: updatedFares };
+            })
+          );
+
+          setReturnFlights(updatedFlights);
+        }
+      }
+    };
+
+    checkAvailability();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departureFlights.length, returnFlights.length]);
+
 
   // Hàm chuyển đổi flight từ API sang FlightItem
   const convertFlightToFlightItem = (flight: Flight): FlightItem => {

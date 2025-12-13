@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import Link from 'next/link';
 import { useBooking } from "../BookingContext";
 import { useSearch } from "../SearchContext";
@@ -335,6 +335,8 @@ const FareCell = ({
         // Không có hạng - hiển thị dấu X lớn
         <div className="flex flex-col items-center justify-center h-full">
           <span className="text-3xl font-extrabold tracking-widest text-gray-400">X</span>
+          <span className="text-xs font-semibold uppercase text-gray-500">Không có hạng</span>
+
         </div>
       ) : isDisabled ? (
         // Hết chỗ - hiển thị thông báo hết chỗ
@@ -342,7 +344,7 @@ const FareCell = ({
           <svg className="w-6 h-6 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-          <div className="text-sm font-semibold">Hết chỗ</div>
+          <span className="text-xs font-semibold uppercase text-gray-500">Chỗ ngồi đã được đặt hết</span>
         </div>
       ) : (
         <div>
@@ -852,6 +854,74 @@ export default function SelectFlightPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDepartureDate, currentMonth, currentYear]);
 
+  // Kiểm tra availability thực tế từ FlightSeats sau khi load flights
+  const checkedFlightsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (departureFlights.length > 0) {
+        const needsCheck = departureFlights.some(
+          flight => flight.flightData && !checkedFlightsRef.current.has(`dep-${flight.flightData.flightId}`)
+        );
+
+        if (needsCheck) {
+          const updatedFlights = await Promise.all(
+            departureFlights.map(async (flight) => {
+              if (!flight.flightData) return flight;
+
+              const flightKey = `dep-${flight.flightData.flightId}`;
+              if (checkedFlightsRef.current.has(flightKey)) return flight;
+
+              const updatedFares = await Promise.all(
+                flight.fares.map(async (fare) => {
+                  // Skip nếu đã soldOut hoặc không có giá
+                  if (fare.soldOut && fare.price === 0) return fare;
+
+                  // Map fare name to travelClass
+                  const travelClassMap: { [key: string]: string } = {
+                    'FIST CLASS': 'First',
+                    'BUSSINESS': 'Business',
+                    'Eco': 'Economy'
+                  };
+                  const travelClass = travelClassMap[fare.name];
+
+                  if (!travelClass) return fare;
+
+                  // Ensure flightData exists before accessing flightId
+                  if (!flight.flightData) return fare;
+
+                  try {
+                    const response = await requestApi(
+                      `flight-seats/flight/${flight.flightData.flightId}/available/${travelClass}`,
+                      'GET'
+                    );
+
+                    if (!response.success || !response.data || response.data.length === 0) {
+                      return { ...fare, soldOut: true };
+                    }
+
+                    return fare;
+                  } catch (error) {
+                    console.error(`Error checking availability:`, error);
+                    return fare;
+                  }
+                })
+              );
+
+              checkedFlightsRef.current.add(flightKey);
+              return { ...flight, fares: updatedFares };
+            })
+          );
+
+          setDepartureFlights(updatedFlights);
+        }
+      }
+    };
+
+    checkAvailability();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departureFlights.length]);
+
   const [expandedFlight, setExpandedFlight] = useState<{ flightId: string, fareIndex: number } | null>(null);
 
   const departureFlight = departureFlights.find(f => f.id === selectedDepartureFlight?.flightId);
@@ -875,11 +945,60 @@ export default function SelectFlightPage() {
   const isFlightSelected = selectedDepartureFlight !== null;
   const [showAlert, setShowAlert] = useState(false);
 
-  const handleContinue = (e: React.MouseEvent) => {
+  const handleContinue = async (e: React.MouseEvent) => {
+    e.preventDefault();
+
     if (!isFlightSelected) {
-      e.preventDefault();
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
+      return false;
+    }
+
+    try {
+      // Kiểm tra chỗ trống cho chuyến đi
+      if (selectedDepartureFlight) {
+        const departureFlight = departureFlights.find(f => f.id === selectedDepartureFlight.flightId);
+        const departureFare = departureFlight?.fares[selectedDepartureFlight.fareIndex];
+
+        if (departureFlight?.flightData && departureFare) {
+          // Map fare name to travelClass
+          const travelClassMap: { [key: string]: string } = {
+            'FIST CLASS': 'First',
+            'BUSSINESS': 'Business',
+            'Eco': 'Economy'
+          };
+          const travelClass = travelClassMap[departureFare.name];
+
+          if (travelClass) {
+            // Gọi API kiểm tra chỗ trống
+            const response = await requestApi(
+              `flight-seats/flight/${departureFlight.flightData.flightId}/available/${travelClass}`,
+              'GET'
+            );
+
+            if (!response.success || !response.data || response.data.length === 0) {
+              setShowAlert(true);
+              setTimeout(() => setShowAlert(false), 5000);
+              return false;
+            }
+
+            // Kiểm tra số lượng chỗ trống có đủ không
+            const totalPassengers = adultsCount + childrenCount + infantsCount;
+            if (response.data.length < totalPassengers) {
+              setShowAlert(true);
+              setTimeout(() => setShowAlert(false), 5000);
+              return false;
+            }
+          }
+        }
+      }
+
+      // Nếu tất cả kiểm tra đều pass, chuyển sang trang tiếp theo
+      window.location.href = '/book-plane/passengers';
+    } catch (error) {
+      console.error('Error checking seat availability:', error);
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 5000);
       return false;
     }
   };
